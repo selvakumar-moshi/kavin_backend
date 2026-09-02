@@ -1,0 +1,519 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\utils\\constants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\utils\\constants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\services\\courseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\services\\courseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\controllers\\coursecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\controllers\\coursecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\dtos\\courserequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\dtos\\courserequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\services\\icourseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\services\\icourseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\services\\iauthservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\services\\iauthservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\repositories\\icourserepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\repositories\\icourserepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\repositories\\courserepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\repositories\\courserepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\modals\\course.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\modals\\course.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\middleware\\jwtmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\middleware\\jwtmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\middleware\\globalexceptionmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\middleware\\globalexceptionmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\helpers\\responsehelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\helpers\\responsehelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\validators\\registervalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\validators\\registervalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\repositories\\userrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\repositories\\userrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\repositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\repositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\services\\jwtservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\services\\jwtservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\services\\ijwtservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\services\\ijwtservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\config\\databasesettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\config\\databasesettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\dtos\\registerrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\dtos\\registerrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\dtos\\loginresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\dtos\\loginresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\dtos\\loginrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\dtos\\loginrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\dtos\\apiresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\dtos\\apiresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\modals\\admin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\modals\\admin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\modals\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\modals\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|d:\\software\\data\\selva_coac\\kavin_backend\\learning\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{9EBC90CA-763D-4872-C19D-4BA0CD398F54}|Learning\\Learning.csproj|solutionrelative:learning\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 4,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Program.cs",
+              "RelativeDocumentMoniker": "Learning\\Program.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Program.cs*",
+              "RelativeToolTip": "Learning\\Program.cs*",
+              "ViewState": "AgIAACMAAAAAAAAAAAAAwMYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:52:49.815Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "CourseService.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\CourseService.cs",
+              "RelativeDocumentMoniker": "Learning\\Services\\CourseService.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\CourseService.cs",
+              "RelativeToolTip": "Learning\\Services\\CourseService.cs",
+              "ViewState": "AgIAAFsAAAAAAAAAAADgvzgAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:41:42.722Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "CourseController.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Controllers\\CourseController.cs",
+              "RelativeDocumentMoniker": "Learning\\Controllers\\CourseController.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Controllers\\CourseController.cs",
+              "RelativeToolTip": "Learning\\Controllers\\CourseController.cs",
+              "ViewState": "AgIAAFoAAAAAAAAAAAAqwHAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:37:19.432Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Constants.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Utils\\Constants.cs",
+              "RelativeDocumentMoniker": "Learning\\Utils\\Constants.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Utils\\Constants.cs",
+              "RelativeToolTip": "Learning\\Utils\\Constants.cs",
+              "ViewState": "AgIAAA0AAAAAAAAAAADwvwYAAABCAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:45:08.968Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\appsettings.json",
+              "RelativeDocumentMoniker": "Learning\\appsettings.json",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\appsettings.json",
+              "RelativeToolTip": "Learning\\appsettings.json",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAwwBUAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-09-02T09:51:40.248Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "CourseRequest.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\CourseRequest.cs",
+              "RelativeDocumentMoniker": "Learning\\DTOs\\CourseRequest.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\CourseRequest.cs",
+              "RelativeToolTip": "Learning\\DTOs\\CourseRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:40:46.167Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ICourseService.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\ICourseService.cs",
+              "RelativeDocumentMoniker": "Learning\\Services\\ICourseService.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\ICourseService.cs",
+              "RelativeToolTip": "Learning\\Services\\ICourseService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:58:23.736Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "IAuthService.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\IAuthService.cs",
+              "RelativeDocumentMoniker": "Learning\\Services\\IAuthService.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\IAuthService.cs",
+              "RelativeToolTip": "Learning\\Services\\IAuthService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:56:50.101Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "ICourseRepository.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Repositories\\ICourseRepository.cs",
+              "RelativeDocumentMoniker": "Learning\\Repositories\\ICourseRepository.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Repositories\\ICourseRepository.cs",
+              "RelativeToolTip": "Learning\\Repositories\\ICourseRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:42:57.592Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "CourseRepository.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Repositories\\CourseRepository.cs",
+              "RelativeDocumentMoniker": "Learning\\Repositories\\CourseRepository.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Repositories\\CourseRepository.cs",
+              "RelativeToolTip": "Learning\\Repositories\\CourseRepository.cs",
+              "ViewState": "AgIAAB4AAAAAAAAAAAAcwDEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:43:06.866Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "Course.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Modals\\Course.cs",
+              "RelativeDocumentMoniker": "Learning\\Modals\\Course.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Modals\\Course.cs",
+              "RelativeToolTip": "Learning\\Modals\\Course.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAIwBcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:38:05.182Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "JwtMiddleware.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Middleware\\JwtMiddleware.cs",
+              "RelativeDocumentMoniker": "Learning\\Middleware\\JwtMiddleware.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Middleware\\JwtMiddleware.cs",
+              "RelativeToolTip": "Learning\\Middleware\\JwtMiddleware.cs",
+              "ViewState": "AgIAACwAAAAAAAAAAAAmwDwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:43:27Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "GlobalExceptionMiddleware.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Middleware\\GlobalExceptionMiddleware.cs",
+              "RelativeDocumentMoniker": "Learning\\Middleware\\GlobalExceptionMiddleware.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Middleware\\GlobalExceptionMiddleware.cs",
+              "RelativeToolTip": "Learning\\Middleware\\GlobalExceptionMiddleware.cs",
+              "ViewState": "AgIAADEAAAAAAAAAAAAmwEcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:43:38.457Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "ResponseHelper.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Helpers\\ResponseHelper.cs",
+              "RelativeDocumentMoniker": "Learning\\Helpers\\ResponseHelper.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Helpers\\ResponseHelper.cs",
+              "RelativeToolTip": "Learning\\Helpers\\ResponseHelper.cs",
+              "ViewState": "AgIAACUAAAAAAAAAAAAwwCkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:43:58.121Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "UserRepository.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Repositories\\UserRepository.cs",
+              "RelativeDocumentMoniker": "Learning\\Repositories\\UserRepository.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Repositories\\UserRepository.cs",
+              "RelativeToolTip": "Learning\\Repositories\\UserRepository.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAAzwDcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:42:47.994Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "RegisterValidator.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Validators\\RegisterValidator.cs",
+              "RelativeDocumentMoniker": "Learning\\Validators\\RegisterValidator.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Validators\\RegisterValidator.cs",
+              "RelativeToolTip": "Learning\\Validators\\RegisterValidator.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAAzwCsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:44:40.218Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "IUserRepository.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Repositories\\IUserRepository.cs",
+              "RelativeDocumentMoniker": "Learning\\Repositories\\IUserRepository.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Repositories\\IUserRepository.cs",
+              "RelativeToolTip": "Learning\\Repositories\\IUserRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:42:38.293Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "Learning\\Controllers\\AuthController.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "Learning\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAAC4AAAAAAAAAAAAkwEQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:37:02.528Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "Learning\\Properties\\launchSettings.json",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Properties\\launchSettings.json",
+              "RelativeToolTip": "Learning\\Properties\\launchSettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-09-02T10:09:45.242Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "IJwtService.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\IJwtService.cs",
+              "RelativeDocumentMoniker": "Learning\\Services\\IJwtService.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\IJwtService.cs",
+              "RelativeToolTip": "Learning\\Services\\IJwtService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:57:47.103Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "JwtService.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\JwtService.cs",
+              "RelativeDocumentMoniker": "Learning\\Services\\JwtService.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\JwtService.cs",
+              "RelativeToolTip": "Learning\\Services\\JwtService.cs",
+              "ViewState": "AgIAABcAAAAAAAAAAAAkwC0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:41:51.181Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\AuthService.cs",
+              "RelativeDocumentMoniker": "Learning\\Services\\AuthService.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Services\\AuthService.cs",
+              "RelativeToolTip": "Learning\\Services\\AuthService.cs",
+              "ViewState": "AgIAABwAAAAAAAAAAAAgwFIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:41:34.111Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "DatabaseSettings.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Config\\DatabaseSettings.cs",
+              "RelativeDocumentMoniker": "Learning\\Config\\DatabaseSettings.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Config\\DatabaseSettings.cs",
+              "RelativeToolTip": "Learning\\Config\\DatabaseSettings.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:44:18.298Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "RegisterRequest.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\RegisterRequest.cs",
+              "RelativeDocumentMoniker": "Learning\\DTOs\\RegisterRequest.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\RegisterRequest.cs",
+              "RelativeToolTip": "Learning\\DTOs\\RegisterRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:40:37.119Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "LoginResponse.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\LoginResponse.cs",
+              "RelativeDocumentMoniker": "Learning\\DTOs\\LoginResponse.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\LoginResponse.cs",
+              "RelativeToolTip": "Learning\\DTOs\\LoginResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:40:26.213Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "LoginRequest.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\LoginRequest.cs",
+              "RelativeDocumentMoniker": "Learning\\DTOs\\LoginRequest.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\LoginRequest.cs",
+              "RelativeToolTip": "Learning\\DTOs\\LoginRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:40:16.394Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "ApiResponse.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\ApiResponse.cs",
+              "RelativeDocumentMoniker": "Learning\\DTOs\\ApiResponse.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\DTOs\\ApiResponse.cs",
+              "RelativeToolTip": "Learning\\DTOs\\ApiResponse.cs",
+              "ViewState": "AgIAABcAAAAAAAAAAAAswCIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:40:54.737Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "Admin.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Modals\\Admin.cs",
+              "RelativeDocumentMoniker": "Learning\\Modals\\Admin.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Modals\\Admin.cs",
+              "RelativeToolTip": "Learning\\Modals\\Admin.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:38:14.457Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "User.cs",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Modals\\User.cs",
+              "RelativeDocumentMoniker": "Learning\\Modals\\User.cs",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Modals\\User.cs",
+              "RelativeToolTip": "Learning\\Modals\\User.cs",
+              "ViewState": "AgIAACQAAAAAAAAAAAAIwCYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:37:54.668Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "Learning\\appsettings.Development.json",
+              "ToolTip": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\appsettings.Development.json",
+              "RelativeToolTip": "Learning\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-09-02T09:21:41.239Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
