@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "Iups2c8KirY=",
+  "dgSpecHash": "K40c4FQkulM=",
   "success": true,
   "projectFilePath": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Learning.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\selvakumar.gunasekar\\.nuget\\packages\\awssdk.core\\3.7.100.14\\awssdk.core.3.7.100.14.nupkg.sha512",
+    "C:\\Users\\selvakumar.gunasekar\\.nuget\\packages\\awssdk.core\\4.0.102.1\\awssdk.core.4.0.102.1.nupkg.sha512",
+    "C:\\Users\\selvakumar.gunasekar\\.nuget\\packages\\awssdk.s3\\4.0.102.4\\awssdk.s3.4.0.102.4.nupkg.sha512",
     "C:\\Users\\selvakumar.gunasekar\\.nuget\\packages\\awssdk.securitytoken\\3.7.100.14\\awssdk.securitytoken.3.7.100.14.nupkg.sha512",
     "C:\\Users\\selvakumar.gunasekar\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\selvakumar.gunasekar\\.nuget\\packages\\dnsclient\\1.6.1\\dnsclient.1.6.1.nupkg.sha512",
@@ -118,6 +119,18 @@
     "C:\\Users\\selvakumar.gunasekar\\.nuget\\packages\\zstdsharp.port\\0.6.2\\zstdsharp.port.0.6.2.nupkg.sha512"
   ],
   "logs": [
+    {
+      "code": "NU1608",
+      "level": "Warning",
+      "message": "Detected package version outside of dependency constraint: AWSSDK.SecurityToken 3.7.100.14 requires AWSSDK.Core (>= 3.7.100.14 && < 4.0.0) but version AWSSDK.Core 4.0.102.1 was resolved.",
+      "projectPath": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Learning.csproj",
+      "warningLevel": 1,
+      "filePath": "D:\\Software\\data\\Selva_Coac\\kavin_backend\\Learning\\Learning.csproj",
+      "libraryId": "AWSSDK.Core",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
     {
       "code": "NU1902",
       "level": "Warning",

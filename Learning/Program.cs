@@ -1,3 +1,6 @@
+using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
 using LearningBackendAPI.Config;
 using LearningBackendAPI.Helpers;
 using LearningBackendAPI.Middleware;
@@ -11,10 +14,10 @@ using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Load environment variables
+// Load environment variables (must happen before CreateBuilder so AddEnvironmentVariables() picks them up)
 DotNetEnv.Env.Load();
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Configure Services
 ConfigureServices(builder.Services, builder.Configuration);
@@ -93,10 +96,37 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     // Register Repositories
     services.AddScoped<IUserRepository, UserRepository>();
     services.AddScoped<ICourseRepository, CourseRepository>();
+    services.AddScoped<IStudyMaterialRepository, StudyMaterialRepository>();
+    services.AddScoped<IVideoMaterialRepository, VideoMaterialRepository>();
+    services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+    services.AddScoped<IQuizRepository, QuizRepository>();
+    services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
+    services.AddScoped<IBatchRepository, BatchRepository>();
+
+    // Configure AWS S3 (credentials loaded from .env via DotNetEnv)
+    var awsAccessKey = configuration["AWS_ACCESS_KEY_ID"];
+    var awsSecretKey = configuration["AWS_SECRET_ACCESS_KEY"];
+    var awsRegion = configuration["AWS_REGION"];
+    var awsBucketName = configuration["AWS_BUCKET_NAME"];
+
+    var s3Settings = new S3Settings { BucketName = awsBucketName ?? "", Region = awsRegion ?? "" };
+    services.AddSingleton(Microsoft.Extensions.Options.Options.Create(s3Settings));
+
+    var awsCredentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
+    var s3Client = new AmazonS3Client(awsCredentials, RegionEndpoint.GetBySystemName(awsRegion));
+    services.AddSingleton<IAmazonS3>(s3Client);
+    services.AddScoped<IFileStorageService, S3FileStorageService>();
 
     // Register Services
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<ICourseService, CourseService>();
+    services.AddScoped<IStudyMaterialService, StudyMaterialService>();
+    services.AddScoped<IVideoMaterialService, VideoMaterialService>();
+    services.AddScoped<IEnrollmentService, EnrollmentService>();
+    services.AddScoped<IUserService, UserService>();
+    services.AddScoped<IQuizService, QuizService>();
+    services.AddScoped<IDashboardService, DashboardService>();
+    services.AddScoped<IBatchService, BatchService>();
     services.AddScoped<IJwtService, JwtService>();
 
     // Register Validators (Only Register Validator, CourseValidator removed)
@@ -189,7 +219,6 @@ void SeedAdminUser(IServiceProvider services)
                 FirstName = "Admin",
                 LastName = "User",
                 PhoneNumber = "0000000000",
-                CourseType = "Admin",
                 Role = "Admin",
                 CreatedAt = DateTime.UtcNow
             };

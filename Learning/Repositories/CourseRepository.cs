@@ -22,6 +22,11 @@ namespace LearningBackendAPI.Repositories
             return await _courses.Find(_ => true).ToListAsync();
         }
 
+        public async Task<long> CountAsync()
+        {
+            return await _courses.CountDocumentsAsync(_ => true);
+        }
+
         public async Task<Course> CreateAsync(Course course)
         {
             course.CreatedAt = DateTime.UtcNow;

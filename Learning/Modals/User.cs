@@ -3,6 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LearningBackendAPI.Models
 {
+    [BsonIgnoreExtraElements]
     public class User
     {
         [BsonId]
@@ -21,11 +22,14 @@ namespace LearningBackendAPI.Models
         [BsonElement("phoneNumber")]
         public string PhoneNumber { get; set; }
 
-        [BsonElement("courseType")]
-        public string CourseType { get; set; }
-
         [BsonElement("passwordHash")]
         public string PasswordHash { get; set; }
+
+        [BsonElement("profileImage")]
+        public string? ProfileImage { get; set; }
+
+        [BsonElement("profileImageKey")]
+        public string? ProfileImageKey { get; set; }
 
         [BsonElement("role")]
         public string Role { get; set; } = "User";

@@ -33,10 +33,18 @@ namespace LearningBackendAPI.Services
                 }
             }
 
+            var courseAmount = request.CourseAmount ?? 0;
+
+            if (courseAmount < 0)
+            {
+                throw new InvalidOperationException("Course amount cannot be negative");
+            }
+
             var course = new Course
             {
                 CourseName = courseName,
                 CourseDescription = courseDescription,
+                CourseAmount = courseAmount,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -82,9 +90,18 @@ namespace LearningBackendAPI.Services
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(request.CourseDescription))
+            if (request.CourseDescription != null)
             {
                 existingCourse.CourseDescription = request.CourseDescription.Trim();
+            }
+
+            if (request.CourseAmount.HasValue)
+            {
+                if (request.CourseAmount.Value < 0)
+                {
+                    throw new InvalidOperationException("Course amount cannot be negative");
+                }
+                existingCourse.CourseAmount = request.CourseAmount.Value;
             }
 
             existingCourse.UpdatedAt = DateTime.UtcNow;

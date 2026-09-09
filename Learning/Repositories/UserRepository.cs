@@ -1,4 +1,6 @@
-﻿using LearningBackendAPI.Models;
+﻿using System.Text.RegularExpressions;
+using LearningBackendAPI.Models;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace LearningBackendAPI.Repositories
@@ -48,9 +50,75 @@ namespace LearningBackendAPI.Repositories
             return user != null;
         }
 
-        public async Task<List<User>> GetAllAsync()
+        public async Task<(List<User> Users, long TotalCount)> GetAllAsync(int pageNumber, int pageSize)
         {
-            return await _users.Find(_ => true).ToListAsync();
+            var filter = Builders<User>.Filter.Empty;
+            var totalCount = await _users.CountDocumentsAsync(filter);
+            var users = await _users.Find(filter)
+                .Skip((pageNumber - 1) * pageSize)
+                .Limit(pageSize)
+                .ToListAsync();
+
+            return (users, totalCount);
+        }
+
+        public async Task<(List<User> Users, long TotalCount)> SearchAsync(string? searchTerm, Dictionary<string, string>? fieldFilters, int pageNumber, int pageSize)
+        {
+            var conditions = new List<FilterDefinition<User>>();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var pattern = new BsonRegularExpression(Regex.Escape(searchTerm.Trim()), "i");
+                conditions.Add(Builders<User>.Filter.Or(
+                    Builders<User>.Filter.Regex(u => u.FirstName, pattern),
+                    Builders<User>.Filter.Regex(u => u.LastName, pattern),
+                    Builders<User>.Filter.Regex(u => u.PhoneNumber, pattern),
+                    Builders<User>.Filter.Regex(u => u.Email, pattern)
+                ));
+            }
+
+            if (fieldFilters != null)
+            {
+                foreach (var (field, value) in fieldFilters)
+                {
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        continue;
+                    }
+
+                    var pattern = new BsonRegularExpression(Regex.Escape(value.Trim()), "i");
+                    FilterDefinition<User>? fieldFilter = field.ToLowerInvariant() switch
+                    {
+                        "firstname" => Builders<User>.Filter.Regex(u => u.FirstName, pattern),
+                        "lastname" => Builders<User>.Filter.Regex(u => u.LastName, pattern),
+                        "phonenumber" => Builders<User>.Filter.Regex(u => u.PhoneNumber, pattern),
+                        "email" => Builders<User>.Filter.Regex(u => u.Email, pattern),
+                        _ => null
+                    };
+
+                    if (fieldFilter != null)
+                    {
+                        conditions.Add(fieldFilter);
+                    }
+                }
+            }
+
+            var filter = conditions.Count == 0
+                ? Builders<User>.Filter.Empty
+                : Builders<User>.Filter.And(conditions);
+
+            var totalCount = await _users.CountDocumentsAsync(filter);
+            var users = await _users.Find(filter)
+                .Skip((pageNumber - 1) * pageSize)
+                .Limit(pageSize)
+                .ToListAsync();
+
+            return (users, totalCount);
+        }
+
+        public async Task<long> CountByRoleAsync(string role)
+        {
+            return await _users.CountDocumentsAsync(u => u.Role == role);
         }
     }
 }

@@ -54,10 +54,12 @@ D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\staticwebass
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\staticwebassets.development.json
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\swae.build.ex.cache
-D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\Learning.csproj.Up2Date
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\Learning.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\refint\Learning.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\Learning.pdb
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\Learning.genruntimeconfig.cache
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\ref\Learning.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Learning.staticwebassets.runtime.json
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\AWSSDK.S3.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

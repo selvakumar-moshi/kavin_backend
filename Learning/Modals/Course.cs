@@ -3,6 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LearningBackendAPI.Models
 {
+    [BsonIgnoreExtraElements]
     public class Course
     {
         [BsonId]
@@ -14,6 +15,9 @@ namespace LearningBackendAPI.Models
 
         [BsonElement("courseDescription")]
         public string CourseDescription { get; set; }
+
+        [BsonElement("courseAmount")]
+        public decimal CourseAmount { get; set; }
 
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; }

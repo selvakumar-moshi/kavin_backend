@@ -1,6 +1,7 @@
 ﻿using LearningBackendAPI.DTOs;
 using LearningBackendAPI.Helpers;
 using LearningBackendAPI.Services;
+using LearningBackendAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,6 +27,7 @@ namespace LearningBackendAPI.Controllers
         /// Create a new course
         /// </summary>
         [HttpPost]
+        [Authorize(Roles = Constants.Roles.Admin)]
         public async Task<IActionResult> CreateCourse([FromBody] CourseRequest request)
         {
             try
@@ -72,6 +74,7 @@ namespace LearningBackendAPI.Controllers
         /// Update course
         /// </summary>
         [HttpPut("{id}")]
+        [Authorize(Roles = Constants.Roles.Admin)]
         public async Task<IActionResult> UpdateCourse(string id, [FromBody] CourseRequest request)
         {
             try
@@ -93,6 +96,7 @@ namespace LearningBackendAPI.Controllers
         /// Delete course
         /// </summary>
         [HttpDelete("{id}")]
+        [Authorize(Roles = Constants.Roles.Admin)]
         public async Task<IActionResult> DeleteCourse(string id)
         {
             try

@@ -6,6 +6,7 @@ namespace LearningBackendAPI.Repositories
     {
         Task<Course> GetByIdAsync(string id);
         Task<List<Course>> GetAllAsync();
+        Task<long> CountAsync();
         Task<Course> CreateAsync(Course course);
         Task UpdateAsync(string id, Course course);
         Task<bool> DeleteAsync(string id);
