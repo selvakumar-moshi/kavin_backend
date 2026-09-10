@@ -73,7 +73,8 @@ namespace LearningBackendAPI.Repositories
                     Builders<User>.Filter.Regex(u => u.FirstName, pattern),
                     Builders<User>.Filter.Regex(u => u.LastName, pattern),
                     Builders<User>.Filter.Regex(u => u.PhoneNumber, pattern),
-                    Builders<User>.Filter.Regex(u => u.Email, pattern)
+                    Builders<User>.Filter.Regex(u => u.Email, pattern),
+                    Builders<User>.Filter.Regex(u => u.ApplicationNo, pattern)
                 ));
             }
 
@@ -93,6 +94,7 @@ namespace LearningBackendAPI.Repositories
                         "lastname" => Builders<User>.Filter.Regex(u => u.LastName, pattern),
                         "phonenumber" => Builders<User>.Filter.Regex(u => u.PhoneNumber, pattern),
                         "email" => Builders<User>.Filter.Regex(u => u.Email, pattern),
+                        "applicationno" => Builders<User>.Filter.Regex(u => u.ApplicationNo, pattern),
                         _ => null
                     };
 
@@ -119,6 +121,13 @@ namespace LearningBackendAPI.Repositories
         public async Task<long> CountByRoleAsync(string role)
         {
             return await _users.CountDocumentsAsync(u => u.Role == role);
+        }
+
+        public async Task<List<User>> GetUsersWithoutApplicationNoAsync()
+        {
+            // {field: null} matches both an explicit null and a missing field (pre-existing docs).
+            var filter = Builders<User>.Filter.Eq(u => u.ApplicationNo, null);
+            return await _users.Find(filter).ToListAsync();
         }
     }
 }

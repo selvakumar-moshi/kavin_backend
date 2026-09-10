@@ -86,5 +86,14 @@
 
             public static readonly string[] All = { A, B, C, D };
         }
+
+        public static class ApplicationNumber
+        {
+            public const string CounterName = "applicationNo";
+            public const string Prefix = "RSK-";
+
+            // First generated application number is Prefix + (Offset + 1), e.g. RSK-1000.
+            public const long Offset = 999;
+        }
     }
 }

@@ -44,8 +44,8 @@ namespace LearningBackendAPI.Controllers
 
         /// <summary>
         /// Get all registered users, optionally filtered via a { searchTerm, globalFilter, pageNumber, pageSize }
-        /// body payload (globalFilter: subset of firstName/lastName/phoneNumber/email; all four if omitted;
-        /// pageNumber/pageSize default to 1/10 if omitted) (Admin only)
+        /// body payload (globalFilter: subset of firstName/lastName/phoneNumber/email/applicationNo; all five if
+        /// omitted; pageNumber/pageSize default to 1/10 if omitted) (Admin only)
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]

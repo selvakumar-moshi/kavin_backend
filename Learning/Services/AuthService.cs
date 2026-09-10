@@ -12,6 +12,7 @@ namespace LearningBackendAPI.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly IBatchRepository _batchRepository;
+        private readonly ICounterRepository _counterRepository;
         private readonly IJwtService _jwtService;
 
         public AuthService(
@@ -19,12 +20,14 @@ namespace LearningBackendAPI.Services
             ICourseRepository courseRepository,
             IEnrollmentRepository enrollmentRepository,
             IBatchRepository batchRepository,
+            ICounterRepository counterRepository,
             IJwtService jwtService)
         {
             _userRepository = userRepository;
             _courseRepository = courseRepository;
             _enrollmentRepository = enrollmentRepository;
             _batchRepository = batchRepository;
+            _counterRepository = counterRepository;
             _jwtService = jwtService;
         }
 
@@ -84,6 +87,8 @@ namespace LearningBackendAPI.Services
             // Hash password
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
+            var applicationNo = await GenerateApplicationNoAsync();
+
             var user = new User
             {
                 FirstName = request.FirstName,
@@ -91,6 +96,7 @@ namespace LearningBackendAPI.Services
                 Email = request.Email.ToLower(),
                 PhoneNumber = request.PhoneNumber,
                 PasswordHash = passwordHash,
+                ApplicationNo = applicationNo,
                 Role = "User",
                 CreatedAt = DateTime.UtcNow
             };
@@ -115,11 +121,18 @@ namespace LearningBackendAPI.Services
             return MapToUserDto(createdUser);
         }
 
+        private async Task<string> GenerateApplicationNoAsync()
+        {
+            var sequence = await _counterRepository.GetNextSequenceAsync(Constants.ApplicationNumber.CounterName);
+            return $"{Constants.ApplicationNumber.Prefix}{Constants.ApplicationNumber.Offset + sequence}";
+        }
+
         private UserDto MapToUserDto(User user)
         {
             return new UserDto
             {
                 Id = user.Id,
+                ApplicationNo = user.ApplicationNo,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,

@@ -122,6 +122,7 @@ namespace LearningBackendAPI.Services
             return new UserProfileResponse
             {
                 Id = user.Id,
+                ApplicationNo = user.ApplicationNo,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
@@ -277,6 +278,7 @@ namespace LearningBackendAPI.Services
             return new UserDto
             {
                 Id = user.Id,
+                ApplicationNo = user.ApplicationNo,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,

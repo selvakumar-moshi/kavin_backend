@@ -13,5 +13,6 @@ namespace LearningBackendAPI.Repositories
         Task<(List<User> Users, long TotalCount)> GetAllAsync(int pageNumber, int pageSize);
         Task<(List<User> Users, long TotalCount)> SearchAsync(string? searchTerm, Dictionary<string, string>? fieldFilters, int pageNumber, int pageSize);
         Task<long> CountByRoleAsync(string role);
+        Task<List<User>> GetUsersWithoutApplicationNoAsync();
     }
 }

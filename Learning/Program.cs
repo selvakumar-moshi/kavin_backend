@@ -7,6 +7,7 @@ using LearningBackendAPI.Middleware;
 using LearningBackendAPI.Models;
 using LearningBackendAPI.Repositories;
 using LearningBackendAPI.Services;
+using LearningBackendAPI.Utils;
 using LearningBackendAPI.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -93,6 +94,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     var database = mongoClient.GetDatabase(mongoSettings.DatabaseName);
     services.AddSingleton(database);
 
+    // Unique-but-sparse: enforces uniqueness only for documents that actually have an
+    // applicationNo (existing/admin users without one are unaffected).
+    var users = database.GetCollection<User>(Constants.CollectionNames.Users);
+    users.Indexes.CreateOne(new CreateIndexModel<User>(
+        Builders<User>.IndexKeys.Ascending(u => u.ApplicationNo),
+        new CreateIndexOptions { Unique = true, Sparse = true }));
+
     // Register Repositories
     services.AddScoped<IUserRepository, UserRepository>();
     services.AddScoped<ICourseRepository, CourseRepository>();
@@ -102,6 +110,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IQuizRepository, QuizRepository>();
     services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
     services.AddScoped<IBatchRepository, BatchRepository>();
+    services.AddScoped<ICounterRepository, CounterRepository>();
 
     // Configure AWS S3 (credentials loaded from .env via DotNetEnv)
     var awsAccessKey = configuration["AWS_ACCESS_KEY_ID"];
@@ -196,6 +205,9 @@ void ConfigurePipeline(WebApplication app)
 
     // Seed admin user
     SeedAdminUser(app.Services);
+
+    // Backfill applicationNo for any users created before this field existed
+    BackfillApplicationNumbers(app.Services);
 }
 
 void SeedAdminUser(IServiceProvider services)
@@ -224,5 +236,32 @@ void SeedAdminUser(IServiceProvider services)
             };
             userRepository.CreateAsync(admin).GetAwaiter().GetResult();
         }
+    }
+}
+
+void BackfillApplicationNumbers(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+    var counterRepository = scope.ServiceProvider.GetRequiredService<ICounterRepository>();
+
+    var usersMissingApplicationNo = userRepository.GetUsersWithoutApplicationNoAsync().GetAwaiter().GetResult();
+    if (usersMissingApplicationNo.Count == 0)
+    {
+        return;
+    }
+
+    // Admins first (so the original admin lands on the first number, e.g. RSK-1000), then
+    // everyone else in the order they originally registered.
+    var orderedUsers = usersMissingApplicationNo
+        .OrderBy(u => u.Role == Constants.Roles.Admin ? 0 : 1)
+        .ThenBy(u => u.CreatedAt)
+        .ToList();
+
+    foreach (var user in orderedUsers)
+    {
+        var sequence = counterRepository.GetNextSequenceAsync(Constants.ApplicationNumber.CounterName).GetAwaiter().GetResult();
+        user.ApplicationNo = $"{Constants.ApplicationNumber.Prefix}{Constants.ApplicationNumber.Offset + sequence}";
+        userRepository.UpdateAsync(user.Id, user).GetAwaiter().GetResult();
     }
 }

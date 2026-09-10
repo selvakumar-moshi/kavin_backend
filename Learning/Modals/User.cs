@@ -19,6 +19,9 @@ namespace LearningBackendAPI.Models
         [BsonElement("email")]
         public string Email { get; set; }
 
+        [BsonElement("applicationNo")]
+        public string? ApplicationNo { get; set; }
+
         [BsonElement("phoneNumber")]
         public string PhoneNumber { get; set; }
 
