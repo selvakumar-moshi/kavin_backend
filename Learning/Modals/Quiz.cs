@@ -12,17 +12,47 @@ namespace LearningBackendAPI.Models
         [BsonElement("questionText")]
         public string QuestionText { get; set; }
 
+        [BsonElement("questionImageUrl")]
+        public string? QuestionImageUrl { get; set; }
+
+        [BsonElement("questionImageKey")]
+        public string? QuestionImageKey { get; set; }
+
         [BsonElement("optionA")]
         public string OptionA { get; set; }
+
+        [BsonElement("optionAImageUrl")]
+        public string? OptionAImageUrl { get; set; }
+
+        [BsonElement("optionAImageKey")]
+        public string? OptionAImageKey { get; set; }
 
         [BsonElement("optionB")]
         public string OptionB { get; set; }
 
+        [BsonElement("optionBImageUrl")]
+        public string? OptionBImageUrl { get; set; }
+
+        [BsonElement("optionBImageKey")]
+        public string? OptionBImageKey { get; set; }
+
         [BsonElement("optionC")]
         public string OptionC { get; set; }
 
+        [BsonElement("optionCImageUrl")]
+        public string? OptionCImageUrl { get; set; }
+
+        [BsonElement("optionCImageKey")]
+        public string? OptionCImageKey { get; set; }
+
         [BsonElement("optionD")]
         public string OptionD { get; set; }
+
+        [BsonElement("optionDImageUrl")]
+        public string? OptionDImageUrl { get; set; }
+
+        [BsonElement("optionDImageKey")]
+        public string? OptionDImageKey { get; set; }
 
         [BsonElement("correctOption")]
         public string? CorrectOption { get; set; }
@@ -47,8 +77,14 @@ namespace LearningBackendAPI.Models
         [BsonElement("status")]
         public string Status { get; set; }
 
+        [BsonElement("publishVersion")]
+        public int PublishVersion { get; set; } = 0;
+
         [BsonElement("publishedAt")]
         public DateTime? PublishedAt { get; set; }
+
+        [BsonElement("expiresAt")]
+        public DateTime? ExpiresAt { get; set; }
 
         [BsonElement("questions")]
         public List<QuizQuestionItem> Questions { get; set; } = new();
@@ -60,22 +96,19 @@ namespace LearningBackendAPI.Models
         public DateTime? UpdatedAt { get; set; }
 
         [BsonIgnore]
-        public DateTime? ExpiresAt => PublishedAt?.AddHours(24);
-
-        [BsonIgnore]
-        public bool IsExpired => PublishedAt.HasValue && DateTime.UtcNow > PublishedAt.Value.AddHours(24);
+        public bool IsExpired => ExpiresAt.HasValue && DateTime.UtcNow > ExpiresAt.Value;
 
         [BsonIgnore]
         public int? TimeLeftSeconds
         {
             get
             {
-                if (!PublishedAt.HasValue)
+                if (!ExpiresAt.HasValue)
                 {
                     return null;
                 }
 
-                var remaining = PublishedAt.Value.AddHours(24) - DateTime.UtcNow;
+                var remaining = ExpiresAt.Value - DateTime.UtcNow;
                 return remaining.TotalSeconds > 0 ? (int)remaining.TotalSeconds : 0;
             }
         }

@@ -26,16 +26,18 @@
             public const string QuizNotPublished = "This quiz is not currently published";
             public const string QuizExpired = "This quiz has expired and is no longer accepting submissions";
             public const string QuizAlreadyAttempted = "You have already submitted this quiz";
-            public const string QuizNotDraft = "Only a draft quiz can be edited or deleted";
+            public const string QuizNotDraft = "Only a draft quiz can be deleted";
             public const string QuizAlreadyPublished = "This quiz has already been published";
             public const string QuizNotAttempted = "You have not submitted this quiz yet";
             public const string QuizIncomplete = "Every question must have text, all four options, and a correct answer selected before publishing";
+            public const string QuizExpiryRequired = "Expiry date and time must be a valid date in the future";
             public const string InvalidOption = "Selected option must be A, B, C, or D";
             public const string BatchNotFound = "Batch not found";
             public const string BatchDateRangeInvalid = "Batch start date must be before or equal to the end date";
             public const string BatchCourseMismatch = "Selected batch does not belong to the selected course";
             public const string BatchExpired = "Selected batch has already ended";
             public const string CourseAlreadyEnrolled = "User is already enrolled in this course";
+            public const string NotificationNotFound = "Notification not found";
         }
 
         public static class Roles

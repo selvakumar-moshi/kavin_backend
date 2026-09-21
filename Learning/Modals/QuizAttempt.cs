@@ -23,6 +23,12 @@ namespace LearningBackendAPI.Models
         [BsonElement("quizId")]
         public string QuizId { get; set; }
 
+        [BsonElement("quizVersion")]
+        public int QuizVersion { get; set; }
+
+        [BsonElement("questionsSnapshot")]
+        public List<QuizQuestionItem> QuestionsSnapshot { get; set; } = new();
+
         [BsonElement("userId")]
         public string UserId { get; set; }
 

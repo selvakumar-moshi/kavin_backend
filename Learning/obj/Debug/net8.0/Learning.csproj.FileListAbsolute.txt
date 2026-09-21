@@ -62,4 +62,12 @@ D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\Learning.gen
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\ref\Learning.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Learning.staticwebassets.runtime.json
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\AWSSDK.S3.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\ClosedXML.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\ClosedXML.Parser.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\DocumentFormat.OpenXml.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\DocumentFormat.OpenXml.Framework.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\ExcelNumberFormat.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\RBush.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\SixLabors.Fonts.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\System.IO.Packaging.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

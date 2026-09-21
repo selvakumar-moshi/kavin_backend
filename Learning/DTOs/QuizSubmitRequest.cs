@@ -26,10 +26,15 @@ namespace LearningBackendAPI.DTOs
     {
         public int QuestionNumber { get; set; }
         public string QuestionText { get; set; } = "";
+        public string? QuestionImageUrl { get; set; }
         public string OptionA { get; set; } = "";
+        public string? OptionAImageUrl { get; set; }
         public string OptionB { get; set; } = "";
+        public string? OptionBImageUrl { get; set; }
         public string OptionC { get; set; } = "";
+        public string? OptionCImageUrl { get; set; }
         public string OptionD { get; set; } = "";
+        public string? OptionDImageUrl { get; set; }
         public string? SelectedOption { get; set; }
         public string? CorrectOption { get; set; }
         public bool IsCorrect { get; set; }

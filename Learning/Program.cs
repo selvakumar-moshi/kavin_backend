@@ -111,6 +111,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
     services.AddScoped<IBatchRepository, BatchRepository>();
     services.AddScoped<ICounterRepository, CounterRepository>();
+    services.AddScoped<INotificationRepository, NotificationRepository>();
 
     // Configure AWS S3 (credentials loaded from .env via DotNetEnv)
     var awsAccessKey = configuration["AWS_ACCESS_KEY_ID"];
@@ -134,8 +135,10 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IEnrollmentService, EnrollmentService>();
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<IQuizService, QuizService>();
+    services.AddScoped<IExcelExportService, ExcelExportService>();
     services.AddScoped<IDashboardService, DashboardService>();
     services.AddScoped<IBatchService, BatchService>();
+    services.AddScoped<INotificationService, NotificationService>();
     services.AddScoped<IJwtService, JwtService>();
 
     // Register Validators (Only Register Validator, CourseValidator removed)

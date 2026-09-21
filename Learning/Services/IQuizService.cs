@@ -7,7 +7,7 @@ namespace LearningBackendAPI.Services
     {
         Task<Quiz> CreateQuizAsync(QuizCreateRequest request);
         Task<Quiz> UpdateQuizAsync(string id, QuizUpdateRequest request);
-        Task<Quiz> PublishQuizAsync(string id);
+        Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt);
         Task<bool> DeleteQuizAsync(string id);
         Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(int pageNumber, int pageSize);
         Task<Quiz> GetQuizByIdForAdminAsync(string id);
@@ -18,5 +18,6 @@ namespace LearningBackendAPI.Services
         Task<QuizResultResponse> SubmitQuizAsync(string quizId, string userId, QuizSubmitRequest request);
         Task<QuizResultResponse> GetMyResultAsync(string quizId, string userId);
         Task<List<RankListEntryDto>> GetRankListAsync(string quizId, string userId, bool isAdmin);
+        Task<(byte[] Content, string FileName)> ExportRankListAsync(string quizId, string userId, bool isAdmin);
     }
 }

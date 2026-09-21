@@ -12,19 +12,25 @@ namespace LearningBackendAPI.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IFileStorageService _fileStorageService;
+        private readonly IExcelExportService _excelExportService;
 
         public QuizService(
             IQuizRepository quizRepository,
             IQuizAttemptRepository quizAttemptRepository,
             ICourseRepository courseRepository,
             IEnrollmentRepository enrollmentRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IFileStorageService fileStorageService,
+            IExcelExportService excelExportService)
         {
             _quizRepository = quizRepository;
             _quizAttemptRepository = quizAttemptRepository;
             _courseRepository = courseRepository;
             _enrollmentRepository = enrollmentRepository;
             _userRepository = userRepository;
+            _fileStorageService = fileStorageService;
+            _excelExportService = excelExportService;
         }
 
         public async Task<Quiz> CreateQuizAsync(QuizCreateRequest request)
@@ -45,13 +51,18 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException("Title is required");
             }
 
+            if (request.Questions == null || request.Questions.Count == 0)
+            {
+                throw new InvalidOperationException("At least one question is required");
+            }
+
             var quiz = new Quiz
             {
                 CourseId = course.Id,
                 CourseName = course.CourseName,
                 Title = request.Title.Trim(),
                 Status = Constants.QuizStatuses.Draft,
-                Questions = MapQuestions(request.Questions),
+                Questions = await MapQuestionsAsync(request.Questions, null),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -66,11 +77,6 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
             }
 
-            if (quiz.Status != Constants.QuizStatuses.Draft)
-            {
-                throw new InvalidOperationException(Constants.Messages.QuizNotDraft);
-            }
-
             if (!string.IsNullOrWhiteSpace(request.Title))
             {
                 quiz.Title = request.Title.Trim();
@@ -78,14 +84,25 @@ namespace LearningBackendAPI.Services
 
             if (request.Questions != null)
             {
-                quiz.Questions = MapQuestions(request.Questions);
+                quiz.Questions = await MapQuestionsAsync(request.Questions, quiz.Questions);
             }
+
+            if (quiz.Status == Constants.QuizStatuses.Published)
+            {
+                // Editing a live quiz takes it offline; the admin must explicitly
+                // republish (with a fresh expiry) to make the updated version visible again.
+                quiz.Status = Constants.QuizStatuses.Draft;
+                quiz.PublishedAt = null;
+                quiz.ExpiresAt = null;
+            }
+
+            quiz.UpdatedAt = DateTime.UtcNow;
 
             await _quizRepository.UpdateAsync(id, quiz);
             return quiz;
         }
 
-        private static List<QuizQuestionItem> MapQuestions(List<QuizQuestionInput> questions)
+        private async Task<List<QuizQuestionItem>> MapQuestionsAsync(List<QuizQuestionInput> questions, List<QuizQuestionItem>? existing)
         {
             foreach (var q in questions)
             {
@@ -96,19 +113,61 @@ namespace LearningBackendAPI.Services
                 }
             }
 
-            return questions.Select((q, index) => new QuizQuestionItem
+            var items = new List<QuizQuestionItem>();
+            for (var index = 0; index < questions.Count; index++)
             {
-                QuestionNumber = index + 1,
-                QuestionText = q.QuestionText.Trim(),
-                OptionA = q.OptionA.Trim(),
-                OptionB = q.OptionB.Trim(),
-                OptionC = q.OptionC.Trim(),
-                OptionD = q.OptionD.Trim(),
-                CorrectOption = string.IsNullOrWhiteSpace(q.CorrectOption) ? null : q.CorrectOption.ToUpperInvariant()
-            }).ToList();
+                var q = questions[index];
+                var previous = existing != null && index < existing.Count ? existing[index] : null;
+
+                var item = new QuizQuestionItem
+                {
+                    QuestionNumber = index + 1,
+                    QuestionText = q.QuestionText.Trim(),
+                    OptionA = q.OptionA.Trim(),
+                    OptionB = q.OptionB.Trim(),
+                    OptionC = q.OptionC.Trim(),
+                    OptionD = q.OptionD.Trim(),
+                    CorrectOption = string.IsNullOrWhiteSpace(q.CorrectOption) ? null : q.CorrectOption.ToUpperInvariant()
+                };
+
+                (item.QuestionImageUrl, item.QuestionImageKey) = await ResolveImageAsync(
+                    q.QuestionImage, previous?.QuestionImageUrl, previous?.QuestionImageKey);
+                (item.OptionAImageUrl, item.OptionAImageKey) = await ResolveImageAsync(
+                    q.OptionAImage, previous?.OptionAImageUrl, previous?.OptionAImageKey);
+                (item.OptionBImageUrl, item.OptionBImageKey) = await ResolveImageAsync(
+                    q.OptionBImage, previous?.OptionBImageUrl, previous?.OptionBImageKey);
+                (item.OptionCImageUrl, item.OptionCImageKey) = await ResolveImageAsync(
+                    q.OptionCImage, previous?.OptionCImageUrl, previous?.OptionCImageKey);
+                (item.OptionDImageUrl, item.OptionDImageKey) = await ResolveImageAsync(
+                    q.OptionDImage, previous?.OptionDImageUrl, previous?.OptionDImageKey);
+
+                items.Add(item);
+            }
+
+            return items;
         }
 
-        public async Task<Quiz> PublishQuizAsync(string id)
+        private const string QuestionImageFolder = "coaching/Question";
+
+        private async Task<(string? Url, string? Key)> ResolveImageAsync(
+            IFormFile? file, string? previousUrl, string? previousKey)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return (previousUrl, previousKey);
+            }
+
+            if (!string.IsNullOrWhiteSpace(previousKey))
+            {
+                await _fileStorageService.DeleteAsync(previousKey);
+            }
+
+            var uniqueFileName = $"{Path.GetFileName(file.FileName)}";
+            var (url, key) = await _fileStorageService.UploadImageAsync(file, QuestionImageFolder, uniqueFileName);
+            return (url, key);
+        }
+
+        public async Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt)
         {
             var quiz = await _quizRepository.GetByIdAsync(id);
             if (quiz == null)
@@ -139,8 +198,15 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException(Constants.Messages.QuizIncomplete);
             }
 
+            if (expiresAt <= DateTime.UtcNow)
+            {
+                throw new InvalidOperationException(Constants.Messages.QuizExpiryRequired);
+            }
+
             quiz.Status = Constants.QuizStatuses.Published;
             quiz.PublishedAt = DateTime.UtcNow;
+            quiz.ExpiresAt = expiresAt;
+            quiz.PublishVersion += 1;
 
             await _quizRepository.UpdateAsync(id, quiz);
             return quiz;
@@ -159,7 +225,20 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException(Constants.Messages.QuizNotDraft);
             }
 
-            return await _quizRepository.DeleteAsync(id);
+            var deleted = await _quizRepository.DeleteAsync(id);
+            if (deleted)
+            {
+                foreach (var q in quiz.Questions)
+                {
+                    await _fileStorageService.DeleteAsync(q.QuestionImageKey);
+                    await _fileStorageService.DeleteAsync(q.OptionAImageKey);
+                    await _fileStorageService.DeleteAsync(q.OptionBImageKey);
+                    await _fileStorageService.DeleteAsync(q.OptionCImageKey);
+                    await _fileStorageService.DeleteAsync(q.OptionDImageKey);
+                }
+            }
+
+            return deleted;
         }
 
         public async Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(int pageNumber, int pageSize)
@@ -245,7 +324,7 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException(Constants.Messages.QuizExpired);
             }
 
-            var existingAttempt = await _quizAttemptRepository.GetByQuizAndUserAsync(quizId, userId);
+            var existingAttempt = await _quizAttemptRepository.GetByQuizUserAndVersionAsync(quizId, userId, quiz.PublishVersion);
             if (existingAttempt != null)
             {
                 throw new InvalidOperationException(Constants.Messages.QuizAlreadyAttempted);
@@ -280,6 +359,8 @@ namespace LearningBackendAPI.Services
             var attempt = new QuizAttempt
             {
                 QuizId = quizId,
+                QuizVersion = quiz.PublishVersion,
+                QuestionsSnapshot = quiz.Questions,
                 UserId = userId,
                 Answers = answers,
                 TotalQuestions = totalQuestions,
@@ -289,7 +370,7 @@ namespace LearningBackendAPI.Services
 
             await _quizAttemptRepository.CreateAsync(attempt);
 
-            return ToResultResponse(attempt, quiz);
+            return ToResultResponse(attempt);
         }
 
         public async Task<QuizResultResponse> GetMyResultAsync(string quizId, string userId)
@@ -300,13 +381,7 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.QuizNotAttempted);
             }
 
-            var quiz = await _quizRepository.GetByIdAsync(quizId);
-            if (quiz == null)
-            {
-                throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
-            }
-
-            return ToResultResponse(attempt, quiz);
+            return ToResultResponse(attempt);
         }
 
         public async Task<List<RankListEntryDto>> GetRankListAsync(string quizId, string userId, bool isAdmin)
@@ -324,6 +399,7 @@ namespace LearningBackendAPI.Services
 
             var attempts = await _quizAttemptRepository.GetByQuizIdAsync(quizId);
             var ordered = attempts
+                .Where(a => a.QuizVersion == quiz.PublishVersion)
                 .OrderByDescending(a => a.CorrectCount)
                 .ThenBy(a => a.SubmittedAt)
                 .ToList();
@@ -351,6 +427,24 @@ namespace LearningBackendAPI.Services
             return rankList;
         }
 
+        public async Task<(byte[] Content, string FileName)> ExportRankListAsync(string quizId, string userId, bool isAdmin)
+        {
+            var quiz = await _quizRepository.GetByIdAsync(quizId);
+            if (quiz == null)
+            {
+                throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
+            }
+
+            var rankList = await GetRankListAsync(quizId, userId, isAdmin);
+            var content = _excelExportService.GenerateRankListExcel(quiz.Title, rankList);
+
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var safeCourseName = new string(quiz.CourseName.Select(c => invalidChars.Contains(c) || c == ' ' ? '_' : c).ToArray());
+            var fileName = $"quiz-rank-list-{safeCourseName}.xlsx";
+
+            return (content, fileName);
+        }
+
         private static QuizStudentResponse ToStudentResponse(Quiz quiz)
         {
             return new QuizStudentResponse
@@ -367,19 +461,24 @@ namespace LearningBackendAPI.Services
                 {
                     QuestionNumber = q.QuestionNumber,
                     QuestionText = q.QuestionText,
+                    QuestionImageUrl = q.QuestionImageUrl,
                     OptionA = q.OptionA,
+                    OptionAImageUrl = q.OptionAImageUrl,
                     OptionB = q.OptionB,
+                    OptionBImageUrl = q.OptionBImageUrl,
                     OptionC = q.OptionC,
-                    OptionD = q.OptionD
+                    OptionCImageUrl = q.OptionCImageUrl,
+                    OptionD = q.OptionD,
+                    OptionDImageUrl = q.OptionDImageUrl
                 }).ToList()
             };
         }
 
-        private static QuizResultResponse ToResultResponse(QuizAttempt attempt, Quiz quiz)
+        private static QuizResultResponse ToResultResponse(QuizAttempt attempt)
         {
             var answerByQuestion = attempt.Answers.ToDictionary(a => a.QuestionNumber, a => a.SelectedOption);
 
-            var questions = quiz.Questions
+            var questions = attempt.QuestionsSnapshot
                 .OrderBy(q => q.QuestionNumber)
                 .Select(q =>
                 {
@@ -388,10 +487,15 @@ namespace LearningBackendAPI.Services
                     {
                         QuestionNumber = q.QuestionNumber,
                         QuestionText = q.QuestionText,
+                        QuestionImageUrl = q.QuestionImageUrl,
                         OptionA = q.OptionA,
+                        OptionAImageUrl = q.OptionAImageUrl,
                         OptionB = q.OptionB,
+                        OptionBImageUrl = q.OptionBImageUrl,
                         OptionC = q.OptionC,
+                        OptionCImageUrl = q.OptionCImageUrl,
                         OptionD = q.OptionD,
+                        OptionDImageUrl = q.OptionDImageUrl,
                         SelectedOption = selected,
                         CorrectOption = q.CorrectOption,
                         IsCorrect = selected != null && selected == q.CorrectOption

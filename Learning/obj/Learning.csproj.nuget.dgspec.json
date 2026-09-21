@@ -61,6 +61,10 @@
               "target": "Package",
               "version": "[4.0.3, )"
             },
+            "ClosedXML": {
+              "target": "Package",
+              "version": "[0.105.1, )"
+            },
             "DotNetEnv": {
               "target": "Package",
               "version": "[2.5.0, )"

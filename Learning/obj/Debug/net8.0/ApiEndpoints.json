@@ -247,6 +247,75 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "LearningBackendAPI.Controllers.NotificationController",
+    "Method": "CreateNotification",
+    "RelativePath": "api/Notification",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.NotificationCreateRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.NotificationController",
+    "Method": "UpdateNotification",
+    "RelativePath": "api/Notification/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.NotificationUpdateRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.NotificationController",
+    "Method": "DeleteNotification",
+    "RelativePath": "api/Notification/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.NotificationController",
+    "Method": "GetAllNotifications",
+    "RelativePath": "api/Notification/search",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.NotificationSearchRequest",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "LearningBackendAPI.Controllers.QuizController",
     "Method": "CreateQuiz",
     "RelativePath": "api/Quiz",
@@ -255,9 +324,19 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "request",
-        "Type": "LearningBackendAPI.DTOs.QuizCreateRequest",
-        "IsRequired": true
+        "Name": "CourseId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Questions",
+        "Type": "System.Collections.Generic.List\u00601[[LearningBackendAPI.DTOs.QuizQuestionInput, Learning, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -276,9 +355,14 @@
         "IsRequired": true
       },
       {
-        "Name": "request",
-        "Type": "LearningBackendAPI.DTOs.QuizUpdateRequest",
-        "IsRequired": true
+        "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Questions",
+        "Type": "System.Collections.Generic.List\u00601[[LearningBackendAPI.DTOs.QuizQuestionInput, Learning, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -343,6 +427,11 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizPublishRequest",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []
@@ -351,6 +440,22 @@
     "ContainingType": "LearningBackendAPI.Controllers.QuizController",
     "Method": "GetRankList",
     "RelativePath": "api/Quiz/{id}/rank-list",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizController",
+    "Method": "DownloadRankList",
+    "RelativePath": "api/Quiz/{id}/rank-list/download",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

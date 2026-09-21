@@ -40,7 +40,7 @@ namespace LearningBackendAPI.Services
             return (url, key);
         }
 
-        public async Task<(string Url, string Key)> UploadImageAsync(IFormFile file, string folder)
+        public async Task<(string Url, string Key)> UploadImageAsync(IFormFile file, string folder, string? fileName = null)
         {
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             var contentType = extension switch
@@ -51,8 +51,8 @@ namespace LearningBackendAPI.Services
                 _ => throw new InvalidOperationException("Only JPG, PNG, or WEBP images are allowed")
             };
 
-            var fileName = SanitizeFileName(Path.GetFileName(file.FileName));
-            var key = $"{folder}/{fileName}";
+            var resolvedFileName = SanitizeFileName(Path.GetFileName(fileName ?? file.FileName));
+            var key = $"{folder}/{resolvedFileName}";
 
             using var stream = file.OpenReadStream();
             var putRequest = new PutObjectRequest

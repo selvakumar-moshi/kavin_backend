@@ -32,7 +32,8 @@ namespace LearningBackendAPI.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public async Task<IActionResult> CreateQuiz([FromBody] QuizCreateRequest request)
+        [RequestSizeLimit(20 * 1024 * 1024)]
+        public async Task<IActionResult> CreateQuiz([FromForm] QuizCreateRequest request)
         {
             try
             {
@@ -46,11 +47,14 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Edit a draft quiz's title/questions/correct answers (Admin only)
+        /// Edit a quiz's title/questions/correct answers (Admin only). Draft quizzes are edited in place.
+        /// Editing a published quiz takes it offline (back to Draft, clearing its publish/expiry state) -
+        /// call publish again afterwards, with a new expiry, to make the updated version live.
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public async Task<IActionResult> UpdateQuiz(string id, [FromBody] QuizUpdateRequest request)
+        [RequestSizeLimit(20 * 1024 * 1024)]
+        public async Task<IActionResult> UpdateQuiz(string id, [FromForm] QuizUpdateRequest request)
         {
             try
             {
@@ -68,15 +72,15 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Publish a draft quiz, making it visible to students for 24 hours (Admin only)
+        /// Publish a draft quiz, making it visible to students until the given expiry date/time (Admin only)
         /// </summary>
         [HttpPost("{id}/publish")]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public async Task<IActionResult> PublishQuiz(string id)
+        public async Task<IActionResult> PublishQuiz(string id, [FromBody] QuizPublishRequest request)
         {
             try
             {
-                var quiz = await _quizService.PublishQuizAsync(id);
+                var quiz = await _quizService.PublishQuizAsync(id, request?.ExpiresAt ?? default);
                 return Ok(_responseHelper.Success(quiz, "Quiz published successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -221,6 +225,28 @@ namespace LearningBackendAPI.Controllers
             {
                 var rankList = await _quizService.GetRankListAsync(id, CurrentUserId, IsAdmin);
                 return Ok(_responseHelper.Success(rankList, "Rank list retrieved successfully"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, _responseHelper.Forbidden<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Download the rank list (leaderboard) for a quiz as an Excel (.xlsx) file (Admin only)
+        /// </summary>
+        [HttpGet("{id}/rank-list/download")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        public async Task<IActionResult> DownloadRankList(string id)
+        {
+            try
+            {
+                var (content, fileName) = await _quizService.ExportRankListAsync(id, CurrentUserId, IsAdmin);
+                return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (KeyNotFoundException ex)
             {
