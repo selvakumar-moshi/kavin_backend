@@ -45,9 +45,11 @@ namespace LearningBackendAPI.Controllers
 
         /// <summary>
         /// Get study materials the current user has access to (Admin sees all, students see only
-        /// verified/paid courses), optionally filtered via a { searchTerm, globalFilter, pageNumber, pageSize }
-        /// body payload (globalFilter: subset of title/description/batchTitle; all three if omitted;
-        /// pageNumber/pageSize default to 1/10 if omitted)
+        /// verified/paid courses), optionally filtered via a { courseId, material, searchTerm, globalFilter,
+        /// pageNumber, pageSize } body payload (courseId: filter to a single course, omit/"All" for every
+        /// accessible course; material: informational tag the UI sends, e.g. "study", not used to filter since
+        /// this endpoint only ever returns study materials; globalFilter: subset of title/description/batchTitle,
+        /// all three if omitted; pageNumber/pageSize default to 1/10 if omitted)
         /// </summary>
         [HttpPost("search")]
         public async Task<IActionResult> GetAllStudyMaterials([FromBody] MaterialSearchRequest? request)
@@ -55,7 +57,7 @@ namespace LearningBackendAPI.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var role = User.FindFirstValue(ClaimTypes.Role) ?? Constants.Roles.User;
             var studyMaterials = await _studyMaterialService.GetAccessibleStudyMaterialsAsync(
-                userId, role, request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
+                userId, role, request?.CourseId, request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
             return Ok(_responseHelper.Success(studyMaterials, "Study materials retrieved successfully"));
         }
 

@@ -11,5 +11,6 @@ namespace LearningBackendAPI.DTOs
         public string? CourseId { get; set; }
         public string? BatchId { get; set; }
         public string? YoutubeLink { get; set; }
+        public string? MaterialToView { get; set; }
     }
 }

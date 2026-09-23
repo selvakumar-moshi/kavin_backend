@@ -38,6 +38,7 @@
             public const string BatchExpired = "Selected batch has already ended";
             public const string CourseAlreadyEnrolled = "User is already enrolled in this course";
             public const string NotificationNotFound = "Notification not found";
+            public const string InvalidMaterialAccess = "MaterialToView must be either 'Paid' or 'Free'";
         }
 
         public static class Roles
@@ -69,14 +70,33 @@
         {
             public const string Pending = "Pending";
             public const string Verified = "Verified";
+            public const string Dropped = "Dropped";
 
-            public static readonly string[] All = { Pending, Verified };
+            public static readonly string[] All = { Pending, Verified, Dropped };
         }
 
         public static class QuizStatuses
         {
             public const string Draft = "Draft";
             public const string Published = "Published";
+        }
+
+        public static class MaterialAccess
+        {
+            public const string Paid = "Paid";
+            public const string Free = "Free";
+
+            public static readonly string[] All = { Paid, Free };
+
+            public static string Normalize(string value)
+            {
+                var match = All.FirstOrDefault(a => string.Equals(a, value.Trim(), StringComparison.OrdinalIgnoreCase));
+                if (match == null)
+                {
+                    throw new InvalidOperationException(Messages.InvalidMaterialAccess);
+                }
+                return match;
+            }
         }
 
         public static class QuizOptions

@@ -5,6 +5,7 @@ namespace LearningBackendAPI.DTOs
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? PhoneNumber { get; set; }
+        public string? District { get; set; }
         public List<CourseEnrollmentRequest>? Courses { get; set; }
     }
 

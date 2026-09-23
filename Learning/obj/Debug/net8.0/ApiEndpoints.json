@@ -247,6 +247,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "LearningBackendAPI.Controllers.FreeMaterialController",
+    "Method": "GetFreeMaterials",
+    "RelativePath": "api/FreeMaterial",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.FreeMaterialSearchRequest",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "LearningBackendAPI.Controllers.NotificationController",
     "Method": "CreateNotification",
     "RelativePath": "api/Notification",
@@ -534,6 +550,11 @@
         "IsRequired": false
       },
       {
+        "Name": "MaterialToView",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
         "Name": "PdfFile",
         "Type": "Microsoft.AspNetCore.Http.IFormFile",
         "IsRequired": false
@@ -587,6 +608,11 @@
       },
       {
         "Name": "BatchId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "MaterialToView",
         "Type": "System.String",
         "IsRequired": false
       },

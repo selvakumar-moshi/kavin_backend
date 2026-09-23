@@ -122,8 +122,9 @@ namespace LearningBackendAPI.Controllers
         /// <summary>
         /// Get quizzes: Admin sees every quiz with answer keys; students see only published,
         /// non-expired quizzes for courses they've paid for, with answer keys stripped.
-        /// Optionally filtered via a { courseId, pageNumber, pageSize } body payload
-        /// (pageNumber/pageSize default to 1/10 if omitted).
+        /// Optionally filtered via a { courseId, searchTerm, globalFilter, pageNumber, pageSize } body payload
+        /// (searchTerm: matches quiz title or course name; globalFilter: subset of title/courseName, both if
+        /// omitted; pageNumber/pageSize default to 1/10 if omitted).
         /// </summary>
         [HttpPost("search")]
         public async Task<IActionResult> GetAllQuizzes([FromBody] QuizSearchRequest? request)
@@ -132,12 +133,13 @@ namespace LearningBackendAPI.Controllers
             {
                 if (IsAdmin)
                 {
-                    var quizzes = await _quizService.GetAllQuizzesForAdminAsync(request?.PageNumber ?? 1, request?.PageSize ?? 10);
+                    var quizzes = await _quizService.GetAllQuizzesForAdminAsync(
+                        request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
                     return Ok(_responseHelper.Success(quizzes, "Quizzes retrieved successfully"));
                 }
 
                 var studentQuizzes = await _quizService.GetAccessibleQuizzesForStudentAsync(
-                    CurrentUserId, request?.CourseId, request?.PageNumber ?? 1, request?.PageSize ?? 10);
+                    CurrentUserId, request?.CourseId, request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
                 return Ok(_responseHelper.Success(studentQuizzes, "Quizzes retrieved successfully"));
             }
             catch (UnauthorizedAccessException ex)

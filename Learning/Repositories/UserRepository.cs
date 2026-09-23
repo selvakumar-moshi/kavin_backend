@@ -74,7 +74,8 @@ namespace LearningBackendAPI.Repositories
                     Builders<User>.Filter.Regex(u => u.LastName, pattern),
                     Builders<User>.Filter.Regex(u => u.PhoneNumber, pattern),
                     Builders<User>.Filter.Regex(u => u.Email, pattern),
-                    Builders<User>.Filter.Regex(u => u.ApplicationNo, pattern)
+                    Builders<User>.Filter.Regex(u => u.ApplicationNo, pattern),
+                    Builders<User>.Filter.Regex(u => u.District, pattern)
                 ));
             }
 
@@ -95,6 +96,7 @@ namespace LearningBackendAPI.Repositories
                         "phonenumber" => Builders<User>.Filter.Regex(u => u.PhoneNumber, pattern),
                         "email" => Builders<User>.Filter.Regex(u => u.Email, pattern),
                         "applicationno" => Builders<User>.Filter.Regex(u => u.ApplicationNo, pattern),
+                        "district" => Builders<User>.Filter.Regex(u => u.District, pattern),
                         _ => null
                     };
 

@@ -86,10 +86,18 @@ namespace LearningBackendAPI.Services
             return await _notificationRepository.DeleteAsync(id);
         }
 
-        public async Task<PagedResult<Notification>> GetAllNotificationsAsync(int pageNumber, int pageSize)
+        private static readonly Dictionary<string, Func<Notification, string?>> SearchFields = new()
+        {
+            ["title"] = n => n.Title,
+            ["description"] = n => n.Description
+        };
+        private static readonly string[] DefaultSearchFields = { "title", "description" };
+
+        public async Task<PagedResult<Notification>> GetAllNotificationsAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
         {
             var notifications = await _notificationRepository.GetAllAsync();
-            return PagingHelper.ToPagedResult(notifications, pageNumber, pageSize);
+            var filtered = TextSearchHelper.ApplyFilter(notifications, searchTerm, globalFilter, SearchFields, DefaultSearchFields);
+            return PagingHelper.ToPagedResult(filtered, pageNumber, pageSize);
         }
     }
 }

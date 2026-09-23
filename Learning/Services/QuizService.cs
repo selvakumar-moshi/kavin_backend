@@ -241,10 +241,18 @@ namespace LearningBackendAPI.Services
             return deleted;
         }
 
-        public async Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(int pageNumber, int pageSize)
+        private static readonly Dictionary<string, Func<Quiz, string?>> QuizSearchFields = new()
+        {
+            ["title"] = q => q.Title,
+            ["coursename"] = q => q.CourseName
+        };
+        private static readonly string[] DefaultQuizSearchFields = { "title", "courseName" };
+
+        public async Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
         {
             var quizzes = await _quizRepository.GetAllAsync();
-            return PagingHelper.ToPagedResult(quizzes, pageNumber, pageSize);
+            var filtered = TextSearchHelper.ApplyFilter(quizzes, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
+            return PagingHelper.ToPagedResult(filtered, pageNumber, pageSize);
         }
 
         public async Task<Quiz> GetQuizByIdForAdminAsync(string id)
@@ -257,7 +265,7 @@ namespace LearningBackendAPI.Services
             return quiz;
         }
 
-        public async Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, int pageNumber, int pageSize)
+        public async Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
         {
             List<Quiz> quizzes;
 
@@ -277,10 +285,12 @@ namespace LearningBackendAPI.Services
                     : await _quizRepository.GetByCourseIdsAsync(verifiedCourseIds);
             }
 
-            var accessible = quizzes
+            var published = quizzes
                 .Where(q => q.Status == Constants.QuizStatuses.Published && !q.IsExpired)
-                .Select(ToStudentResponse)
                 .ToList();
+
+            var filtered = TextSearchHelper.ApplyFilter(published, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
+            var accessible = filtered.Select(ToStudentResponse).ToList();
 
             return PagingHelper.ToPagedResult(accessible, pageNumber, pageSize);
         }
@@ -416,6 +426,7 @@ namespace LearningBackendAPI.Services
                     UserId = attempt.UserId,
                     FirstName = user?.FirstName ?? "Unknown",
                     LastName = user?.LastName ?? "",
+                    District = user?.District,
                     ProfileImage = user?.ProfileImage ?? "",
                     CorrectCount = attempt.CorrectCount,
                     TotalQuestions = attempt.TotalQuestions,

@@ -8,6 +8,6 @@ namespace LearningBackendAPI.Services
         Task<Notification> CreateNotificationAsync(NotificationCreateRequest request);
         Task<Notification> UpdateNotificationAsync(string id, NotificationUpdateRequest request);
         Task<bool> DeleteNotificationAsync(string id);
-        Task<PagedResult<Notification>> GetAllNotificationsAsync(int pageNumber, int pageSize);
+        Task<PagedResult<Notification>> GetAllNotificationsAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize);
     }
 }

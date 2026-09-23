@@ -28,6 +28,9 @@ namespace LearningBackendAPI.Models
         [BsonElement("youtubeLink")]
         public string YoutubeLink { get; set; }
 
+        [BsonElement("materialToView")]
+        public string MaterialToView { get; set; }
+
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; }
 

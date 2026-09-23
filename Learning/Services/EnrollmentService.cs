@@ -68,8 +68,11 @@ namespace LearningBackendAPI.Services
                 enrollment.VerifiedAt = DateTime.UtcNow;
                 enrollment.VerifiedByAdminId = adminUserId;
             }
-            else
+            else if (status == Constants.EnrollmentStatuses.Pending)
             {
+                // Reverting to Pending means undoing a verification mistake - clear the record of it.
+                // Dropping a previously-verified enrollment is not a mistake, so its verification
+                // history (proof the course was paid for) is preserved rather than wiped here.
                 enrollment.VerifiedAt = null;
                 enrollment.VerifiedByAdminId = null;
             }

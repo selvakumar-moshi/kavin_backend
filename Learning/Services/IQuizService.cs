@@ -9,10 +9,10 @@ namespace LearningBackendAPI.Services
         Task<Quiz> UpdateQuizAsync(string id, QuizUpdateRequest request);
         Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt);
         Task<bool> DeleteQuizAsync(string id);
-        Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(int pageNumber, int pageSize);
+        Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize);
         Task<Quiz> GetQuizByIdForAdminAsync(string id);
 
-        Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, int pageNumber, int pageSize);
+        Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize);
         Task<QuizStudentResponse> GetQuizByIdForStudentAsync(string id, string userId);
 
         Task<QuizResultResponse> SubmitQuizAsync(string quizId, string userId, QuizSubmitRequest request);

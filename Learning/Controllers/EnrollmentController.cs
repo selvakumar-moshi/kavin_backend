@@ -65,7 +65,10 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Update payment status of an enrollment, e.g. verify offline payment (Admin only)
+        /// Update the status of an enrollment (Admin only): Verified (e.g. verify offline payment),
+        /// Pending (revert an incorrect verification - clears verifiedAt/verifiedByAdminId), or
+        /// Dropped (student left this batch - verification history is kept, and they can later
+        /// rejoin a different batch for the same course via PUT /api/User/{id} without re-paying)
         /// </summary>
         [HttpPut("{id}/status")]
         [Authorize(Roles = Constants.Roles.Admin)]

@@ -139,6 +139,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IDashboardService, DashboardService>();
     services.AddScoped<IBatchService, BatchService>();
     services.AddScoped<INotificationService, NotificationService>();
+    services.AddScoped<IFreeMaterialService, FreeMaterialService>();
     services.AddScoped<IJwtService, JwtService>();
 
     // Register Validators (Only Register Validator, CourseValidator removed)

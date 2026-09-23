@@ -7,7 +7,7 @@ namespace LearningBackendAPI.Services
     {
         private static readonly string[] RankListHeaders =
         {
-            "Rank", "First Name", "Last Name", "Correct Answers", "Wrong Answers", "Total Questions", "Score", "Submitted At"
+            "Student Name", "District", "Correct Answers", "Wrong Answers", "Total Questions", "Score","Rank"
         };
 
         public byte[] GenerateRankListExcel(string quizTitle, List<RankListEntryDto> rankList)
@@ -54,14 +54,13 @@ namespace LearningBackendAPI.Services
                 var entry = rankList[i];
                 var row = firstDataRow + i;
 
-                worksheet.Cell(row, 1).Value = entry.Rank;
-                worksheet.Cell(row, 2).Value = entry.FirstName;
-                worksheet.Cell(row, 3).Value = entry.LastName;
-                worksheet.Cell(row, 4).Value = entry.CorrectCount;
-                worksheet.Cell(row, 5).Value = entry.TotalQuestions - entry.CorrectCount;
-                worksheet.Cell(row, 6).Value = entry.TotalQuestions;
-                worksheet.Cell(row, 7).Value = entry.Score;
-                worksheet.Cell(row, 8).Value = entry.SubmittedAt.ToString("yyyy-MM-dd HH:mm:ss");
+                worksheet.Cell(row, 1).Value = $"{entry.FirstName} {entry.LastName}".Trim();
+                worksheet.Cell(row, 2).Value = entry.District ?? "";
+                worksheet.Cell(row, 3).Value = entry.CorrectCount;
+                worksheet.Cell(row, 4).Value = entry.TotalQuestions - entry.CorrectCount;
+                worksheet.Cell(row, 5).Value = entry.TotalQuestions;
+                worksheet.Cell(row, 6).Value = entry.Score;
+                worksheet.Cell(row, 7).Value = entry.Rank;
             }
 
             worksheet.Columns().AdjustToContents();

@@ -127,6 +127,7 @@ namespace LearningBackendAPI.Services
                 LastName = user.LastName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
+                District = user.District,
                 Role = user.Role,
                 ProfileImage = user.ProfileImage ?? "",
                 CreatedAt = user.CreatedAt,
@@ -174,7 +175,7 @@ namespace LearningBackendAPI.Services
             return MapToUserDto(user);
         }
 
-        public async Task<UserDto> UpdateUserAsync(string id, UpdateUserRequest request, bool allowCourseEnrollment = false)
+        public async Task<UserDto> UpdateUserAsync(string id, UpdateUserRequest request, bool allowCourseEnrollment = false, string? adminUserId = null)
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
@@ -197,20 +198,27 @@ namespace LearningBackendAPI.Services
                 user.PhoneNumber = request.PhoneNumber.Trim();
             }
 
+            if (!string.IsNullOrWhiteSpace(request.District))
+            {
+                user.District = request.District.Trim();
+            }
+
             await _userRepository.UpdateAsync(id, user);
 
             if (allowCourseEnrollment && request.Courses != null && request.Courses.Count > 0)
             {
-                await AddCourseEnrollmentsAsync(id, request.Courses);
+                await AddCourseEnrollmentsAsync(id, request.Courses, adminUserId);
             }
 
             return MapToUserDto(user);
         }
 
-        private async Task AddCourseEnrollmentsAsync(string userId, List<CourseEnrollmentRequest> courses)
+        private async Task AddCourseEnrollmentsAsync(string userId, List<CourseEnrollmentRequest> courses, string? adminUserId)
         {
             var existingEnrollments = await _enrollmentRepository.GetByUserIdAsync(userId);
-            var enrolledCourseIds = existingEnrollments.Select(e => e.CourseId).ToHashSet();
+            var enrollmentsByCourse = existingEnrollments
+                .GroupBy(e => e.CourseId)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             foreach (var request in courses)
             {
@@ -219,9 +227,21 @@ namespace LearningBackendAPI.Services
                     throw new InvalidOperationException(Constants.Messages.BatchNotFound);
                 }
 
-                if (!enrolledCourseIds.Add(request.CourseId))
+                // A prior enrollment for this course that is still Pending/Verified means the
+                // student is already (or about to be) active in it - block a duplicate. A prior
+                // enrollment that is Dropped means they left and are now rejoining with a
+                // different batch: update that same enrollment record rather than creating a new
+                // one, since the course was already paid for.
+                Enrollment? droppedEnrollment = null;
+                if (enrollmentsByCourse.TryGetValue(request.CourseId, out var courseEnrollments))
                 {
-                    throw new InvalidOperationException(Constants.Messages.CourseAlreadyEnrolled);
+                    var activeEnrollment = courseEnrollments.FirstOrDefault(e => e.Status != Constants.EnrollmentStatuses.Dropped);
+                    if (activeEnrollment != null)
+                    {
+                        throw new InvalidOperationException(Constants.Messages.CourseAlreadyEnrolled);
+                    }
+
+                    droppedEnrollment = courseEnrollments.OrderByDescending(e => e.CreatedAt).First();
                 }
 
                 var course = await _courseRepository.GetByIdAsync(request.CourseId);
@@ -244,6 +264,20 @@ namespace LearningBackendAPI.Services
                 if (batch.IsExpired)
                 {
                     throw new InvalidOperationException(Constants.Messages.BatchExpired);
+                }
+
+                if (droppedEnrollment != null)
+                {
+                    // Rejoin: update the existing enrollment in place. CourseAmount/TotalAmount/
+                    // PaymentMethod/TransactionReference are left untouched - no re-payment needed.
+                    droppedEnrollment.BatchId = batch.Id;
+                    droppedEnrollment.BatchTitle = batch.Title;
+                    droppedEnrollment.Status = Constants.EnrollmentStatuses.Verified;
+                    droppedEnrollment.VerifiedAt = DateTime.UtcNow;
+                    droppedEnrollment.VerifiedByAdminId = adminUserId;
+
+                    await _enrollmentRepository.UpdateAsync(droppedEnrollment.Id, droppedEnrollment);
+                    continue;
                 }
 
                 var enrollment = new Enrollment
@@ -283,6 +317,7 @@ namespace LearningBackendAPI.Services
                 LastName = user.LastName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
+                District = user.District,
                 Role = user.Role,
                 ProfileImage = user.ProfileImage ?? "",
                 CreatedAt = user.CreatedAt,

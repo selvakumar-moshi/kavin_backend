@@ -76,6 +76,9 @@ namespace LearningBackendAPI.Services
                 CourseId = request.CourseId,
                 BatchId = batch?.Id,
                 BatchTitle = batch?.Title,
+                MaterialToView = string.IsNullOrWhiteSpace(request.MaterialToView)
+                    ? Constants.MaterialAccess.Paid
+                    : Constants.MaterialAccess.Normalize(request.MaterialToView),
                 PdfUrl = pdfUrl,
                 PdfFileName = pdfKey,
                 CreatedAt = DateTime.UtcNow
@@ -93,9 +96,15 @@ namespace LearningBackendAPI.Services
         private static readonly string[] DefaultSearchFields = { "title", "description", "batchTitle" };
 
         public async Task<PagedResult<StudyMaterial>> GetAccessibleStudyMaterialsAsync(
-            string userId, string role, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
+            string userId, string role, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
         {
             var materials = await GetAccessibleStudyMaterialsCoreAsync(userId, role);
+
+            if (!string.IsNullOrWhiteSpace(courseId) && !string.Equals(courseId, "All", StringComparison.OrdinalIgnoreCase))
+            {
+                materials = materials.Where(m => m.CourseId == courseId).ToList();
+            }
+
             var filtered = TextSearchHelper.ApplyFilter(materials, searchTerm, globalFilter, SearchFields, DefaultSearchFields);
             return PagingHelper.ToPagedResult(filtered, pageNumber, pageSize);
         }
@@ -184,6 +193,11 @@ namespace LearningBackendAPI.Services
                 }
                 existing.BatchId = batch.Id;
                 existing.BatchTitle = batch.Title;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.MaterialToView))
+            {
+                existing.MaterialToView = Constants.MaterialAccess.Normalize(request.MaterialToView);
             }
 
             if (request.PdfFile != null && request.PdfFile.Length > 0)

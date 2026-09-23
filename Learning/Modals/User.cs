@@ -25,6 +25,9 @@ namespace LearningBackendAPI.Models
         [BsonElement("phoneNumber")]
         public string PhoneNumber { get; set; }
 
+        [BsonElement("district")]
+        public string? District { get; set; }
+
         [BsonElement("passwordHash")]
         public string PasswordHash { get; set; }
 

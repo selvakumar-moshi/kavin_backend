@@ -10,6 +10,7 @@ namespace LearningBackendAPI.DTOs
         public string? Description { get; set; }
         public string? CourseId { get; set; }
         public string? BatchId { get; set; }
+        public string? MaterialToView { get; set; }
         public IFormFile? PdfFile { get; set; }
     }
 }

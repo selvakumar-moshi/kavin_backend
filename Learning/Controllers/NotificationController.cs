@@ -86,14 +86,15 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Get all notifications, filtered via a { pageNumber, pageSize } body payload
-        /// (pageNumber/pageSize default to 1/10 if omitted)
+        /// Get all notifications, filtered via a { searchTerm, globalFilter, pageNumber, pageSize } body payload
+        /// (searchTerm: matches title or description; globalFilter: subset of title/description, both if
+        /// omitted; pageNumber/pageSize default to 1/10 if omitted)
         /// </summary>
         [HttpPost("search")]
         public async Task<IActionResult> GetAllNotifications([FromBody] NotificationSearchRequest? request)
         {
             var notifications = await _notificationService.GetAllNotificationsAsync(
-                request?.PageNumber ?? 1, request?.PageSize ?? 10);
+                request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
             return Ok(_responseHelper.Success(notifications, "Notifications retrieved successfully"));
         }
     }

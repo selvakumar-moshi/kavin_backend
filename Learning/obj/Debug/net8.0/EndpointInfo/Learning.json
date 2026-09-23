@@ -419,6 +419,37 @@
         }
       }
     },
+    "/api/FreeMaterial": {
+      "post": {
+        "tags": [
+          "FreeMaterial"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreeMaterialSearchRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreeMaterialSearchRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreeMaterialSearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Notification": {
       "post": {
         "tags": [
@@ -890,6 +921,9 @@
                   "BatchId": {
                     "type": "string"
                   },
+                  "MaterialToView": {
+                    "type": "string"
+                  },
                   "PdfFile": {
                     "type": "string",
                     "format": "binary"
@@ -907,6 +941,9 @@
                   "style": "form"
                 },
                 "BatchId": {
+                  "style": "form"
+                },
+                "MaterialToView": {
                   "style": "form"
                 },
                 "PdfFile": {
@@ -1009,6 +1046,9 @@
                   "BatchId": {
                     "type": "string"
                   },
+                  "MaterialToView": {
+                    "type": "string"
+                  },
                   "PdfFile": {
                     "type": "string",
                     "format": "binary"
@@ -1026,6 +1066,9 @@
                   "style": "form"
                 },
                 "BatchId": {
+                  "style": "form"
+                },
+                "MaterialToView": {
                   "style": "form"
                 },
                 "PdfFile": {
@@ -1549,6 +1592,20 @@
         },
         "additionalProperties": false
       },
+      "FreeMaterialSearchRequest": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "nullable": true
+          },
+          "searchTerm": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -1566,6 +1623,14 @@
       "MaterialSearchRequest": {
         "type": "object",
         "properties": {
+          "courseId": {
+            "type": "string",
+            "nullable": true
+          },
+          "material": {
+            "type": "string",
+            "nullable": true
+          },
           "searchTerm": {
             "type": "string",
             "nullable": true
@@ -1614,6 +1679,17 @@
       "NotificationSearchRequest": {
         "type": "object",
         "properties": {
+          "searchTerm": {
+            "type": "string",
+            "nullable": true
+          },
+          "globalFilter": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
+          },
           "pageNumber": {
             "type": "integer",
             "format": "int32"
@@ -1734,6 +1810,17 @@
             "type": "string",
             "nullable": true
           },
+          "searchTerm": {
+            "type": "string",
+            "nullable": true
+          },
+          "globalFilter": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
+          },
           "pageNumber": {
             "type": "integer",
             "format": "int32"
@@ -1774,6 +1861,10 @@
             "nullable": true
           },
           "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "district": {
             "type": "string",
             "nullable": true
           },
@@ -1826,6 +1917,10 @@
             "nullable": true
           },
           "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "district": {
             "type": "string",
             "nullable": true
           },
@@ -1884,6 +1979,10 @@
             "nullable": true
           },
           "youtubeLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "materialToView": {
             "type": "string",
             "nullable": true
           }

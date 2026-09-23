@@ -7,7 +7,7 @@ namespace LearningBackendAPI.Services
         Task<PagedResult<UserDto>> GetAllUsersAsync(UserSearchRequest? request);
         Task<UserDto> GetUserByIdAsync(string id);
         Task<UserProfileResponse> GetUserProfileAsync(string id);
-        Task<UserDto> UpdateUserAsync(string id, UpdateUserRequest request, bool allowCourseEnrollment = false);
+        Task<UserDto> UpdateUserAsync(string id, UpdateUserRequest request, bool allowCourseEnrollment = false, string? adminUserId = null);
         Task<UserDto> UpdateProfileImageAsync(string id, IFormFile file);
         Task<bool> DeleteUserAsync(string id);
     }

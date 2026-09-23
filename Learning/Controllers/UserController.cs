@@ -44,8 +44,8 @@ namespace LearningBackendAPI.Controllers
 
         /// <summary>
         /// Get all registered users, optionally filtered via a { searchTerm, globalFilter, pageNumber, pageSize }
-        /// body payload (globalFilter: subset of firstName/lastName/phoneNumber/email/applicationNo; all five if
-        /// omitted; pageNumber/pageSize default to 1/10 if omitted) (Admin only)
+        /// body payload (globalFilter: subset of firstName/lastName/phoneNumber/email/applicationNo/district; all
+        /// six if omitted; pageNumber/pageSize default to 1/10 if omitted) (Admin only)
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
@@ -117,8 +117,12 @@ namespace LearningBackendAPI.Controllers
         /// <summary>
         /// Update a specific user's details by ID (Admin only). To enroll the user in one or
         /// more additional courses (e.g. they purchased new courses later), also pass a
-        /// courses: [{ courseId, batchId }, ...] array in the payload; each enrollment is
-        /// created as Pending and must then be verified via PUT /api/Enrollment/{id}/status
+        /// courses: [{ courseId, batchId }, ...] array in the payload; each new-course enrollment is
+        /// created as Pending and must then be verified via PUT /api/Enrollment/{id}/status. If the
+        /// student previously dropped that course (its enrollment status is Dropped), passing that
+        /// same courseId with a new batchId instead updates that existing enrollment in place -
+        /// reactivated as Verified with the new batch, no re-payment/re-verification needed since
+        /// the course was already purchased.
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
@@ -126,7 +130,8 @@ namespace LearningBackendAPI.Controllers
         {
             try
             {
-                var user = await _userService.UpdateUserAsync(id, request, allowCourseEnrollment: true);
+                var adminUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var user = await _userService.UpdateUserAsync(id, request, allowCourseEnrollment: true, adminUserId: adminUserId);
                 return Ok(_responseHelper.Success(user, "User details updated successfully"));
             }
             catch (KeyNotFoundException ex)

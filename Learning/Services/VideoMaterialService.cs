@@ -66,6 +66,9 @@ namespace LearningBackendAPI.Services
                 BatchId = batch?.Id,
                 BatchTitle = batch?.Title,
                 YoutubeLink = request.YoutubeLink!.Trim(),
+                MaterialToView = string.IsNullOrWhiteSpace(request.MaterialToView)
+                    ? Constants.MaterialAccess.Paid
+                    : Constants.MaterialAccess.Normalize(request.MaterialToView),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -81,9 +84,15 @@ namespace LearningBackendAPI.Services
         private static readonly string[] DefaultSearchFields = { "title", "description", "batchTitle" };
 
         public async Task<PagedResult<VideoMaterial>> GetAccessibleVideoMaterialsAsync(
-            string userId, string role, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
+            string userId, string role, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
         {
             var materials = await GetAccessibleVideoMaterialsCoreAsync(userId, role);
+
+            if (!string.IsNullOrWhiteSpace(courseId) && !string.Equals(courseId, "All", StringComparison.OrdinalIgnoreCase))
+            {
+                materials = materials.Where(m => m.CourseId == courseId).ToList();
+            }
+
             var filtered = TextSearchHelper.ApplyFilter(materials, searchTerm, globalFilter, SearchFields, DefaultSearchFields);
             return PagingHelper.ToPagedResult(filtered, pageNumber, pageSize);
         }
@@ -171,6 +180,11 @@ namespace LearningBackendAPI.Services
                 }
                 existing.BatchId = batch.Id;
                 existing.BatchTitle = batch.Title;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.MaterialToView))
+            {
+                existing.MaterialToView = Constants.MaterialAccess.Normalize(request.MaterialToView);
             }
 
             if (!string.IsNullOrWhiteSpace(request.YoutubeLink))

@@ -24,6 +24,10 @@ namespace LearningBackendAPI.Validators
                 .NotEmpty().WithMessage("Phone number is required")
                 .Matches(@"^[0-9]{10}$").WithMessage("Phone number must be 10 digits");
 
+            RuleFor(x => x.District)
+                .NotEmpty().WithMessage("District is required")
+                .MaximumLength(50).WithMessage("District must not exceed 50 characters");
+
             RuleFor(x => x.CourseId)
                 .NotEmpty().WithMessage("Course is required");
 

@@ -31,6 +31,9 @@ namespace LearningBackendAPI.Models
         [BsonElement("batchTitle")]
         public string? BatchTitle { get; set; }
 
+        [BsonElement("materialToView")]
+        public string MaterialToView { get; set; }
+
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; }
 
