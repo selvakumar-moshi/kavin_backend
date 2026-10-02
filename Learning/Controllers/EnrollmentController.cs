@@ -90,5 +90,49 @@ namespace LearningBackendAPI.Controllers
                 return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
             }
         }
+
+        /// <summary>
+        /// Upload (or replace) the GPay/PhonePe payment screenshot for the current student's own
+        /// enrollment. Stored in S3 under coaching/payment; admin sees it as paymentScreenshot on
+        /// each course in the user profile response.
+        /// </summary>
+        [HttpPost("{id}/payment-attachment")]
+        [RequestSizeLimit(5 * 1024 * 1024)]
+        public async Task<IActionResult> UploadPaymentAttachment(string id, IFormFile file)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                var enrollment = await _enrollmentService.UploadPaymentAttachmentAsync(id, userId, file);
+                return Ok(_responseHelper.Success(enrollment, "Payment screenshot uploaded successfully"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Download an Excel (.xlsx) report of every student enrolled in a course, including their
+        /// batch and enrollment status/dates (Admin only)
+        /// </summary>
+        [HttpGet("course/{courseId}/download")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        public async Task<IActionResult> DownloadCourseEnrollments(string courseId)
+        {
+            try
+            {
+                var (content, fileName) = await _enrollmentService.ExportCourseEnrollmentsAsync(courseId);
+                return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
     }
 }

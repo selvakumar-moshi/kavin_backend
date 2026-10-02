@@ -6,6 +6,7 @@ namespace LearningBackendAPI.DTOs
         public string CourseId { get; set; } = "";
         public string CourseName { get; set; } = "";
         public string Title { get; set; } = "";
+        public string QuizToView { get; set; } = "";
         public DateTime? PublishedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
         public bool IsExpired { get; set; }
@@ -26,5 +27,6 @@ namespace LearningBackendAPI.DTOs
         public string? OptionCImageUrl { get; set; }
         public string OptionD { get; set; } = "";
         public string? OptionDImageUrl { get; set; }
+        public decimal Mark { get; set; }
     }
 }

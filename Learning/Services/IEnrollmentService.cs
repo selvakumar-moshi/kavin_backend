@@ -8,5 +8,7 @@ namespace LearningBackendAPI.Services
         Task<List<Enrollment>> GetEnrollmentsByUserIdAsync(string userId);
         Task<Enrollment> GetEnrollmentByIdAsync(string id);
         Task<Enrollment> UpdateStatusAsync(string id, string status, string? paymentMethod, string? transactionReference, string adminUserId);
+        Task<Enrollment> UploadPaymentAttachmentAsync(string id, string userId, IFormFile file);
+        Task<(byte[] Content, string FileName)> ExportCourseEnrollmentsAsync(string courseId);
     }
 }

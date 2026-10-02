@@ -44,6 +44,12 @@ namespace LearningBackendAPI.Models
         [BsonElement("wrongCount")]
         public int WrongCount { get; set; }
 
+        [BsonElement("totalMarks")]
+        public decimal TotalMarks { get; set; }
+
+        [BsonElement("scoredMarks")]
+        public decimal ScoredMarks { get; set; }
+
         [BsonElement("submittedAt")]
         public DateTime SubmittedAt { get; set; }
     }

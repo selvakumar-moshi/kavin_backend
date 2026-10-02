@@ -419,6 +419,72 @@
         }
       }
     },
+    "/api/Enrollment/{id}/payment-attachment": {
+      "post": {
+        "tags": [
+          "Enrollment"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Enrollment/course/{courseId}/download": {
+      "get": {
+        "tags": [
+          "Enrollment"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/FreeMaterial": {
       "post": {
         "tags": [
@@ -592,6 +658,9 @@
                   "Title": {
                     "type": "string"
                   },
+                  "QuizToView": {
+                    "type": "string"
+                  },
                   "Questions": {
                     "type": "array",
                     "items": {
@@ -605,6 +674,9 @@
                   "style": "form"
                 },
                 "Title": {
+                  "style": "form"
+                },
+                "QuizToView": {
                   "style": "form"
                 },
                 "Questions": {
@@ -646,6 +718,9 @@
                   "Title": {
                     "type": "string"
                   },
+                  "QuizToView": {
+                    "type": "string"
+                  },
                   "Questions": {
                     "type": "array",
                     "items": {
@@ -656,6 +731,9 @@
               },
               "encoding": {
                 "Title": {
+                  "style": "form"
+                },
+                "QuizToView": {
                   "style": "form"
                 },
                 "Questions": {
@@ -1798,6 +1876,11 @@
           },
           "correctOption": {
             "type": "string",
+            "nullable": true
+          },
+          "mark": {
+            "type": "number",
+            "format": "double",
             "nullable": true
           }
         },

@@ -91,7 +91,8 @@ namespace LearningBackendAPI.Services
         {
             ["title"] = m => m.Title,
             ["description"] = m => m.Description,
-            ["batchtitle"] = m => m.BatchTitle
+            ["batchtitle"] = m => m.BatchTitle,
+            ["materialtoview"] = m => m.MaterialToView
         };
         private static readonly string[] DefaultSearchFields = { "title", "description", "batchTitle" };
 

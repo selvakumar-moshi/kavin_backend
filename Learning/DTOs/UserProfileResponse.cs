@@ -31,6 +31,7 @@ namespace LearningBackendAPI.DTOs
         public decimal TotalAmount { get; set; }
         public string? PaymentMethod { get; set; }
         public string? TransactionReference { get; set; }
+        public string? PaymentScreenshot { get; set; }
         public string EnrollmentStatus { get; set; }
         public DateTime? VerifiedAt { get; set; }
         public List<StudyMaterial> StudyMaterials { get; set; } = new();

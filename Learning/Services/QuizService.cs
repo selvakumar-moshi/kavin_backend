@@ -61,6 +61,9 @@ namespace LearningBackendAPI.Services
                 CourseId = course.Id,
                 CourseName = course.CourseName,
                 Title = request.Title.Trim(),
+                QuizToView = string.IsNullOrWhiteSpace(request.QuizToView)
+                    ? Constants.MaterialAccess.Paid
+                    : Constants.MaterialAccess.Normalize(request.QuizToView),
                 Status = Constants.QuizStatuses.Draft,
                 Questions = await MapQuestionsAsync(request.Questions, null),
                 CreatedAt = DateTime.UtcNow
@@ -80,6 +83,11 @@ namespace LearningBackendAPI.Services
             if (!string.IsNullOrWhiteSpace(request.Title))
             {
                 quiz.Title = request.Title.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.QuizToView))
+            {
+                quiz.QuizToView = Constants.MaterialAccess.Normalize(request.QuizToView);
             }
 
             if (request.Questions != null)
@@ -111,6 +119,11 @@ namespace LearningBackendAPI.Services
                 {
                     throw new InvalidOperationException(Constants.Messages.InvalidOption);
                 }
+
+                if (q.Mark.HasValue && q.Mark.Value <= 0)
+                {
+                    throw new InvalidOperationException(Constants.Messages.InvalidMark);
+                }
             }
 
             var items = new List<QuizQuestionItem>();
@@ -127,7 +140,8 @@ namespace LearningBackendAPI.Services
                     OptionB = q.OptionB.Trim(),
                     OptionC = q.OptionC.Trim(),
                     OptionD = q.OptionD.Trim(),
-                    CorrectOption = string.IsNullOrWhiteSpace(q.CorrectOption) ? null : q.CorrectOption.ToUpperInvariant()
+                    CorrectOption = string.IsNullOrWhiteSpace(q.CorrectOption) ? null : q.CorrectOption.ToUpperInvariant(),
+                    Mark = q.Mark ?? 1
                 };
 
                 (item.QuestionImageUrl, item.QuestionImageKey) = await ResolveImageAsync(
@@ -244,7 +258,8 @@ namespace LearningBackendAPI.Services
         private static readonly Dictionary<string, Func<Quiz, string?>> QuizSearchFields = new()
         {
             ["title"] = q => q.Title,
-            ["coursename"] = q => q.CourseName
+            ["coursename"] = q => q.CourseName,
+            ["status"] = q => q.Status
         };
         private static readonly string[] DefaultQuizSearchFields = { "title", "courseName" };
 
@@ -267,26 +282,17 @@ namespace LearningBackendAPI.Services
 
         public async Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
         {
-            List<Quiz> quizzes;
+            var quizzes = string.IsNullOrWhiteSpace(courseId)
+                ? await _quizRepository.GetAllAsync()
+                : await _quizRepository.GetByCourseIdsAsync(new List<string> { courseId });
 
-            if (!string.IsNullOrWhiteSpace(courseId))
-            {
-                if (!await _enrollmentRepository.HasVerifiedEnrollmentAsync(userId, courseId))
-                {
-                    throw new UnauthorizedAccessException(Constants.Messages.NoCourseAccess);
-                }
-                quizzes = await _quizRepository.GetByCourseIdsAsync(new List<string> { courseId });
-            }
-            else
-            {
-                var verifiedCourseIds = await _enrollmentRepository.GetVerifiedCourseIdsAsync(userId);
-                quizzes = verifiedCourseIds.Count == 0
-                    ? new List<Quiz>()
-                    : await _quizRepository.GetByCourseIdsAsync(verifiedCourseIds);
-            }
+            var verifiedCourseIds = (await _enrollmentRepository.GetVerifiedCourseIdsAsync(userId)).ToHashSet();
 
+            // A Free quiz is visible to every student regardless of course purchase; a Paid quiz
+            // still requires a verified enrollment in that specific course.
             var published = quizzes
                 .Where(q => q.Status == Constants.QuizStatuses.Published && !q.IsExpired)
+                .Where(q => q.QuizToView == Constants.MaterialAccess.Free || verifiedCourseIds.Contains(q.CourseId))
                 .ToList();
 
             var filtered = TextSearchHelper.ApplyFilter(published, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
@@ -303,7 +309,8 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
             }
 
-            if (!await _enrollmentRepository.HasVerifiedEnrollmentAsync(userId, quiz.CourseId))
+            if (quiz.QuizToView != Constants.MaterialAccess.Free &&
+                !await _enrollmentRepository.HasVerifiedEnrollmentAsync(userId, quiz.CourseId))
             {
                 throw new UnauthorizedAccessException(Constants.Messages.NoCourseAccess);
             }
@@ -319,7 +326,8 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
             }
 
-            if (!await _enrollmentRepository.HasVerifiedEnrollmentAsync(userId, quiz.CourseId))
+            if (quiz.QuizToView != Constants.MaterialAccess.Free &&
+                !await _enrollmentRepository.HasVerifiedEnrollmentAsync(userId, quiz.CourseId))
             {
                 throw new UnauthorizedAccessException(Constants.Messages.NoCourseAccess);
             }
@@ -345,10 +353,14 @@ namespace LearningBackendAPI.Services
                 .ToDictionary(a => a.QuestionNumber, a => a.SelectedOption!.Trim().ToUpperInvariant());
 
             var correctCount = 0;
+            var totalMarks = 0m;
+            var scoredMarks = 0m;
             var answers = new List<QuizAnswerItem>();
 
             foreach (var question in quiz.Questions)
             {
+                totalMarks += question.Mark;
+
                 answerLookup.TryGetValue(question.QuestionNumber, out var selected);
                 var isValidOption = selected != null && Constants.QuizOptions.All.Contains(selected);
                 var normalizedSelected = isValidOption ? selected : null;
@@ -356,6 +368,7 @@ namespace LearningBackendAPI.Services
                 if (normalizedSelected != null && normalizedSelected == question.CorrectOption)
                 {
                     correctCount++;
+                    scoredMarks += question.Mark;
                 }
 
                 answers.Add(new QuizAnswerItem
@@ -375,7 +388,9 @@ namespace LearningBackendAPI.Services
                 Answers = answers,
                 TotalQuestions = totalQuestions,
                 CorrectCount = correctCount,
-                WrongCount = totalQuestions - correctCount
+                WrongCount = totalQuestions - correctCount,
+                TotalMarks = totalMarks,
+                ScoredMarks = scoredMarks
             };
 
             await _quizAttemptRepository.CreateAsync(attempt);
@@ -402,7 +417,8 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
             }
 
-            if (!isAdmin && !await _enrollmentRepository.HasVerifiedEnrollmentAsync(userId, quiz.CourseId))
+            if (!isAdmin && quiz.QuizToView != Constants.MaterialAccess.Free &&
+                !await _enrollmentRepository.HasVerifiedEnrollmentAsync(userId, quiz.CourseId))
             {
                 throw new UnauthorizedAccessException(Constants.Messages.NoCourseAccess);
             }
@@ -410,7 +426,7 @@ namespace LearningBackendAPI.Services
             var attempts = await _quizAttemptRepository.GetByQuizIdAsync(quizId);
             var ordered = attempts
                 .Where(a => a.QuizVersion == quiz.PublishVersion)
-                .OrderByDescending(a => a.CorrectCount)
+                .OrderByDescending(a => a.ScoredMarks)
                 .ThenBy(a => a.SubmittedAt)
                 .ToList();
 
@@ -430,7 +446,9 @@ namespace LearningBackendAPI.Services
                     ProfileImage = user?.ProfileImage ?? "",
                     CorrectCount = attempt.CorrectCount,
                     TotalQuestions = attempt.TotalQuestions,
-                    Score = $"{attempt.CorrectCount}/{attempt.TotalQuestions}",
+                    ScoredMarks = attempt.ScoredMarks,
+                    TotalMarks = attempt.TotalMarks,
+                    Score = $"{attempt.ScoredMarks}/{attempt.TotalMarks}",
                     SubmittedAt = attempt.SubmittedAt
                 });
             }
@@ -464,6 +482,7 @@ namespace LearningBackendAPI.Services
                 CourseId = quiz.CourseId,
                 CourseName = quiz.CourseName,
                 Title = quiz.Title,
+                QuizToView = quiz.QuizToView,
                 PublishedAt = quiz.PublishedAt,
                 ExpiresAt = quiz.ExpiresAt,
                 IsExpired = quiz.IsExpired,
@@ -480,7 +499,8 @@ namespace LearningBackendAPI.Services
                     OptionC = q.OptionC,
                     OptionCImageUrl = q.OptionCImageUrl,
                     OptionD = q.OptionD,
-                    OptionDImageUrl = q.OptionDImageUrl
+                    OptionDImageUrl = q.OptionDImageUrl,
+                    Mark = q.Mark
                 }).ToList()
             };
         }
@@ -507,6 +527,7 @@ namespace LearningBackendAPI.Services
                         OptionCImageUrl = q.OptionCImageUrl,
                         OptionD = q.OptionD,
                         OptionDImageUrl = q.OptionDImageUrl,
+                        Mark = q.Mark,
                         SelectedOption = selected,
                         CorrectOption = q.CorrectOption,
                         IsCorrect = selected != null && selected == q.CorrectOption
@@ -520,7 +541,9 @@ namespace LearningBackendAPI.Services
                 TotalQuestions = attempt.TotalQuestions,
                 CorrectAnswers = attempt.CorrectCount,
                 WrongAnswers = attempt.WrongCount,
-                Score = $"{attempt.CorrectCount}/{attempt.TotalQuestions}",
+                TotalMarks = attempt.TotalMarks,
+                ScoredMarks = attempt.ScoredMarks,
+                Score = $"{attempt.ScoredMarks}/{attempt.TotalMarks}",
                 SubmittedAt = attempt.SubmittedAt,
                 Questions = questions
             };

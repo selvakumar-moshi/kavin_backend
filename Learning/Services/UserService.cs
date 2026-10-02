@@ -112,6 +112,7 @@ namespace LearningBackendAPI.Services
                     TotalAmount = enrollment.TotalAmount,
                     PaymentMethod = enrollment.PaymentMethod,
                     TransactionReference = enrollment.TransactionReference,
+                    PaymentScreenshot = enrollment.PaymentScreenshot,
                     EnrollmentStatus = enrollment.Status,
                     VerifiedAt = enrollment.VerifiedAt,
                     StudyMaterials = studyMaterials,
@@ -304,7 +305,17 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException("User not found");
             }
 
-            return await _userRepository.DeleteAsync(id);
+            var deleted = await _userRepository.DeleteAsync(id);
+            if (deleted)
+            {
+                var enrollments = await _enrollmentRepository.GetByUserIdAsync(id);
+                foreach (var enrollment in enrollments)
+                {
+                    await _enrollmentRepository.DeleteAsync(enrollment.Id);
+                }
+            }
+
+            return deleted;
         }
 
         private static UserDto MapToUserDto(User user)

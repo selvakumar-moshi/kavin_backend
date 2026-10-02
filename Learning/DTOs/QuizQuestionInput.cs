@@ -13,5 +13,6 @@ namespace LearningBackendAPI.DTOs
         public string OptionD { get; set; } = "";
         public IFormFile? OptionDImage { get; set; }
         public string? CorrectOption { get; set; }
+        public decimal? Mark { get; set; }
     }
 }

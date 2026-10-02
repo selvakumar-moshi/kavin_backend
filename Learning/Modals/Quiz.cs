@@ -56,6 +56,9 @@ namespace LearningBackendAPI.Models
 
         [BsonElement("correctOption")]
         public string? CorrectOption { get; set; }
+
+        [BsonElement("mark")]
+        public decimal Mark { get; set; }
     }
 
     [BsonIgnoreExtraElements]
@@ -76,6 +79,9 @@ namespace LearningBackendAPI.Models
 
         [BsonElement("status")]
         public string Status { get; set; }
+
+        [BsonElement("quizToView")]
+        public string QuizToView { get; set; }
 
         [BsonElement("publishVersion")]
         public int PublishVersion { get; set; } = 0;

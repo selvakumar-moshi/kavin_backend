@@ -39,6 +39,13 @@ namespace LearningBackendAPI.Models
         [BsonElement("transactionReference")]
         public string? TransactionReference { get; set; }
 
+        [BsonElement("paymentScreenshot")]
+        public string? PaymentScreenshot { get; set; }
+
+        [BsonElement("paymentScreenshotKey")]
+        [JsonIgnore]
+        public string? PaymentScreenshotKey { get; set; }
+
         [BsonElement("status")]
         public string Status { get; set; }
 

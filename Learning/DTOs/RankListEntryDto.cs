@@ -10,6 +10,8 @@ namespace LearningBackendAPI.DTOs
         public string ProfileImage { get; set; } = "";
         public int CorrectCount { get; set; }
         public int TotalQuestions { get; set; }
+        public decimal ScoredMarks { get; set; }
+        public decimal TotalMarks { get; set; }
         public string Score { get; set; } = "";
         public DateTime SubmittedAt { get; set; }
     }

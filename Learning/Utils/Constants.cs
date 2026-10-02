@@ -19,6 +19,10 @@
             public const string Forbidden = "Access denied";
             public const string InternalError = "An unexpected error occurred. Please try again later.";
             public const string EnrollmentNotFound = "Enrollment not found";
+            public const string PaymentScreenshotRequired = "Payment screenshot file is required";
+            public const string PaymentScreenshotInvalidType = "Only JPG, PNG, or WEBP images are allowed";
+            public const string PaymentScreenshotTooLarge = "Payment screenshot must not exceed 5 MB";
+            public const string PaymentAlreadyVerified = "Payment is already verified for this enrollment";
             public const string InvalidPaymentMethod = "Invalid payment method";
             public const string InvalidEnrollmentStatus = "Invalid enrollment status";
             public const string NoCourseAccess = "You do not have access to this course's content until your payment is verified";
@@ -32,6 +36,7 @@
             public const string QuizIncomplete = "Every question must have text, all four options, and a correct answer selected before publishing";
             public const string QuizExpiryRequired = "Expiry date and time must be a valid date in the future";
             public const string InvalidOption = "Selected option must be A, B, C, or D";
+            public const string InvalidMark = "Mark must be a positive number";
             public const string BatchNotFound = "Batch not found";
             public const string BatchDateRangeInvalid = "Batch start date must be before or equal to the end date";
             public const string BatchCourseMismatch = "Selected batch does not belong to the selected course";
@@ -71,8 +76,9 @@
             public const string Pending = "Pending";
             public const string Verified = "Verified";
             public const string Dropped = "Dropped";
+            public const string Rejected = "Rejected";
 
-            public static readonly string[] All = { Pending, Verified, Dropped };
+            public static readonly string[] All = { Pending, Verified, Dropped, Rejected };
         }
 
         public static class QuizStatuses

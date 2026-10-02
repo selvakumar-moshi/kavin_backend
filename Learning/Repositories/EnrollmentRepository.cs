@@ -28,6 +28,17 @@ namespace LearningBackendAPI.Repositories
             return await _enrollments.Find(e => e.UserId == userId).ToListAsync();
         }
 
+        public async Task<List<Enrollment>> GetByCourseIdAsync(string courseId)
+        {
+            return await _enrollments.Find(e => e.CourseId == courseId).ToListAsync();
+        }
+
+        public async Task<bool> DeleteAsync(string id)
+        {
+            var result = await _enrollments.DeleteOneAsync(e => e.Id == id);
+            return result.DeletedCount > 0;
+        }
+
         public async Task<Enrollment> CreateAsync(Enrollment enrollment)
         {
             enrollment.CreatedAt = DateTime.UtcNow;

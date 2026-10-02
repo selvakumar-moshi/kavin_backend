@@ -48,8 +48,8 @@ namespace LearningBackendAPI.Controllers
         /// verified/paid courses), optionally filtered via a { courseId, material, searchTerm, globalFilter,
         /// pageNumber, pageSize } body payload (courseId: filter to a single course, omit/"All" for every
         /// accessible course; material: informational tag the UI sends, e.g. "study", not used to filter since
-        /// this endpoint only ever returns study materials; globalFilter: subset of title/description/batchTitle,
-        /// all three if omitted; pageNumber/pageSize default to 1/10 if omitted)
+        /// this endpoint only ever returns study materials; globalFilter: subset of title/description/batchTitle/materialToView,
+        /// all four if omitted; pageNumber/pageSize default to 1/10 if omitted)
         /// </summary>
         [HttpPost("search")]
         public async Task<IActionResult> GetAllStudyMaterials([FromBody] MaterialSearchRequest? request)

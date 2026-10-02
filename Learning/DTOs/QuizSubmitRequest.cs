@@ -17,6 +17,8 @@ namespace LearningBackendAPI.DTOs
         public int TotalQuestions { get; set; }
         public int CorrectAnswers { get; set; }
         public int WrongAnswers { get; set; }
+        public decimal TotalMarks { get; set; }
+        public decimal ScoredMarks { get; set; }
         public string Score { get; set; } = "";
         public DateTime SubmittedAt { get; set; }
         public List<QuizResultQuestionDto> Questions { get; set; } = new();
@@ -35,6 +37,7 @@ namespace LearningBackendAPI.DTOs
         public string? OptionCImageUrl { get; set; }
         public string OptionD { get; set; } = "";
         public string? OptionDImageUrl { get; set; }
+        public decimal Mark { get; set; }
         public string? SelectedOption { get; set; }
         public string? CorrectOption { get; set; }
         public bool IsCorrect { get; set; }

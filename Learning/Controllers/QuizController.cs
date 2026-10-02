@@ -28,7 +28,11 @@ namespace LearningBackendAPI.Controllers
         private bool IsAdmin => User.FindFirstValue(ClaimTypes.Role) == Constants.Roles.Admin;
 
         /// <summary>
-        /// Create a new quiz as a Draft with manually-entered questions (Admin only)
+        /// Create a new quiz as a Draft with manually-entered questions (Admin only). Each question
+        /// accepts a "mark" (defaults to 1 if omitted); the rank list and a student's score are
+        /// based on marks scored, not just the count of correct answers. quizToView is "Paid"
+        /// (default - requires a verified enrollment in the quiz's course) or "Free" (visible and
+        /// attemptable by any student regardless of course purchase).
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
@@ -120,11 +124,15 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Get quizzes: Admin sees every quiz with answer keys; students see only published,
-        /// non-expired quizzes for courses they've paid for, with answer keys stripped.
-        /// Optionally filtered via a { courseId, searchTerm, globalFilter, pageNumber, pageSize } body payload
-        /// (searchTerm: matches quiz title or course name; globalFilter: subset of title/courseName, both if
-        /// omitted; pageNumber/pageSize default to 1/10 if omitted).
+        /// Get quizzes: Admin sees every quiz with answer keys. Students see published, non-expired
+        /// quizzes with answer keys stripped - "Paid" quizzes only for courses they've verified-paid
+        /// for, "Free" quizzes regardless of purchase; passing a courseId no longer requires the
+        /// student to be enrolled in it (they'll just see whatever Free quizzes exist for that course
+        /// if they aren't). Optionally filtered via a { courseId, searchTerm, globalFilter, pageNumber,
+        /// pageSize } body payload (searchTerm: matches quiz title or course name; globalFilter:
+        /// subset of title/courseName/status, all three if omitted - note students never see Draft
+        /// quizzes regardless of a status filter, since that list is always pre-restricted to
+        /// Published; pageNumber/pageSize default to 1/10 if omitted).
         /// </summary>
         [HttpPost("search")]
         public async Task<IActionResult> GetAllQuizzes([FromBody] QuizSearchRequest? request)
