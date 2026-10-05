@@ -416,6 +416,11 @@
         "Name": "Questions",
         "Type": "System.Collections.Generic.List\u00601[[LearningBackendAPI.DTOs.QuizQuestionInput, Learning, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "IsRequired": false
+      },
+      {
+        "Name": "File",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -600,6 +605,22 @@
         "Name": "request",
         "Type": "LearningBackendAPI.DTOs.QuizCopyRequest",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizController",
+    "Method": "ImportQuiz",
+    "RelativePath": "api/Quiz/import",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "File",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []

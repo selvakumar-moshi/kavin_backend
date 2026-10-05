@@ -16,7 +16,10 @@ namespace LearningBackendAPI.DTOs
 
     public class QuizStudentQuestionDto
     {
+        // Fixed id of the question - this is what the answer is submitted against
         public int QuestionNumber { get; set; }
+        // Position of the question in this student's order (1, 2, 3 ...) - show this as the question number
+        public int DisplayNumber { get; set; }
         public string QuestionText { get; set; } = "";
         public string? QuestionImageUrl { get; set; }
         public string OptionA { get; set; } = "";
@@ -25,7 +28,7 @@ namespace LearningBackendAPI.DTOs
         public string? OptionBImageUrl { get; set; }
         public string OptionC { get; set; } = "";
         public string? OptionCImageUrl { get; set; }
-        public string OptionD { get; set; } = "";
+        public string? OptionD { get; set; }
         public string? OptionDImageUrl { get; set; }
         public decimal Mark { get; set; }
     }

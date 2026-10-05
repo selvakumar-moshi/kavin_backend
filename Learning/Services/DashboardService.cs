@@ -36,6 +36,7 @@ namespace LearningBackendAPI.Services
             var totalBatch = await _batchRepository.CountAsync();
             var totalStudyMaterial = await _studyMaterialRepository.CountAsync();
             var totalVideoMaterial = await _videoMaterialRepository.CountAsync();
+            var totalQuiz = await _quizRepository.CountAsync();
             var totalQuestion = await _quizRepository.CountTotalQuestionsAsync();
 
             return new DashboardCountsResponse
@@ -45,6 +46,7 @@ namespace LearningBackendAPI.Services
                 TotalBatch = totalBatch,
                 TotalStudyMaterial = totalStudyMaterial,
                 TotalVideoMaterial = totalVideoMaterial,
+                TotalQuiz = totalQuiz,
                 TotalQuestion = totalQuestion
             };
         }

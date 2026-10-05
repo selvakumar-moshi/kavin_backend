@@ -698,6 +698,10 @@
                     "items": {
                       "$ref": "#/components/schemas/QuizQuestionInput"
                     }
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
                   }
                 }
               },
@@ -715,6 +719,41 @@
                   "style": "form"
                 },
                 "Questions": {
+                  "style": "form"
+                },
+                "File": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Quiz/import": {
+      "post": {
+        "tags": [
+          "Quiz"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "File": {
                   "style": "form"
                 }
               }
@@ -1958,6 +1997,10 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "shuffleQuestions": {
+            "type": "boolean",
+            "nullable": true
           }
         },
         "additionalProperties": false

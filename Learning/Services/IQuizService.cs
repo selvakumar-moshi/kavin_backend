@@ -7,8 +7,9 @@ namespace LearningBackendAPI.Services
     {
         Task<Quiz> CreateQuizAsync(QuizCreateRequest request);
         Task<Quiz> CopyQuizAsync(QuizCopyRequest request);
+        Task<QuizImportPreviewResponse> PreviewDocxQuizAsync(IFormFile? file);
         Task<Quiz> UpdateQuizAsync(string id, QuizUpdateRequest request);
-        Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt);
+        Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt, bool shuffleQuestions = true);
         Task<bool> DeleteQuizAsync(string id);
         Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize);
         Task<Quiz> GetQuizByIdForAdminAsync(string id);

@@ -10,7 +10,7 @@ namespace LearningBackendAPI.DTOs
         public IFormFile? OptionBImage { get; set; }
         public string OptionC { get; set; } = "";
         public IFormFile? OptionCImage { get; set; }
-        public string OptionD { get; set; } = "";
+        public string? OptionD { get; set; }
         public IFormFile? OptionDImage { get; set; }
         public string? CorrectOption { get; set; }
         public decimal? Mark { get; set; }

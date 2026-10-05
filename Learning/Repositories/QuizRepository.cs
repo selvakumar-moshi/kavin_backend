@@ -22,6 +22,11 @@ namespace LearningBackendAPI.Repositories
             return await _quizzes.Find(_ => true).ToListAsync();
         }
 
+        public async Task<long> CountAsync()
+        {
+            return await _quizzes.CountDocumentsAsync(_ => true);
+        }
+
         public async Task<long> CountTotalQuestionsAsync()
         {
             var questionCounts = await _quizzes.Find(_ => true)

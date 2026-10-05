@@ -197,7 +197,11 @@ void ConfigurePipeline(WebApplication app)
         });
     }
 
-    app.UseHttpsRedirection();
+    // Skip HTTPS redirect in Development so phones on the LAN can use plain HTTP.
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+    }
 
     // JWT Middleware
     app.UseMiddleware<JwtMiddleware>();

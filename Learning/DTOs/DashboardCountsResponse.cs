@@ -7,6 +7,7 @@ namespace LearningBackendAPI.DTOs
         public long TotalBatch { get; set; }
         public long TotalStudyMaterial { get; set; }
         public long TotalVideoMaterial { get; set; }
+        public long TotalQuiz { get; set; }
         public long TotalQuestion { get; set; }
     }
 }

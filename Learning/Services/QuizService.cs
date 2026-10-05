@@ -49,6 +49,37 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException("Course not found");
             }
 
+            if (request.File != null && request.File.Length > 0)
+            {
+                if (request.Questions != null && request.Questions.Count > 0)
+                {
+                    throw new InvalidOperationException("Pass either questions or a file, not both");
+                }
+
+                var parsed = ParseDocx(request.File);
+                if (parsed.Questions.Count == 0)
+                {
+                    var first = parsed.Skipped.First();
+                    throw new InvalidOperationException($"None of the {parsed.TotalFound} questions could be read. Question {first.DocumentNumber}: {first.Reason}");
+                }
+
+                request.Questions = parsed.Questions.Select(q => new QuizQuestionInput
+                {
+                    QuestionText = q.QuestionText,
+                    OptionA = q.OptionA,
+                    OptionB = q.OptionB,
+                    OptionC = q.OptionC,
+                    OptionD = q.OptionD,
+                    CorrectOption = q.CorrectOption,
+                    Mark = 1
+                }).ToList();
+
+                if (string.IsNullOrWhiteSpace(request.Title))
+                {
+                    request.Title = Path.GetFileNameWithoutExtension(request.File.FileName);
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(request.Title))
             {
                 throw new InvalidOperationException("Title is required");
@@ -89,6 +120,61 @@ namespace LearningBackendAPI.Services
             };
 
             return await _quizRepository.CreateAsync(quiz);
+        }
+
+        // Reads the questions out of an uploaded Word file. Saves nothing.
+        private static DocxQuizParseResult ParseDocx(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                throw new InvalidOperationException("A .docx file is required");
+            }
+
+            if (!string.Equals(Path.GetExtension(file.FileName), ".docx", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Only .docx (Word) files are supported - re-save older .doc files as .docx");
+            }
+
+            DocxQuizParseResult parsed;
+            try
+            {
+                using var stream = file.OpenReadStream();
+                parsed = DocxQuizParser.Parse(stream);
+            }
+            catch (InvalidDataException)
+            {
+                throw new InvalidOperationException("This is not a valid .docx file");
+            }
+
+            if (parsed.TotalFound == 0)
+            {
+                throw new InvalidOperationException("No questions found. Each question must start on a new line with its number, e.g. \"1. Question text\", followed by A) B) C) D) options with the correct one marked ✔");
+            }
+
+            return parsed;
+        }
+
+        public Task<QuizImportPreviewResponse> PreviewDocxQuizAsync(IFormFile? file)
+        {
+            var parsed = ParseDocx(file);
+
+            return Task.FromResult(new QuizImportPreviewResponse
+            {
+                TotalFoundInDocument = parsed.TotalFound,
+                Readable = parsed.Questions.Count,
+                Questions = parsed.Questions.Select(q => new QuizImportQuestionDto
+                {
+                    DocumentNumber = q.DocumentNumber,
+                    QuestionText = q.QuestionText,
+                    OptionA = q.OptionA,
+                    OptionB = q.OptionB,
+                    OptionC = q.OptionC,
+                    OptionD = q.OptionD,
+                    CorrectOption = q.CorrectOption
+                }).ToList(),
+                Skipped = parsed.Skipped.Select(i => new QuizImportIssueDto { DocumentNumber = i.DocumentNumber, Reason = i.Reason }).ToList(),
+                Warnings = parsed.Warnings.Select(i => new QuizImportIssueDto { DocumentNumber = i.DocumentNumber, Reason = i.Reason }).ToList()
+            });
         }
 
         public async Task<Quiz> CopyQuizAsync(QuizCopyRequest request)
@@ -238,6 +324,12 @@ namespace LearningBackendAPI.Services
                 {
                     throw new InvalidOperationException(Constants.Messages.InvalidMark);
                 }
+
+                if (string.Equals(q.CorrectOption, "D", StringComparison.OrdinalIgnoreCase) &&
+                    string.IsNullOrWhiteSpace(q.OptionD) && q.OptionDImage == null)
+                {
+                    throw new InvalidOperationException("Option D cannot be the correct answer when it is empty");
+                }
             }
 
             var items = new List<QuizQuestionItem>();
@@ -253,7 +345,7 @@ namespace LearningBackendAPI.Services
                     OptionA = q.OptionA.Trim(),
                     OptionB = q.OptionB.Trim(),
                     OptionC = q.OptionC.Trim(),
-                    OptionD = q.OptionD.Trim(),
+                    OptionD = (q.OptionD ?? "").Trim(),
                     CorrectOption = string.IsNullOrWhiteSpace(q.CorrectOption) ? null : q.CorrectOption.ToUpperInvariant(),
                     Mark = q.Mark ?? 1
                 };
@@ -295,7 +387,7 @@ namespace LearningBackendAPI.Services
             return (url, key);
         }
 
-        public async Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt)
+        public async Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt, bool shuffleQuestions = true)
         {
             var quiz = await _quizRepository.GetByIdAsync(id);
             if (quiz == null)
@@ -318,8 +410,9 @@ namespace LearningBackendAPI.Services
                 string.IsNullOrWhiteSpace(q.OptionA) ||
                 string.IsNullOrWhiteSpace(q.OptionB) ||
                 string.IsNullOrWhiteSpace(q.OptionC) ||
-                string.IsNullOrWhiteSpace(q.OptionD) ||
-                string.IsNullOrWhiteSpace(q.CorrectOption));
+                string.IsNullOrWhiteSpace(q.CorrectOption) ||
+                // Option D is optional, but it can't be the correct answer if it's empty
+                (q.CorrectOption == "D" && string.IsNullOrWhiteSpace(q.OptionD) && string.IsNullOrWhiteSpace(q.OptionDImageUrl)));
 
             if (incomplete)
             {
@@ -330,6 +423,7 @@ namespace LearningBackendAPI.Services
             quiz.PublishedAt = DateTime.UtcNow;
             quiz.ExpiresAt = expiresAt;
             quiz.PublishVersion += 1;
+            quiz.ShuffleQuestions = shuffleQuestions;
 
             await _quizRepository.UpdateAsync(id, quiz);
             return quiz;
@@ -343,13 +437,12 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
             }
 
-            if (quiz.Status != Constants.QuizStatuses.Draft)
-            {
-                throw new InvalidOperationException(Constants.Messages.QuizNotDraft);
-            }
+            // Students' submitted attempts are kept (their saved results still show the question
+            // images), so the images are only removed from S3 when nobody has attempted the quiz.
+            var hasAttempts = (await _quizAttemptRepository.GetByQuizIdAsync(id)).Count > 0;
 
             var deleted = await _quizRepository.DeleteAsync(id);
-            if (deleted)
+            if (deleted && !hasAttempts)
             {
                 foreach (var q in quiz.Questions)
                 {
@@ -405,7 +498,7 @@ namespace LearningBackendAPI.Services
                 .ToList();
 
             var filtered = TextSearchHelper.ApplyFilter(published, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
-            var accessible = filtered.Select(ToStudentResponse).ToList();
+            var accessible = filtered.Select(q => ToStudentResponse(q, userId)).ToList();
 
             return PagingHelper.ToPagedResult(accessible, pageNumber, pageSize);
         }
@@ -423,7 +516,7 @@ namespace LearningBackendAPI.Services
                 throw new UnauthorizedAccessException(Constants.Messages.NoCourseAccess);
             }
 
-            return ToStudentResponse(quiz);
+            return ToStudentResponse(quiz, userId);
         }
 
         public async Task<QuizResultResponse> SubmitQuizAsync(string quizId, string userId, QuizSubmitRequest request)
@@ -692,7 +785,32 @@ namespace LearningBackendAPI.Services
                 (string.IsNullOrWhiteSpace(quiz.BatchId) || quiz.BatchId == e.BatchId));
         }
 
-        private static QuizStudentResponse ToStudentResponse(Quiz quiz)
+        // A quiz published with shuffling shows every student the same questions in their own order.
+        // The order is derived from (quiz, publish version, student), so it never changes between
+        // requests for the same student, but differs between students. Answers are still submitted by
+        // the question's fixed QuestionNumber, so scoring and rank lists are unaffected.
+        private static List<QuizQuestionItem> OrderForStudent(Quiz quiz, string userId)
+        {
+            var questions = quiz.Questions.OrderBy(q => q.QuestionNumber).ToList();
+            if (!quiz.ShuffleQuestions || questions.Count < 2)
+            {
+                return questions;
+            }
+
+            var hash = System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes($"{quiz.Id}|{quiz.PublishVersion}|{userId}"));
+            var random = new Random(BitConverter.ToInt32(hash, 0));
+
+            for (var i = questions.Count - 1; i > 0; i--)
+            {
+                var j = random.Next(i + 1);
+                (questions[i], questions[j]) = (questions[j], questions[i]);
+            }
+
+            return questions;
+        }
+
+        private static QuizStudentResponse ToStudentResponse(Quiz quiz, string userId)
         {
             return new QuizStudentResponse
             {
@@ -705,8 +823,9 @@ namespace LearningBackendAPI.Services
                 ExpiresAt = quiz.ExpiresAt,
                 IsExpired = quiz.IsExpired,
                 TimeLeftSeconds = quiz.TimeLeftSeconds,
-                Questions = quiz.Questions.Select(q => new QuizStudentQuestionDto
+                Questions = OrderForStudent(quiz, userId).Select((q, position) => new QuizStudentQuestionDto
                 {
+                    DisplayNumber = position + 1,
                     QuestionNumber = q.QuestionNumber,
                     QuestionText = q.QuestionText,
                     QuestionImageUrl = q.QuestionImageUrl,
@@ -716,7 +835,7 @@ namespace LearningBackendAPI.Services
                     OptionBImageUrl = q.OptionBImageUrl,
                     OptionC = q.OptionC,
                     OptionCImageUrl = q.OptionCImageUrl,
-                    OptionD = q.OptionD,
+                    OptionD = string.IsNullOrWhiteSpace(q.OptionD) ? null : q.OptionD,
                     OptionDImageUrl = q.OptionDImageUrl,
                     Mark = q.Mark
                 }).ToList()
@@ -743,7 +862,7 @@ namespace LearningBackendAPI.Services
                         OptionBImageUrl = q.OptionBImageUrl,
                         OptionC = q.OptionC,
                         OptionCImageUrl = q.OptionCImageUrl,
-                        OptionD = q.OptionD,
+                        OptionD = string.IsNullOrWhiteSpace(q.OptionD) ? null : q.OptionD,
                         OptionDImageUrl = q.OptionDImageUrl,
                         Mark = q.Mark,
                         SelectedOption = selected,

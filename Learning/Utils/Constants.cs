@@ -34,7 +34,7 @@
             public const string QuizAlreadyPublished = "This quiz has already been published";
             public const string RankListNotForFreeQuiz = "Rank list is not available for free quizzes";
             public const string QuizNotAttempted = "You have not submitted this quiz yet";
-            public const string QuizIncomplete = "Every question must have text, all four options, and a correct answer selected before publishing";
+            public const string QuizIncomplete = "Every question must have text, options A, B and C (D is optional), and a correct answer selected before publishing";
             public const string QuizExpiryRequired = "Expiry date and time must be a valid date in the future";
             public const string InvalidOption = "Selected option must be A, B, C, or D";
             public const string InvalidMark = "Mark must be a positive number";

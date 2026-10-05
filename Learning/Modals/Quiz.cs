@@ -89,6 +89,10 @@ namespace LearningBackendAPI.Models
         [BsonElement("quizToView")]
         public string QuizToView { get; set; }
 
+        // Set at publish time: each student sees the questions in their own (stable) shuffled order
+        [BsonElement("shuffleQuestions")]
+        public bool ShuffleQuestions { get; set; }
+
         [BsonElement("publishVersion")]
         public int PublishVersion { get; set; } = 0;
 

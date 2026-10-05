@@ -32,7 +32,9 @@ namespace LearningBackendAPI.Controllers
         /// accepts a "mark" (defaults to 1 if omitted); the rank list and a student's score are
         /// based on marks scored, not just the count of correct answers. quizToView is "Paid"
         /// (default - requires a verified enrollment in the quiz's course) or "Free" (visible and
-        /// attemptable by any student regardless of course purchase).
+        /// attemptable by any student regardless of course purchase). Instead of typing questions, pass a
+        /// Word (.docx) in the "file" field to read them from the document (1 mark each) - preview the file
+        /// first with POST /api/Quiz/import; questions that can't be read are left out.
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
@@ -43,6 +45,31 @@ namespace LearningBackendAPI.Controllers
             {
                 var quiz = await _quizService.CreateQuizAsync(request);
                 return Ok(_responseHelper.Success(quiz, "Quiz created successfully"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Read the questions out of a Word (.docx) file and return them, WITHOUT creating a quiz (Admin
+        /// only) - use it to check the file before creating the quiz. Layout expected: each question
+        /// starts on a new line with its number ("1. Question text"), followed by A) B) C) D) options
+        /// (D is optional), with the correct option marked with a tick. "(விளக்கம்: ...)" explanations
+        /// are ignored. Questions that can't be read are listed in "skipped" and doubtful ones in
+        /// "warnings", using the numbers from the document. To create the quiz, call POST /api/Quiz
+        /// with the same file in its "file" field. Form field: file.
+        /// </summary>
+        [HttpPost("import")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        [RequestSizeLimit(10 * 1024 * 1024)]
+        public async Task<IActionResult> ImportQuiz([FromForm] QuizImportRequest request)
+        {
+            try
+            {
+                var result = await _quizService.PreviewDocxQuizAsync(request.File);
+                return Ok(_responseHelper.Success(result, $"{result.Readable} of {result.TotalFoundInDocument} questions read from the document"));
             }
             catch (InvalidOperationException ex)
             {
@@ -108,7 +135,7 @@ namespace LearningBackendAPI.Controllers
         {
             try
             {
-                var quiz = await _quizService.PublishQuizAsync(id, request?.ExpiresAt ?? default);
+                var quiz = await _quizService.PublishQuizAsync(id, request?.ExpiresAt ?? default, request?.ShuffleQuestions ?? true);
                 return Ok(_responseHelper.Success(quiz, "Quiz published successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -122,7 +149,8 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Delete a draft quiz (Admin only, published quizzes cannot be deleted)
+        /// Delete a quiz, Draft or Published (Admin only). Students' submitted results are kept; the quiz's
+        /// question images are removed only if no student has attempted it.
         /// </summary>
         [HttpDelete("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]

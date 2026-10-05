@@ -6,6 +6,7 @@ namespace LearningBackendAPI.Repositories
     {
         Task<Quiz> GetByIdAsync(string id);
         Task<List<Quiz>> GetAllAsync();
+        Task<long> CountAsync();
         Task<long> CountTotalQuestionsAsync();
         Task<List<Quiz>> GetByCourseIdsAsync(List<string> courseIds);
         Task<Quiz> CreateAsync(Quiz quiz);
