@@ -201,6 +201,22 @@
   },
   {
     "ContainingType": "LearningBackendAPI.Controllers.EnrollmentController",
+    "Method": "Enroll",
+    "RelativePath": "api/Enrollment",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.EnrollRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.EnrollmentController",
     "Method": "GetEnrollmentById",
     "RelativePath": "api/Enrollment/{id}",
     "HttpMethod": "GET",
@@ -382,6 +398,11 @@
         "IsRequired": false
       },
       {
+        "Name": "BatchId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
         "Name": "Title",
         "Type": "System.String",
         "IsRequired": false
@@ -411,6 +432,11 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "BatchId",
+        "Type": "System.String",
+        "IsRequired": false
       },
       {
         "Name": "Title",
@@ -511,6 +537,11 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "batchId",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -527,6 +558,11 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "batchId",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -547,6 +583,22 @@
       {
         "Name": "request",
         "Type": "LearningBackendAPI.DTOs.QuizSubmitRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizController",
+    "Method": "CopyQuiz",
+    "RelativePath": "api/Quiz/copy",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizCopyRequest",
         "IsRequired": true
       }
     ],

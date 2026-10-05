@@ -340,6 +340,35 @@
             "description": "Success"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Enrollment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnrollRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnrollRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnrollRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
       }
     },
     "/api/Enrollment/my": {
@@ -655,6 +684,9 @@
                   "CourseId": {
                     "type": "string"
                   },
+                  "BatchId": {
+                    "type": "string"
+                  },
                   "Title": {
                     "type": "string"
                   },
@@ -673,6 +705,9 @@
                 "CourseId": {
                   "style": "form"
                 },
+                "BatchId": {
+                  "style": "form"
+                },
                 "Title": {
                   "style": "form"
                 },
@@ -682,6 +717,37 @@
                 "Questions": {
                   "style": "form"
                 }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Quiz/copy": {
+      "post": {
+        "tags": [
+          "Quiz"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizCopyRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizCopyRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizCopyRequest"
               }
             }
           }
@@ -715,6 +781,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "BatchId": {
+                    "type": "string"
+                  },
                   "Title": {
                     "type": "string"
                   },
@@ -730,6 +799,9 @@
                 }
               },
               "encoding": {
+                "BatchId": {
+                  "style": "form"
+                },
                 "Title": {
                   "style": "form"
                 },
@@ -944,6 +1016,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "batchId",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -964,6 +1044,14 @@
             "in": "path",
             "required": true,
             "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "batchId",
+            "in": "query",
+            "style": "form",
             "schema": {
               "type": "string"
             }
@@ -1580,6 +1668,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "whatsAppLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "telegramLink": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1633,6 +1729,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "whatsAppLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "telegramLink": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1665,6 +1769,20 @@
           "courseAmount": {
             "type": "number",
             "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollRequest": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "nullable": true
+          },
+          "batchId": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -1816,6 +1934,24 @@
         },
         "additionalProperties": false
       },
+      "QuizCopyRequest": {
+        "type": "object",
+        "properties": {
+          "quizId": {
+            "type": "string",
+            "nullable": true
+          },
+          "batchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "QuizPublishRequest": {
         "type": "object",
         "properties": {
@@ -1948,14 +2084,6 @@
             "nullable": true
           },
           "district": {
-            "type": "string",
-            "nullable": true
-          },
-          "courseId": {
-            "type": "string",
-            "nullable": true
-          },
-          "batchId": {
             "type": "string",
             "nullable": true
           },

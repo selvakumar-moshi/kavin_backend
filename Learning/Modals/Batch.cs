@@ -25,6 +25,12 @@ namespace LearningBackendAPI.Models
         [BsonElement("batchTo")]
         public DateTime BatchTo { get; set; }
 
+        [BsonElement("whatsAppLink")]
+        public string? WhatsAppLink { get; set; }
+
+        [BsonElement("telegramLink")]
+        public string? TelegramLink { get; set; }
+
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; }
 

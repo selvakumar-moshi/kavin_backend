@@ -9,24 +9,15 @@ namespace LearningBackendAPI.Services
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
-        private readonly ICourseRepository _courseRepository;
-        private readonly IEnrollmentRepository _enrollmentRepository;
-        private readonly IBatchRepository _batchRepository;
         private readonly ICounterRepository _counterRepository;
         private readonly IJwtService _jwtService;
 
         public AuthService(
             IUserRepository userRepository,
-            ICourseRepository courseRepository,
-            IEnrollmentRepository enrollmentRepository,
-            IBatchRepository batchRepository,
             ICounterRepository counterRepository,
             IJwtService jwtService)
         {
             _userRepository = userRepository;
-            _courseRepository = courseRepository;
-            _enrollmentRepository = enrollmentRepository;
-            _batchRepository = batchRepository;
             _counterRepository = counterRepository;
             _jwtService = jwtService;
         }
@@ -62,28 +53,6 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException("Email is already registered");
             }
 
-            var course = await _courseRepository.GetByIdAsync(request.CourseId);
-            if (course == null)
-            {
-                throw new InvalidOperationException("Course not found");
-            }
-
-            var batch = await _batchRepository.GetByIdAsync(request.BatchId);
-            if (batch == null)
-            {
-                throw new InvalidOperationException(Constants.Messages.BatchNotFound);
-            }
-
-            if (batch.CourseId != course.Id)
-            {
-                throw new InvalidOperationException(Constants.Messages.BatchCourseMismatch);
-            }
-
-            if (batch.IsExpired)
-            {
-                throw new InvalidOperationException(Constants.Messages.BatchExpired);
-            }
-
             // Hash password
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -103,21 +72,6 @@ namespace LearningBackendAPI.Services
             };
 
             var createdUser = await _userRepository.CreateAsync(user);
-
-            var enrollment = new Enrollment
-            {
-                UserId = createdUser.Id,
-                CourseId = course.Id,
-                CourseName = course.CourseName,
-                BatchId = batch.Id,
-                BatchTitle = batch.Title,
-                CourseAmount = course.CourseAmount,
-                TotalAmount = course.CourseAmount,
-                Status = Constants.EnrollmentStatuses.Pending,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _enrollmentRepository.CreateAsync(enrollment);
 
             return MapToUserDto(createdUser);
         }

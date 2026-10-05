@@ -32,6 +32,14 @@ namespace LearningBackendAPI.Models
         [BsonElement("userId")]
         public string UserId { get; set; }
 
+        // The student's batch at the moment they submitted, so results stay attached to that
+        // batch even if the quiz is later moved to a different one.
+        [BsonElement("batchId")]
+        public string? BatchId { get; set; }
+
+        [BsonElement("batchTitle")]
+        public string? BatchTitle { get; set; }
+
         [BsonElement("answers")]
         public List<QuizAnswerItem> Answers { get; set; } = new();
 

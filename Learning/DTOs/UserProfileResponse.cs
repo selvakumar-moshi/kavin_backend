@@ -36,5 +36,17 @@ namespace LearningBackendAPI.DTOs
         public DateTime? VerifiedAt { get; set; }
         public List<StudyMaterial> StudyMaterials { get; set; } = new();
         public List<VideoMaterial> VideoMaterials { get; set; } = new();
+
+        // Batches of this course the student can be moved to (admin view only): not ended, and not
+        // the batch they are already in. Pass one as batchId to PUT /api/User/{id}.
+        public List<AllowedBatchDto>? AllowedBatches { get; set; }
+    }
+
+    public class AllowedBatchDto
+    {
+        public string BatchId { get; set; }
+        public string Title { get; set; }
+        public DateTime BatchFrom { get; set; }
+        public DateTime BatchTo { get; set; }
     }
 }

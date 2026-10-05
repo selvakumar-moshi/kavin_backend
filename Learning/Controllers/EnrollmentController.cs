@@ -36,6 +36,25 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
+        /// Student picks a course and batch to enroll in. Creates a Pending enrollment - the student
+        /// then uploads the payment screenshot and the admin verifies it. Body: { courseId, batchId }.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> Enroll([FromBody] EnrollRequest request)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                var enrollment = await _enrollmentService.EnrollAsync(userId, request.CourseId, request.BatchId);
+                return Ok(_responseHelper.Success(enrollment, "Enrolled successfully. Please upload your payment screenshot."));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
         /// Get the current logged-in student's own enrollments
         /// </summary>
         [HttpGet("my")]

@@ -69,6 +69,23 @@ namespace LearningBackendAPI.Services
             return (url, key);
         }
 
+        public async Task<(string Url, string Key)> CopyAsync(string sourceKey, string folder)
+        {
+            // Unique name so the copy never overwrites (or is overwritten by) another file
+            var key = $"{folder}/{Guid.NewGuid():N}_{Path.GetFileName(sourceKey)}";
+
+            await _s3Client.CopyObjectAsync(new CopyObjectRequest
+            {
+                SourceBucket = _settings.BucketName,
+                SourceKey = sourceKey,
+                DestinationBucket = _settings.BucketName,
+                DestinationKey = key
+            });
+
+            var url = $"https://{_settings.BucketName}.s3.{_settings.Region}.amazonaws.com/{key}";
+            return (url, key);
+        }
+
         public async Task DeleteAsync(string key)
         {
             if (string.IsNullOrWhiteSpace(key))

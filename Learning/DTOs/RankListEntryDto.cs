@@ -7,6 +7,8 @@ namespace LearningBackendAPI.DTOs
         public string FirstName { get; set; } = "";
         public string LastName { get; set; } = "";
         public string? District { get; set; }
+        public string? BatchId { get; set; }
+        public string? BatchTitle { get; set; }
         public string ProfileImage { get; set; } = "";
         public int CorrectCount { get; set; }
         public int TotalQuestions { get; set; }

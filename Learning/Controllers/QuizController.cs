@@ -51,6 +51,30 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
+        /// Copy an existing quiz (questions, answers, marks, images) into another batch of the same
+        /// course as a new Draft (Admin only). The original quiz and its results are untouched; publish
+        /// the copy with its own expiry. Body: { quizId, batchId, title (optional - defaults to the original title) }.
+        /// </summary>
+        [HttpPost("copy")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        public async Task<IActionResult> CopyQuiz([FromBody] QuizCopyRequest request)
+        {
+            try
+            {
+                var quiz = await _quizService.CopyQuizAsync(request);
+                return Ok(_responseHelper.Success(quiz, "Quiz copied successfully"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
         /// Edit a quiz's title/questions/correct answers (Admin only). Draft quizzes are edited in place.
         /// Editing a published quiz takes it offline (back to Draft, clearing its publish/expiry state) -
         /// call publish again afterwards, with a new expiry, to make the updated version live.
@@ -229,16 +253,20 @@ namespace LearningBackendAPI.Controllers
         /// Get the rank list (leaderboard) for a quiz
         /// </summary>
         [HttpGet("{id}/rank-list")]
-        public async Task<IActionResult> GetRankList(string id)
+        public async Task<IActionResult> GetRankList(string id, [FromQuery] string? batchId = null)
         {
             try
             {
-                var rankList = await _quizService.GetRankListAsync(id, CurrentUserId, IsAdmin);
+                var rankList = await _quizService.GetRankListAsync(id, CurrentUserId, IsAdmin, batchId);
                 return Ok(_responseHelper.Success(rankList, "Rank list retrieved successfully"));
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -251,16 +279,20 @@ namespace LearningBackendAPI.Controllers
         /// </summary>
         [HttpGet("{id}/rank-list/download")]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public async Task<IActionResult> DownloadRankList(string id)
+        public async Task<IActionResult> DownloadRankList(string id, [FromQuery] string? batchId = null)
         {
             try
             {
-                var (content, fileName) = await _quizService.ExportRankListAsync(id, CurrentUserId, IsAdmin);
+                var (content, fileName) = await _quizService.ExportRankListAsync(id, CurrentUserId, IsAdmin, batchId);
                 return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
             }
             catch (UnauthorizedAccessException ex)
             {

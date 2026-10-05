@@ -51,6 +51,8 @@ namespace LearningBackendAPI.Services
                 CourseName = course.CourseName,
                 BatchFrom = request.BatchFrom.Value.Date,
                 BatchTo = request.BatchTo.Value.Date,
+                WhatsAppLink = NormalizeLink(request.WhatsAppLink),
+                TelegramLink = NormalizeLink(request.TelegramLink),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -96,8 +98,24 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException(Constants.Messages.BatchDateRangeInvalid);
             }
 
+            // null = leave unchanged; empty string = clear the link
+            if (request.WhatsAppLink != null)
+            {
+                batch.WhatsAppLink = NormalizeLink(request.WhatsAppLink);
+            }
+
+            if (request.TelegramLink != null)
+            {
+                batch.TelegramLink = NormalizeLink(request.TelegramLink);
+            }
+
             await _batchRepository.UpdateAsync(id, batch);
             return batch;
+        }
+
+        private static string? NormalizeLink(string? link)
+        {
+            return string.IsNullOrWhiteSpace(link) ? null : link.Trim();
         }
 
         private static readonly Dictionary<string, Func<Batch, string?>> SearchFields = new()

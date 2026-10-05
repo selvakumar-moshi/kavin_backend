@@ -6,6 +6,8 @@ namespace LearningBackendAPI.DTOs
         public string? CourseId { get; set; }
         public DateTime? BatchFrom { get; set; }
         public DateTime? BatchTo { get; set; }
+        public string? WhatsAppLink { get; set; }
+        public string? TelegramLink { get; set; }
     }
 
     public class BatchUpdateRequest
@@ -14,5 +16,7 @@ namespace LearningBackendAPI.DTOs
         public string? CourseId { get; set; }
         public DateTime? BatchFrom { get; set; }
         public DateTime? BatchTo { get; set; }
+        public string? WhatsAppLink { get; set; }
+        public string? TelegramLink { get; set; }
     }
 }

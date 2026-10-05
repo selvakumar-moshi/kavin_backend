@@ -12,6 +12,7 @@ namespace LearningBackendAPI.Services
         private readonly IUserRepository _userRepository;
         private readonly IExcelExportService _excelExportService;
         private readonly IFileStorageService _fileStorageService;
+        private readonly IBatchRepository _batchRepository;
 
         private const long MaxScreenshotSizeInBytes = 5 * 1024 * 1024; // 5 MB
         private const string PaymentFolder = "coaching/payment";
@@ -21,8 +22,10 @@ namespace LearningBackendAPI.Services
             ICourseRepository courseRepository,
             IUserRepository userRepository,
             IExcelExportService excelExportService,
-            IFileStorageService fileStorageService)
+            IFileStorageService fileStorageService,
+            IBatchRepository batchRepository)
         {
+            _batchRepository = batchRepository;
             _fileStorageService = fileStorageService;
             _enrollmentRepository = enrollmentRepository;
             _courseRepository = courseRepository;
@@ -96,6 +99,69 @@ namespace LearningBackendAPI.Services
 
             await _enrollmentRepository.UpdateAsync(id, enrollment);
             return enrollment;
+        }
+
+        public async Task<Enrollment> EnrollAsync(string userId, string? courseId, string? batchId)
+        {
+            if (string.IsNullOrWhiteSpace(courseId))
+            {
+                throw new InvalidOperationException("Course is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(batchId))
+            {
+                throw new InvalidOperationException("Batch is required");
+            }
+
+            var course = await _courseRepository.GetByIdAsync(courseId);
+            if (course == null)
+            {
+                throw new InvalidOperationException(Constants.Messages.CourseNotFound);
+            }
+
+            var batch = await _batchRepository.GetByIdAsync(batchId);
+            if (batch == null)
+            {
+                throw new InvalidOperationException(Constants.Messages.BatchNotFound);
+            }
+
+            if (batch.CourseId != course.Id)
+            {
+                throw new InvalidOperationException(Constants.Messages.BatchCourseMismatch);
+            }
+
+            if (batch.IsExpired)
+            {
+                throw new InvalidOperationException(Constants.Messages.BatchExpired);
+            }
+
+            // A student can't pick a different batch (or re-activate a drop) on their own - once
+            // enrolled in a course, batch changes and rejoins go through the admin.
+            var existing = (await _enrollmentRepository.GetByUserIdAsync(userId))
+                .Where(e => e.CourseId == course.Id)
+                .ToList();
+            if (existing.Any(e => e.Status != Constants.EnrollmentStatuses.Dropped))
+            {
+                throw new InvalidOperationException(Constants.Messages.CourseAlreadyEnrolled);
+            }
+            if (existing.Count > 0)
+            {
+                throw new InvalidOperationException(Constants.Messages.EnrollmentDropped);
+            }
+
+            var enrollment = new Enrollment
+            {
+                UserId = userId,
+                CourseId = course.Id,
+                CourseName = course.CourseName,
+                BatchId = batch.Id,
+                BatchTitle = batch.Title,
+                CourseAmount = course.CourseAmount,
+                TotalAmount = course.CourseAmount,
+                Status = Constants.EnrollmentStatuses.Pending
+            };
+
+            return await _enrollmentRepository.CreateAsync(enrollment);
         }
 
         public async Task<Enrollment> UploadPaymentAttachmentAsync(string id, string userId, IFormFile file)

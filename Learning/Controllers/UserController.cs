@@ -64,7 +64,7 @@ namespace LearningBackendAPI.Controllers
         {
             try
             {
-                var user = await _userService.GetUserProfileAsync(id);
+                var user = await _userService.GetUserProfileAsync(id, includeAllowedBatches: true);
                 return Ok(_responseHelper.Success(user, "User details retrieved successfully"));
             }
             catch (KeyNotFoundException ex)

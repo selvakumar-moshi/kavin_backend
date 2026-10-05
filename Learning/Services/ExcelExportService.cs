@@ -7,7 +7,7 @@ namespace LearningBackendAPI.Services
     {
         private static readonly string[] RankListHeaders =
         {
-            "Student Name", "District", "Correct Answers", "Wrong Answers", "Total Questions", "Marks Scored", "Total Marks", "Score", "Rank"
+            "Student Name", "District", "Correct Answers", "Wrong Answers", "Total Questions", "Marks Scored", "Total Marks", "Score", "Rank", "Batch"
         };
 
         private static readonly string[] CourseEnrollmentHeaders =
@@ -15,9 +15,12 @@ namespace LearningBackendAPI.Services
             "Application No","Student Name","District", "Email","Phone Number", "Batch", "Status"
         };
 
-        public byte[] GenerateRankListExcel(string quizTitle, List<RankListEntryDto> rankList)
+        public byte[] GenerateRankListExcel(string quizTitle, string? batchTitle, List<RankListEntryDto> rankList)
         {
-            using var workbook = CreateTemplate("Rank List", $"Rank List - {quizTitle}", RankListHeaders);
+            var title = string.IsNullOrWhiteSpace(batchTitle)
+                ? $"Rank List - {quizTitle}"
+                : $"Rank List - {quizTitle} ({batchTitle})";
+            using var workbook = CreateTemplate("Rank List", title, RankListHeaders);
             var worksheet = workbook.Worksheet(1);
 
             FillRankListRows(worksheet, rankList);
@@ -72,6 +75,7 @@ namespace LearningBackendAPI.Services
                 var row = firstDataRow + i;
 
                 worksheet.Cell(row, 1).Value = $"{entry.FirstName} {entry.LastName}".Trim();
+                worksheet.Cell(row, 10).Value = entry.BatchTitle ?? "";
                 worksheet.Cell(row, 2).Value = entry.District ?? "";
                 worksheet.Cell(row, 3).Value = entry.CorrectCount;
                 worksheet.Cell(row, 4).Value = entry.TotalQuestions - entry.CorrectCount;

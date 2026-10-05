@@ -80,7 +80,7 @@ namespace LearningBackendAPI.Services
             return MapToUserDto(user);
         }
 
-        public async Task<UserProfileResponse> GetUserProfileAsync(string id)
+        public async Task<UserProfileResponse> GetUserProfileAsync(string id, bool includeAllowedBatches = false)
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
@@ -91,6 +91,8 @@ namespace LearningBackendAPI.Services
             var enrollments = await _enrollmentRepository.GetByUserIdAsync(id);
             var courses = new List<EnrolledCourseDto>();
 
+            var batchesByCourse = new Dictionary<string, List<Batch>>();
+
             foreach (var enrollment in enrollments)
             {
                 var isVerified = enrollment.Status == Constants.EnrollmentStatuses.Verified;
@@ -100,6 +102,28 @@ namespace LearningBackendAPI.Services
                 var videoMaterials = isVerified
                     ? await _videoMaterialRepository.GetByCourseIdAsync(enrollment.CourseId)
                     : new List<VideoMaterial>();
+
+                List<AllowedBatchDto>? allowedBatches = null;
+                if (includeAllowedBatches)
+                {
+                    if (!batchesByCourse.TryGetValue(enrollment.CourseId, out var courseBatches))
+                    {
+                        courseBatches = await _batchRepository.GetByCourseIdAsync(enrollment.CourseId);
+                        batchesByCourse[enrollment.CourseId] = courseBatches;
+                    }
+
+                    allowedBatches = courseBatches
+                        .Where(b => !b.IsExpired && b.Id != enrollment.BatchId)
+                        .OrderBy(b => b.BatchFrom)
+                        .Select(b => new AllowedBatchDto
+                        {
+                            BatchId = b.Id,
+                            Title = b.Title,
+                            BatchFrom = b.BatchFrom,
+                            BatchTo = b.BatchTo
+                        })
+                        .ToList();
+                }
 
                 courses.Add(new EnrolledCourseDto
                 {
@@ -116,7 +140,8 @@ namespace LearningBackendAPI.Services
                     EnrollmentStatus = enrollment.Status,
                     VerifiedAt = enrollment.VerifiedAt,
                     StudyMaterials = studyMaterials,
-                    VideoMaterials = videoMaterials
+                    VideoMaterials = videoMaterials,
+                    AllowedBatches = allowedBatches
                 });
             }
 
@@ -228,21 +253,20 @@ namespace LearningBackendAPI.Services
                     throw new InvalidOperationException(Constants.Messages.BatchNotFound);
                 }
 
-                // A prior enrollment for this course that is still Pending/Verified means the
-                // student is already (or about to be) active in it - block a duplicate. A prior
-                // enrollment that is Dropped means they left and are now rejoining with a
-                // different batch: update that same enrollment record rather than creating a new
-                // one, since the course was already paid for.
+                // An existing enrollment for this course is never duplicated - the same record is
+                // reused, since the course was already paid for:
+                //  - Pending/Verified/Rejected (still active): the student is moved to the new batch,
+                //    keeping their status and payment details. Same batch -> "already enrolled".
+                //  - Dropped: the student is rejoining, so it is re-verified in the new batch.
+                Enrollment? activeEnrollment = null;
                 Enrollment? droppedEnrollment = null;
                 if (enrollmentsByCourse.TryGetValue(request.CourseId, out var courseEnrollments))
                 {
-                    var activeEnrollment = courseEnrollments.FirstOrDefault(e => e.Status != Constants.EnrollmentStatuses.Dropped);
-                    if (activeEnrollment != null)
+                    activeEnrollment = courseEnrollments.FirstOrDefault(e => e.Status != Constants.EnrollmentStatuses.Dropped);
+                    if (activeEnrollment == null)
                     {
-                        throw new InvalidOperationException(Constants.Messages.CourseAlreadyEnrolled);
+                        droppedEnrollment = courseEnrollments.OrderByDescending(e => e.CreatedAt).First();
                     }
-
-                    droppedEnrollment = courseEnrollments.OrderByDescending(e => e.CreatedAt).First();
                 }
 
                 var course = await _courseRepository.GetByIdAsync(request.CourseId);
@@ -265,6 +289,21 @@ namespace LearningBackendAPI.Services
                 if (batch.IsExpired)
                 {
                     throw new InvalidOperationException(Constants.Messages.BatchExpired);
+                }
+
+                if (activeEnrollment != null)
+                {
+                    if (activeEnrollment.BatchId == batch.Id)
+                    {
+                        throw new InvalidOperationException(Constants.Messages.CourseAlreadyEnrolled);
+                    }
+
+                    // Batch change: only the batch moves - status, payment and verification stay.
+                    activeEnrollment.BatchId = batch.Id;
+                    activeEnrollment.BatchTitle = batch.Title;
+
+                    await _enrollmentRepository.UpdateAsync(activeEnrollment.Id, activeEnrollment);
+                    continue;
                 }
 
                 if (droppedEnrollment != null)

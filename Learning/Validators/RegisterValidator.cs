@@ -28,12 +28,6 @@ namespace LearningBackendAPI.Validators
                 .NotEmpty().WithMessage("District is required")
                 .MaximumLength(50).WithMessage("District must not exceed 50 characters");
 
-            RuleFor(x => x.CourseId)
-                .NotEmpty().WithMessage("Course is required");
-
-            RuleFor(x => x.BatchId)
-                .NotEmpty().WithMessage("Batch is required");
-
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Password is required")
                 .MinimumLength(6).WithMessage("Password must be at least 6 characters")

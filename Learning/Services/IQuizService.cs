@@ -6,6 +6,7 @@ namespace LearningBackendAPI.Services
     public interface IQuizService
     {
         Task<Quiz> CreateQuizAsync(QuizCreateRequest request);
+        Task<Quiz> CopyQuizAsync(QuizCopyRequest request);
         Task<Quiz> UpdateQuizAsync(string id, QuizUpdateRequest request);
         Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt);
         Task<bool> DeleteQuizAsync(string id);
@@ -17,7 +18,7 @@ namespace LearningBackendAPI.Services
 
         Task<QuizResultResponse> SubmitQuizAsync(string quizId, string userId, QuizSubmitRequest request);
         Task<QuizResultResponse> GetMyResultAsync(string quizId, string userId);
-        Task<List<RankListEntryDto>> GetRankListAsync(string quizId, string userId, bool isAdmin);
-        Task<(byte[] Content, string FileName)> ExportRankListAsync(string quizId, string userId, bool isAdmin);
+        Task<List<RankListEntryDto>> GetRankListAsync(string quizId, string userId, bool isAdmin, string? batchId = null);
+        Task<(byte[] Content, string FileName)> ExportRankListAsync(string quizId, string userId, bool isAdmin, string? batchId = null);
     }
 }
