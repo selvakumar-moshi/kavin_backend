@@ -1,5 +1,6 @@
 using LearningBackendAPI.DTOs;
 using LearningBackendAPI.Models;
+using LearningBackendAPI.Utils;
 
 namespace LearningBackendAPI.Services
 {
@@ -11,15 +12,15 @@ namespace LearningBackendAPI.Services
         Task<Quiz> UpdateQuizAsync(string id, QuizUpdateRequest request);
         Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt, bool shuffleQuestions = true);
         Task<bool> DeleteQuizAsync(string id);
-        Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize);
+        Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize, QuizClassification? classification = null);
         Task<Quiz> GetQuizByIdForAdminAsync(string id);
 
-        Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize);
+        Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize, QuizClassification? classification = null);
         Task<QuizStudentResponse> GetQuizByIdForStudentAsync(string id, string userId);
 
         Task<QuizResultResponse> SubmitQuizAsync(string quizId, string userId, QuizSubmitRequest request);
         Task<QuizResultResponse> GetMyResultAsync(string quizId, string userId);
-        Task<List<RankListEntryDto>> GetRankListAsync(string quizId, string userId, bool isAdmin, string? batchId = null);
-        Task<(byte[] Content, string FileName)> ExportRankListAsync(string quizId, string userId, bool isAdmin, string? batchId = null);
+        Task<List<RankListEntryDto>> GetRankListAsync(string quizId, string userId, bool isAdmin, RankListRequest? request = null);
+        Task<(byte[] Content, string FileName)> ExportRankListAsync(string quizId, string userId, bool isAdmin, RankListRequest? request = null);
     }
 }

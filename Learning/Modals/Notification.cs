@@ -19,8 +19,13 @@ namespace LearningBackendAPI.Models
         [BsonElement("link")]
         public string? Link { get; set; }
 
+        // "Push Notification" or "Job Notification". Notifications saved before types existed are Push.
+        [BsonElement("notificationType")]
+        public string NotificationType { get; set; } = Utils.Constants.NotificationTypes.Push;
+
+        // Required for Push notifications, optional for Job notifications
         [BsonElement("date")]
-        public DateTime Date { get; set; }
+        public DateTime? Date { get; set; }
 
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; }

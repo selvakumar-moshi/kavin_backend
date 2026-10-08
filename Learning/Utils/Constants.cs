@@ -33,6 +33,9 @@
             public const string QuizNotDraft = "Only a draft quiz can be deleted";
             public const string QuizAlreadyPublished = "This quiz has already been published";
             public const string RankListNotForFreeQuiz = "Rank list is not available for free quizzes";
+            public const string InvalidQuizTypeFilter = "quizType must be 'competitive', 'school' or 'previousYear'";
+            public const string RankListQuizTypeMismatch = "The quiz is not of the requested quizType";
+            public const string RankListFreeViewOnPaidQuiz = "Unpaid students can only be ranked for free quizzes";
             public const string QuizNotAttempted = "You have not submitted this quiz yet";
             public const string QuizIncomplete = "Every question must have text, options A, B and C (D is optional), and a correct answer selected before publishing";
             public const string QuizExpiryRequired = "Expiry date and time must be a valid date in the future";
@@ -71,6 +74,47 @@
             public const string Cash = "Cash";
 
             public static readonly string[] All = { GooglePay, BankTransfer, Cash };
+        }
+
+        // The quiz tabs in the UI: Competitive/Daily, School Book, Previous Year
+        public static class QuizTypes
+        {
+            public const string Competitive = "competitive";
+            public const string School = "school";
+            public const string PreviousYear = "previousYear";
+
+            public static readonly string[] All = { Competitive, School, PreviousYear };
+
+            // Accepts the tab keys or labels in any case/spacing: "school", "School Book", "previous year", "Competitive/Daily" ...
+            public static string? Normalize(string? value)
+            {
+                var key = new string((value ?? "").Where(char.IsLetter).ToArray()).ToLowerInvariant();
+                return key switch
+                {
+                    "competitive" or "competitivedaily" or "daily" => Competitive,
+                    "school" or "schoolbook" => School,
+                    "previousyear" => PreviousYear,
+                    _ => null
+                };
+            }
+        }
+
+        public static class NotificationTypes
+        {
+            public const string Push = "Push Notification";
+            public const string Job = "Job Notification";
+
+            // Accepts the dropdown labels in any case/spacing: "Push Notification", "push", "JobNotification" ...
+            public static string? Normalize(string? value)
+            {
+                var key = (value ?? "").Replace(" ", "").ToLowerInvariant();
+                return key switch
+                {
+                    "push" or "pushnotification" => Push,
+                    "job" or "jobnotification" => Job,
+                    _ => null
+                };
+            }
         }
 
         public static class EnrollmentStatuses

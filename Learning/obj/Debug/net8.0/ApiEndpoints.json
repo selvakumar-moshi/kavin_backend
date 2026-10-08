@@ -300,6 +300,69 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "LearningBackendAPI.Controllers.FolderController",
+    "Method": "GetAll",
+    "RelativePath": "api/Folder",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.FolderController",
+    "Method": "Create",
+    "RelativePath": "api/Folder",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.FolderRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.FolderController",
+    "Method": "Update",
+    "RelativePath": "api/Folder/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.FolderRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.FolderController",
+    "Method": "Delete",
+    "RelativePath": "api/Folder/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "LearningBackendAPI.Controllers.FreeMaterialController",
     "Method": "GetFreeMaterials",
     "RelativePath": "api/FreeMaterial",
@@ -413,6 +476,41 @@
         "IsRequired": false
       },
       {
+        "Name": "QuizType",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Subject",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Category",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Standard",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "Part",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "FolderId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "SubFolderId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
         "Name": "Questions",
         "Type": "System.Collections.Generic.List\u00601[[LearningBackendAPI.DTOs.QuizQuestionInput, Learning, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "IsRequired": false
@@ -450,6 +548,41 @@
       },
       {
         "Name": "QuizToView",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "QuizType",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Subject",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Category",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Standard",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "Part",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "FolderId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "SubFolderId",
         "Type": "System.String",
         "IsRequired": false
       },
@@ -544,7 +677,22 @@
         "IsRequired": true
       },
       {
-        "Name": "batchId",
+        "Name": "body",
+        "Type": "LearningBackendAPI.DTOs.RankListRequest",
+        "IsRequired": false
+      },
+      {
+        "Name": "BatchId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "QuizType",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "QuizToView",
         "Type": "System.String",
         "IsRequired": false
       }
@@ -565,7 +713,22 @@
         "IsRequired": true
       },
       {
-        "Name": "batchId",
+        "Name": "body",
+        "Type": "LearningBackendAPI.DTOs.RankListRequest",
+        "IsRequired": false
+      },
+      {
+        "Name": "BatchId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "QuizType",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "QuizToView",
         "Type": "System.String",
         "IsRequired": false
       }
@@ -591,6 +754,16 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizController",
+    "Method": "GetCategories",
+    "RelativePath": "api/Quiz/categories",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -637,6 +810,264 @@
         "Name": "request",
         "Type": "LearningBackendAPI.DTOs.QuizSearchRequest",
         "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "GetCategories",
+    "RelativePath": "api/QuizStructure/categories",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "subject",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "CreateCategory",
+    "RelativePath": "api/QuizStructure/categories",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizCategoryRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "UpdateCategory",
+    "RelativePath": "api/QuizStructure/categories/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizCategoryRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "DeleteCategory",
+    "RelativePath": "api/QuizStructure/categories/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "GetParts",
+    "RelativePath": "api/QuizStructure/parts",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "CreatePart",
+    "RelativePath": "api/QuizStructure/parts",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizPartRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "UpdatePart",
+    "RelativePath": "api/QuizStructure/parts/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizPartRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "DeletePart",
+    "RelativePath": "api/QuizStructure/parts/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "GetStandards",
+    "RelativePath": "api/QuizStructure/standards",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "CreateStandard",
+    "RelativePath": "api/QuizStructure/standards",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizStandardRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "UpdateStandard",
+    "RelativePath": "api/QuizStructure/standards/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizStandardRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "DeleteStandard",
+    "RelativePath": "api/QuizStructure/standards/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "GetSubjects",
+    "RelativePath": "api/QuizStructure/subjects",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "CreateSubject",
+    "RelativePath": "api/QuizStructure/subjects",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizSubjectRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "UpdateSubject",
+    "RelativePath": "api/QuizStructure/subjects/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.QuizSubjectRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuizStructureController",
+    "Method": "DeleteSubject",
+    "RelativePath": "api/QuizStructure/subjects/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []
@@ -772,6 +1203,75 @@
         "Name": "request",
         "Type": "LearningBackendAPI.DTOs.MaterialSearchRequest",
         "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.SubFolderController",
+    "Method": "GetAll",
+    "RelativePath": "api/SubFolder",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "folderId",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.SubFolderController",
+    "Method": "Create",
+    "RelativePath": "api/SubFolder",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.SubFolderRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.SubFolderController",
+    "Method": "Update",
+    "RelativePath": "api/SubFolder/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.SubFolderRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.SubFolderController",
+    "Method": "Delete",
+    "RelativePath": "api/SubFolder/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []

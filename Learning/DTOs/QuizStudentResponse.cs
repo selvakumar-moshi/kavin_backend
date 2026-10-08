@@ -3,10 +3,19 @@ namespace LearningBackendAPI.DTOs
     public class QuizStudentResponse
     {
         public string Id { get; set; } = "";
-        public string CourseId { get; set; } = "";
-        public string CourseName { get; set; } = "";
+        public string? CourseId { get; set; }
+        public string? CourseName { get; set; }
         public string Title { get; set; } = "";
         public string QuizToView { get; set; } = "";
+        public string? QuizType { get; set; }
+        public string? Subject { get; set; }
+        public string? Category { get; set; }
+        public int? Standard { get; set; }
+        public string? Part { get; set; }
+        public string? FolderId { get; set; }
+        public string? FolderName { get; set; }
+        public string? SubFolderId { get; set; }
+        public string? SubFolderName { get; set; }
         public DateTime? PublishedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
         public bool IsExpired { get; set; }

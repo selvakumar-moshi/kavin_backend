@@ -15,6 +15,8 @@ namespace LearningBackendAPI.Services
         private readonly IFileStorageService _fileStorageService;
         private readonly IExcelExportService _excelExportService;
         private readonly IBatchRepository _batchRepository;
+        private readonly IQuizStructureService _quizStructureService;
+        private readonly IFolderService _folderService;
 
         public QuizService(
             IQuizRepository quizRepository,
@@ -24,9 +26,13 @@ namespace LearningBackendAPI.Services
             IUserRepository userRepository,
             IFileStorageService fileStorageService,
             IExcelExportService excelExportService,
-            IBatchRepository batchRepository)
+            IBatchRepository batchRepository,
+            IQuizStructureService quizStructureService,
+            IFolderService folderService)
         {
+            _folderService = folderService;
             _batchRepository = batchRepository;
+            _quizStructureService = quizStructureService;
             _quizRepository = quizRepository;
             _quizAttemptRepository = quizAttemptRepository;
             _courseRepository = courseRepository;
@@ -38,15 +44,35 @@ namespace LearningBackendAPI.Services
 
         public async Task<Quiz> CreateQuizAsync(QuizCreateRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.CourseId))
+            var quizToView = string.IsNullOrWhiteSpace(request.QuizToView)
+                ? Constants.MaterialAccess.Paid
+                : Constants.MaterialAccess.Normalize(request.QuizToView);
+            var isFree = quizToView == Constants.MaterialAccess.Free;
+
+            // Course and batch are mandatory for a Paid quiz (they decide who can attempt it) and
+            // optional for a Free quiz (open to every student). If a Free quiz still gets them, they're validated.
+            Course? course = null;
+            if (!string.IsNullOrWhiteSpace(request.CourseId))
             {
-                throw new InvalidOperationException("Course is required");
+                course = await _courseRepository.GetByIdAsync(request.CourseId);
+                if (course == null)
+                {
+                    throw new InvalidOperationException("Course not found");
+                }
+            }
+            else if (!isFree)
+            {
+                throw new InvalidOperationException("Course is required for a Paid quiz");
             }
 
-            var course = await _courseRepository.GetByIdAsync(request.CourseId);
-            if (course == null)
+            if (!isFree && string.IsNullOrWhiteSpace(request.BatchId))
             {
-                throw new InvalidOperationException("Course not found");
+                throw new InvalidOperationException("Batch is required for a Paid quiz");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.BatchId) && course == null)
+            {
+                throw new InvalidOperationException("Course is required when a batch is selected");
             }
 
             if (request.File != null && request.File.Length > 0)
@@ -98,22 +124,34 @@ namespace LearningBackendAPI.Services
                 {
                     throw new InvalidOperationException(Constants.Messages.BatchNotFound);
                 }
-                if (batch.CourseId != course.Id)
+                if (batch.CourseId != course!.Id)
                 {
                     throw new InvalidOperationException(Constants.Messages.BatchCourseMismatch);
                 }
             }
 
+            var quizType = Constants.QuizTypes.Normalize(request.QuizType)
+                ?? throw new InvalidOperationException("Quiz type is required: competitive, school or previousYear");
+            var classification = await _quizStructureService.ValidateAsync(request.Subject, request.Category, request.Standard, request.Part);
+            var folder = await ValidateFolderForTypeAsync(quizType, request.FolderId, request.SubFolderId);
+
             var quiz = new Quiz
             {
-                CourseId = course.Id,
-                CourseName = course.CourseName,
+                CourseId = course?.Id,
+                CourseName = course?.CourseName,
                 BatchId = batch?.Id,
                 BatchTitle = batch?.Title,
+                QuizType = quizType,
+                Subject = classification.Subject,
+                Category = classification.Category,
+                Standard = classification.Standard,
+                Part = classification.Part,
+                FolderId = folder.FolderId,
+                FolderName = folder.FolderName,
+                SubFolderId = folder.SubFolderId,
+                SubFolderName = folder.SubFolderName,
                 Title = request.Title.Trim(),
-                QuizToView = string.IsNullOrWhiteSpace(request.QuizToView)
-                    ? Constants.MaterialAccess.Paid
-                    : Constants.MaterialAccess.Normalize(request.QuizToView),
+                QuizToView = quizToView,
                 Status = Constants.QuizStatuses.Draft,
                 Questions = await MapQuestionsAsync(request.Questions, null),
                 CreatedAt = DateTime.UtcNow
@@ -184,25 +222,56 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException("Quiz is required");
             }
 
-            if (string.IsNullOrWhiteSpace(request.BatchId))
-            {
-                throw new InvalidOperationException("Batch is required");
-            }
-
             var source = await _quizRepository.GetByIdAsync(request.QuizId);
             if (source == null)
             {
                 throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
             }
 
-            var batch = await _batchRepository.GetByIdAsync(request.BatchId);
-            if (batch == null)
+            // The copy can be Paid or Free (defaults to the original's type):
+            //  - Paid: a batch is required (and a course - the original's, or request.CourseId if it has none)
+            //  - Free: no batch needed; one is still validated and kept if it is passed
+            var quizToView = string.IsNullOrWhiteSpace(request.QuizToView)
+                ? source.QuizToView
+                : Constants.MaterialAccess.Normalize(request.QuizToView);
+            var isFree = quizToView == Constants.MaterialAccess.Free;
+
+            Course? course = null;
+            var courseId = !string.IsNullOrWhiteSpace(source.CourseId) ? source.CourseId : request.CourseId;
+            if (!string.IsNullOrWhiteSpace(courseId))
             {
-                throw new InvalidOperationException(Constants.Messages.BatchNotFound);
+                course = await _courseRepository.GetByIdAsync(courseId);
+                if (course == null)
+                {
+                    throw new InvalidOperationException(Constants.Messages.CourseNotFound);
+                }
             }
-            if (batch.CourseId != source.CourseId)
+            else if (!isFree)
             {
-                throw new InvalidOperationException(Constants.Messages.BatchCourseMismatch);
+                throw new InvalidOperationException("The original quiz has no course - pass courseId to copy it as a Paid quiz");
+            }
+
+            Batch? batch = null;
+            if (!string.IsNullOrWhiteSpace(request.BatchId))
+            {
+                if (course == null)
+                {
+                    throw new InvalidOperationException("Course is required when a batch is selected");
+                }
+
+                batch = await _batchRepository.GetByIdAsync(request.BatchId);
+                if (batch == null)
+                {
+                    throw new InvalidOperationException(Constants.Messages.BatchNotFound);
+                }
+                if (batch.CourseId != course.Id)
+                {
+                    throw new InvalidOperationException(Constants.Messages.BatchCourseMismatch);
+                }
+            }
+            else if (!isFree)
+            {
+                throw new InvalidOperationException("Batch is required for a Paid quiz");
             }
 
             // Each question image is copied in S3 so the two quizzes never share a file -
@@ -233,12 +302,21 @@ namespace LearningBackendAPI.Services
 
             var quiz = new Quiz
             {
-                CourseId = source.CourseId,
-                CourseName = source.CourseName,
-                BatchId = batch.Id,
-                BatchTitle = batch.Title,
+                CourseId = course?.Id,
+                CourseName = course?.CourseName,
+                BatchId = batch?.Id,
+                BatchTitle = batch?.Title,
+                QuizType = source.QuizType,
+                Subject = source.Subject,
+                Category = source.Category,
+                Standard = source.Standard,
+                Part = source.Part,
+                FolderId = source.FolderId,
+                FolderName = source.FolderName,
+                SubFolderId = source.SubFolderId,
+                SubFolderName = source.SubFolderName,
                 Title = string.IsNullOrWhiteSpace(request.Title) ? source.Title : request.Title.Trim(),
-                QuizToView = source.QuizToView,
+                QuizToView = quizToView,
                 Status = Constants.QuizStatuses.Draft,
                 Questions = questions,
                 CreatedAt = DateTime.UtcNow
@@ -280,6 +358,35 @@ namespace LearningBackendAPI.Services
                 quiz.BatchTitle = batch.Title;
             }
 
+            if (!string.IsNullOrWhiteSpace(request.QuizType))
+            {
+                quiz.QuizType = Constants.QuizTypes.Normalize(request.QuizType)
+                    ?? throw new InvalidOperationException("Quiz type must be competitive, school or previousYear");
+            }
+
+            if (request.Subject != null)
+            {
+                var classification = await _quizStructureService.ValidateAsync(request.Subject, request.Category, request.Standard, request.Part);
+                quiz.Subject = classification.Subject;
+                quiz.Category = classification.Category;
+                quiz.Standard = classification.Standard;
+                quiz.Part = classification.Part;
+            }
+
+            // Folder: only touched when the request changes the folder or the quiz type, so editing e.g. just the
+            // title of an older previousYear quiz that has no folder still works
+            if (request.FolderId != null || !string.IsNullOrWhiteSpace(request.QuizType))
+            {
+                var keepFolder = request.FolderId == null && quiz.QuizType == Constants.QuizTypes.PreviousYear && quiz.FolderId != null;
+                var folder = keepFolder
+                    ? new FolderSelection { FolderId = quiz.FolderId, FolderName = quiz.FolderName, SubFolderId = quiz.SubFolderId, SubFolderName = quiz.SubFolderName }
+                    : await ValidateFolderForTypeAsync(quiz.QuizType, request.FolderId, request.SubFolderId);
+                quiz.FolderId = folder.FolderId;
+                quiz.FolderName = folder.FolderName;
+                quiz.SubFolderId = folder.SubFolderId;
+                quiz.SubFolderName = folder.SubFolderName;
+            }
+
             if (!string.IsNullOrWhiteSpace(request.Title))
             {
                 quiz.Title = request.Title.Trim();
@@ -288,6 +395,11 @@ namespace LearningBackendAPI.Services
             if (!string.IsNullOrWhiteSpace(request.QuizToView))
             {
                 quiz.QuizToView = Constants.MaterialAccess.Normalize(request.QuizToView);
+            }
+
+            if (quiz.QuizToView != Constants.MaterialAccess.Free && string.IsNullOrWhiteSpace(quiz.CourseId))
+            {
+                throw new InvalidOperationException("This quiz has no course, so it can only be Free - create a new Paid quiz with a course and batch instead");
             }
 
             if (request.Questions != null)
@@ -465,9 +577,9 @@ namespace LearningBackendAPI.Services
         };
         private static readonly string[] DefaultQuizSearchFields = { "title", "courseName" };
 
-        public async Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
+        public async Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize, QuizClassification? classification = null)
         {
-            var quizzes = await _quizRepository.GetAllAsync();
+            var quizzes = FilterByClassification(await _quizRepository.GetAllAsync(), classification);
             var filtered = TextSearchHelper.ApplyFilter(quizzes, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
             return PagingHelper.ToPagedResult(filtered, pageNumber, pageSize);
         }
@@ -482,11 +594,14 @@ namespace LearningBackendAPI.Services
             return quiz;
         }
 
-        public async Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
+        public async Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize, QuizClassification? classification = null)
         {
-            var quizzes = string.IsNullOrWhiteSpace(courseId)
-                ? await _quizRepository.GetAllAsync()
-                : await _quizRepository.GetByCourseIdsAsync(new List<string> { courseId });
+            var quizzes = await _quizRepository.GetAllAsync();
+            if (!string.IsNullOrWhiteSpace(courseId))
+            {
+                // Free quizzes created without a course belong to every course
+                quizzes = quizzes.Where(q => q.CourseId == courseId || string.IsNullOrWhiteSpace(q.CourseId)).ToList();
+            }
 
             var verifiedEnrollments = await GetVerifiedEnrollmentsAsync(userId);
 
@@ -496,6 +611,7 @@ namespace LearningBackendAPI.Services
                 .Where(q => q.Status == Constants.QuizStatuses.Published && !q.IsExpired)
                 .Where(q => CanAccess(q, verifiedEnrollments))
                 .ToList();
+            published = FilterByClassification(published, classification);
 
             var filtered = TextSearchHelper.ApplyFilter(published, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
             var accessible = filtered.Select(q => ToStudentResponse(q, userId)).ToList();
@@ -620,9 +736,9 @@ namespace LearningBackendAPI.Services
             return ToResultResponse(attempt);
         }
 
-        public async Task<List<RankListEntryDto>> GetRankListAsync(string quizId, string userId, bool isAdmin, string? batchId = null)
+        public async Task<List<RankListEntryDto>> GetRankListAsync(string quizId, string userId, bool isAdmin, RankListRequest? request = null)
         {
-            var (_, rankList, _) = await BuildRankListAsync(quizId, userId, isAdmin, batchId);
+            var (_, rankList, _) = await BuildRankListAsync(quizId, userId, isAdmin, request);
             return rankList;
         }
 
@@ -631,8 +747,10 @@ namespace LearningBackendAPI.Services
         // Admin: shows the quiz's own batch by default, any other batch via batchId, or every batch
         // (each ranked separately) with batchId=all.
         // Student: always their own batch.
+        // Admin filters (RankListRequest): quizType must match the quiz; quizToView=Paid ranks only students
+        // with a verified paid enrollment (optionally in batchId), quizToView=Free ranks only students without one.
         private async Task<(Quiz Quiz, List<RankListEntryDto> RankList, string? BatchTitle)> BuildRankListAsync(
-            string quizId, string userId, bool isAdmin, string? batchId)
+            string quizId, string userId, bool isAdmin, RankListRequest? request)
         {
             var quiz = await _quizRepository.GetByIdAsync(quizId);
             if (quiz == null)
@@ -640,13 +758,49 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
             }
 
-            if (quiz.QuizToView == Constants.MaterialAccess.Free)
+            var isFree = quiz.QuizToView == Constants.MaterialAccess.Free;
+            if (isFree && !isAdmin)
             {
                 throw new InvalidOperationException(Constants.Messages.RankListNotForFreeQuiz);
             }
 
-            string? targetBatchId;
+            var batchId = request?.BatchId;
+
+            // Which students to rank on a free quiz: null = everyone (no filter given)
+            string? studentView = null;
             if (isAdmin)
+            {
+                if (!string.IsNullOrWhiteSpace(request?.QuizType))
+                {
+                    var requestedType = Constants.QuizTypes.Normalize(request.QuizType)
+                        ?? throw new InvalidOperationException(Constants.Messages.InvalidQuizTypeFilter);
+                    if (!string.Equals(quiz.QuizType, requestedType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException(Constants.Messages.RankListQuizTypeMismatch);
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(request?.QuizToView))
+                {
+                    studentView = Constants.MaterialAccess.Normalize(request.QuizToView);
+                    if (!isFree && studentView == Constants.MaterialAccess.Free)
+                    {
+                        throw new InvalidOperationException(Constants.Messages.RankListFreeViewOnPaidQuiz);
+                    }
+                }
+            }
+
+            string? targetBatchId = null;
+            if (isFree)
+            {
+                // Free quizzes have no batch of their own: batchId only narrows the paid students
+                if (studentView == Constants.MaterialAccess.Paid && !string.IsNullOrWhiteSpace(batchId) &&
+                    !batchId.Equals("all", StringComparison.OrdinalIgnoreCase))
+                {
+                    targetBatchId = batchId;
+                }
+            }
+            else if (isAdmin)
             {
                 if (string.IsNullOrWhiteSpace(batchId))
                 {
@@ -675,6 +829,36 @@ namespace LearningBackendAPI.Services
             var candidates = new List<(QuizAttempt Attempt, string? BatchId, string? BatchTitle)>();
             foreach (var attempt in await _quizAttemptRepository.GetByQuizIdAsync(quizId))
             {
+                if (isFree)
+                {
+                    if (studentView == null)
+                    {
+                        // Anyone can attempt a free quiz, paid or not, so everyone is ranked in one list
+                        candidates.Add((attempt, null, null));
+                        continue;
+                    }
+
+                    var verified = await GetVerifiedEnrollmentsAsync(attempt.UserId);
+                    if (studentView == Constants.MaterialAccess.Free)
+                    {
+                        // Unpaid students: no verified enrollment at all
+                        if (verified.Count == 0)
+                        {
+                            candidates.Add((attempt, null, null));
+                        }
+                        continue;
+                    }
+
+                    var paid = targetBatchId == null
+                        ? verified.FirstOrDefault()
+                        : verified.FirstOrDefault(e => e.BatchId == targetBatchId);
+                    if (paid != null)
+                    {
+                        candidates.Add((attempt, paid.BatchId, paid.BatchTitle));
+                    }
+                    continue;
+                }
+
                 var enrollments = (await GetVerifiedEnrollmentsAsync(attempt.UserId))
                     .Where(e => e.CourseId == quiz.CourseId)
                     .ToList();
@@ -743,18 +927,38 @@ namespace LearningBackendAPI.Services
             return (quiz, rankList, batchTitle);
         }
 
-        public async Task<(byte[] Content, string FileName)> ExportRankListAsync(string quizId, string userId, bool isAdmin, string? batchId = null)
+        public async Task<(byte[] Content, string FileName)> ExportRankListAsync(string quizId, string userId, bool isAdmin, RankListRequest? request = null)
         {
-            var (quiz, rankList, batchTitle) = await BuildRankListAsync(quizId, userId, isAdmin, batchId);
+            var (quiz, rankList, batchTitle) = await BuildRankListAsync(quizId, userId, isAdmin, request);
             var content = _excelExportService.GenerateRankListExcel(quiz.Title, batchTitle, rankList);
 
             var invalidChars = Path.GetInvalidFileNameChars();
             string Safe(string value) => new string(value.Select(c => invalidChars.Contains(c) || c == ' ' ? '_' : c).ToArray());
             var fileName = string.IsNullOrWhiteSpace(batchTitle)
-                ? $"quiz-rank-list-{Safe(quiz.CourseName)}.xlsx"
-                : $"quiz-rank-list-{Safe(quiz.CourseName)}-{Safe(batchTitle)}.xlsx";
+                ? $"quiz-rank-list-{Safe(string.IsNullOrWhiteSpace(quiz.CourseName) ? quiz.Title : quiz.CourseName)}.xlsx"
+                : $"quiz-rank-list-{Safe(quiz.CourseName ?? "")}-{Safe(batchTitle)}.xlsx";
 
             return (content, fileName);
+        }
+
+        // Optional Subject/Category/Standard/Part filters (only the ones that are passed are applied)
+        private static List<Quiz> FilterByClassification(List<Quiz> quizzes, QuizClassification? filter)
+        {
+            if (filter == null || filter.IsEmpty)
+            {
+                return quizzes;
+            }
+
+            return quizzes.Where(q =>
+                (filter.QuizType == null || string.Equals(q.QuizType, filter.QuizType, StringComparison.OrdinalIgnoreCase)) &&
+                (filter.QuizToView == null || string.Equals(q.QuizToView, filter.QuizToView, StringComparison.OrdinalIgnoreCase)) &&
+                (filter.Subject == null || string.Equals(q.Subject, filter.Subject, StringComparison.OrdinalIgnoreCase)) &&
+                (filter.Category == null || string.Equals(q.Category, filter.Category, StringComparison.OrdinalIgnoreCase)) &&
+                (filter.Standard == null || q.Standard == filter.Standard) &&
+                (filter.Part == null || string.Equals(q.Part, filter.Part, StringComparison.OrdinalIgnoreCase)) &&
+                (filter.FolderId == null || q.FolderId == filter.FolderId) &&
+                (filter.SubFolderId == null || q.SubFolderId == filter.SubFolderId))
+                .ToList();
         }
 
         private async Task<List<Enrollment>> GetVerifiedEnrollmentsAsync(string userId)
@@ -810,6 +1014,25 @@ namespace LearningBackendAPI.Services
             return questions;
         }
 
+        // A previousYear quiz must be filed in a folder (and sub folder, if the folder has any); other types can't have one
+        private async Task<FolderSelection> ValidateFolderForTypeAsync(string? quizType, string? folderId, string? subFolderId)
+        {
+            if (quizType == Constants.QuizTypes.PreviousYear)
+            {
+                if (string.IsNullOrWhiteSpace(folderId))
+                {
+                    throw new InvalidOperationException("Folder is required for a previousYear quiz - pick one from GET /api/Folder");
+                }
+                return await _folderService.ValidateAsync(folderId, subFolderId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(folderId) || !string.IsNullOrWhiteSpace(subFolderId))
+            {
+                throw new InvalidOperationException("Folder and sub folder can only be set on a previousYear quiz");
+            }
+            return new FolderSelection();
+        }
+
         private static QuizStudentResponse ToStudentResponse(Quiz quiz, string userId)
         {
             return new QuizStudentResponse
@@ -819,6 +1042,15 @@ namespace LearningBackendAPI.Services
                 CourseName = quiz.CourseName,
                 Title = quiz.Title,
                 QuizToView = quiz.QuizToView,
+                QuizType = quiz.QuizType,
+                Subject = quiz.Subject,
+                Category = quiz.Category,
+                Standard = quiz.Standard,
+                Part = quiz.Part,
+                FolderId = quiz.FolderId,
+                FolderName = quiz.FolderName,
+                SubFolderId = quiz.SubFolderId,
+                SubFolderName = quiz.SubFolderName,
                 PublishedAt = quiz.PublishedAt,
                 ExpiresAt = quiz.ExpiresAt,
                 IsExpired = quiz.IsExpired,

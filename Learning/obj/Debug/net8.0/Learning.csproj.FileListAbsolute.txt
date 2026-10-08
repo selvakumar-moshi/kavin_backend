@@ -79,4 +79,13 @@ C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-C
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\368f229b-e6bb-42b1-9a68-433ff13f21ae\scratchpad\out\Learning.runtimeconfig.json
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\368f229b-e6bb-42b1-9a68-433ff13f21ae\scratchpad\out\Learning.dll
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\368f229b-e6bb-42b1-9a68-433ff13f21ae\scratchpad\out\Learning.pdb
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\ba21dba9-85db-4ade-a2bd-9b0be9655d69\scratchpad\out\appsettings.Development.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\ba21dba9-85db-4ade-a2bd-9b0be9655d69\scratchpad\out\appsettings.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\ba21dba9-85db-4ade-a2bd-9b0be9655d69\scratchpad\out\Learning.staticwebassets.runtime.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\ba21dba9-85db-4ade-a2bd-9b0be9655d69\scratchpad\out\Learning.staticwebassets.endpoints.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\ba21dba9-85db-4ade-a2bd-9b0be9655d69\scratchpad\out\Learning.exe
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\ba21dba9-85db-4ade-a2bd-9b0be9655d69\scratchpad\out\Learning.deps.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\ba21dba9-85db-4ade-a2bd-9b0be9655d69\scratchpad\out\Learning.runtimeconfig.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\ba21dba9-85db-4ade-a2bd-9b0be9655d69\scratchpad\out\Learning.dll
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\ba21dba9-85db-4ade-a2bd-9b0be9655d69\scratchpad\out\Learning.pdb
 D:\Software\data\Selva_Coac\kavin_backend\Learning\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

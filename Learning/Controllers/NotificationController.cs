@@ -24,7 +24,8 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Create a new notification (Admin only)
+        /// Create a new notification (Admin only). notificationType is "Push Notification" (title,
+        /// description, link, date - date required) or "Job Notification" (same fields, date optional).
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
@@ -86,16 +87,23 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Get all notifications, filtered via a { searchTerm, globalFilter, pageNumber, pageSize } body payload
+        /// Get all notifications, filtered via a { notificationType (optional), searchTerm, globalFilter, pageNumber, pageSize } body payload
         /// (searchTerm: matches title or description; globalFilter: subset of title/description, both if
         /// omitted; pageNumber/pageSize default to 1/10 if omitted)
         /// </summary>
         [HttpPost("search")]
         public async Task<IActionResult> GetAllNotifications([FromBody] NotificationSearchRequest? request)
         {
-            var notifications = await _notificationService.GetAllNotificationsAsync(
-                request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
-            return Ok(_responseHelper.Success(notifications, "Notifications retrieved successfully"));
+            try
+            {
+                var notifications = await _notificationService.GetAllNotificationsAsync(
+                    request?.NotificationType, request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
+                return Ok(_responseHelper.Success(notifications, "Notifications retrieved successfully"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
         }
     }
 }

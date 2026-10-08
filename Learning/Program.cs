@@ -112,6 +112,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IBatchRepository, BatchRepository>();
     services.AddScoped<ICounterRepository, CounterRepository>();
     services.AddScoped<INotificationRepository, NotificationRepository>();
+    services.AddScoped<IQuizStructureRepository, QuizStructureRepository>();
 
     // Configure AWS S3 (credentials loaded from .env via DotNetEnv)
     var awsAccessKey = configuration["AWS_ACCESS_KEY_ID"];
@@ -135,6 +136,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IEnrollmentService, EnrollmentService>();
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<IQuizService, QuizService>();
+    services.AddScoped<IQuizStructureService, QuizStructureService>();
+    services.AddScoped<IFolderService, FolderService>();
     services.AddScoped<IExcelExportService, ExcelExportService>();
     services.AddScoped<IDashboardService, DashboardService>();
     services.AddScoped<IBatchService, BatchService>();
@@ -214,8 +217,18 @@ void ConfigurePipeline(WebApplication app)
     // Seed admin user
     SeedAdminUser(app.Services);
 
+    // Load the default Tamil / GK subject-standard-part tree the first time
+    SeedQuizStructure(app.Services);
+
     // Backfill applicationNo for any users created before this field existed
     BackfillApplicationNumbers(app.Services);
+}
+
+void SeedQuizStructure(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var quizStructureService = scope.ServiceProvider.GetRequiredService<IQuizStructureService>();
+    quizStructureService.SeedDefaultsAsync().GetAwaiter().GetResult();
 }
 
 void SeedAdminUser(IServiceProvider services)

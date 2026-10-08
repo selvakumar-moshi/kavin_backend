@@ -68,11 +68,12 @@ namespace LearningBackendAPI.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
 
+        // Empty for a Free quiz that was created without a course
         [BsonElement("courseId")]
-        public string CourseId { get; set; }
+        public string? CourseId { get; set; }
 
         [BsonElement("courseName")]
-        public string CourseName { get; set; }
+        public string? CourseName { get; set; }
 
         [BsonElement("batchId")]
         public string? BatchId { get; set; }
@@ -85,6 +86,35 @@ namespace LearningBackendAPI.Models
 
         [BsonElement("status")]
         public string Status { get; set; }
+
+        // competitive | school | previousYear - which UI tab the quiz belongs to
+        [BsonElement("quizType")]
+        public string? QuizType { get; set; }
+
+        [BsonElement("subject")]
+        public string? Subject { get; set; }
+
+        [BsonElement("category")]
+        public string? Category { get; set; }
+
+        [BsonElement("standard")]
+        public int? Standard { get; set; }
+
+        [BsonElement("part")]
+        public string? Part { get; set; }
+
+        // previousYear quizzes: the folder (and sub folder, if the folder has any) the quiz is filed under
+        [BsonElement("folderId")]
+        public string? FolderId { get; set; }
+
+        [BsonElement("folderName")]
+        public string? FolderName { get; set; }
+
+        [BsonElement("subFolderId")]
+        public string? SubFolderId { get; set; }
+
+        [BsonElement("subFolderName")]
+        public string? SubFolderName { get; set; }
 
         [BsonElement("quizToView")]
         public string QuizToView { get; set; }

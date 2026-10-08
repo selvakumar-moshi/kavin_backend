@@ -14,18 +14,52 @@ namespace LearningBackendAPI.Controllers
     public class QuizController : ControllerBase
     {
         private readonly IQuizService _quizService;
+        private readonly IQuizStructureService _quizStructureService;
         private readonly ResponseHelper _responseHelper;
 
         public QuizController(
             IQuizService quizService,
+            IQuizStructureService quizStructureService,
             ResponseHelper responseHelper)
         {
             _quizService = quizService;
+            _quizStructureService = quizStructureService;
             _responseHelper = responseHelper;
         }
 
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        private static QuizClassification? ToClassificationFilter(QuizSearchRequest? request)
+        {
+            if (request == null)
+            {
+                return null;
+            }
+
+            return new QuizClassification
+            {
+                QuizType = string.IsNullOrWhiteSpace(request.QuizType) ? null : (Constants.QuizTypes.Normalize(request.QuizType) ?? request.QuizType.Trim()),
+                QuizToView = string.IsNullOrWhiteSpace(request.QuizToView) ? null : Constants.MaterialAccess.Normalize(request.QuizToView),
+                Subject = string.IsNullOrWhiteSpace(request.Subject) ? null : request.Subject.Trim(),
+                Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim(),
+                Standard = request.Standard,
+                Part = string.IsNullOrWhiteSpace(request.Part) ? null : request.Part.Trim(),
+                FolderId = string.IsNullOrWhiteSpace(request.FolderId) ? null : request.FolderId.Trim(),
+                SubFolderId = string.IsNullOrWhiteSpace(request.SubFolderId) ? null : request.SubFolderId.Trim()
+            };
+        }
+
         private bool IsAdmin => User.FindFirstValue(ClaimTypes.Role) == Constants.Roles.Admin;
+
+        /// <summary>
+        /// The Subject → Category → Standard → Part options for classifying open quizzes, for the UI's
+        /// cascading dropdowns. Managed through /api/QuizStructure; by default Tamil → standards 6-12,
+        /// GK → Social/Science → standards 6-12, with Part-1/2/3 on standards 6 and 7 only.
+        /// </summary>
+        [HttpGet("categories")]
+        public async Task<IActionResult> GetCategories()
+        {
+            return Ok(_responseHelper.Success(await _quizStructureService.GetTreeAsync(), "Quiz categories retrieved successfully"));
+        }
 
         /// <summary>
         /// Create a new quiz as a Draft with manually-entered questions (Admin only). Each question
@@ -78,9 +112,10 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Copy an existing quiz (questions, answers, marks, images) into another batch of the same
-        /// course as a new Draft (Admin only). The original quiz and its results are untouched; publish
-        /// the copy with its own expiry. Body: { quizId, batchId, title (optional - defaults to the original title) }.
+        /// Copy an existing quiz (questions, answers, marks, images) as a new Draft (Admin only). The copy can
+        /// be Paid (pass batchId - a batch of the quiz's course) or Free (no batchId needed); quizToView
+        /// defaults to the original's. The original quiz and its results are untouched; publish
+        /// the copy with its own expiry. Body: { quizId, quizToView (optional), batchId (required for Paid), title (optional - defaults to the original title) }.
         /// </summary>
         [HttpPost("copy")]
         [Authorize(Roles = Constants.Roles.Admin)]
@@ -194,13 +229,17 @@ namespace LearningBackendAPI.Controllers
                 if (IsAdmin)
                 {
                     var quizzes = await _quizService.GetAllQuizzesForAdminAsync(
-                        request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
+                        request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10, ToClassificationFilter(request));
                     return Ok(_responseHelper.Success(quizzes, "Quizzes retrieved successfully"));
                 }
 
                 var studentQuizzes = await _quizService.GetAccessibleQuizzesForStudentAsync(
-                    CurrentUserId, request?.CourseId, request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
+                    CurrentUserId, request?.CourseId, request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10, ToClassificationFilter(request));
                 return Ok(_responseHelper.Success(studentQuizzes, "Quizzes retrieved successfully"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -278,14 +317,17 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Get the rank list (leaderboard) for a quiz
+        /// Get the rank list (leaderboard) for a quiz. Admin filters (JSON body or query string; body wins):
+        /// batchId, quizType (must match the quiz), quizToView ("Paid" = paid students, "Free" = unpaid students).
         /// </summary>
         [HttpGet("{id}/rank-list")]
-        public async Task<IActionResult> GetRankList(string id, [FromQuery] string? batchId = null)
+        public async Task<IActionResult> GetRankList(string id,
+            [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] RankListRequest? body,
+            [FromQuery] RankListRequest? query)
         {
             try
             {
-                var rankList = await _quizService.GetRankListAsync(id, CurrentUserId, IsAdmin, batchId);
+                var rankList = await _quizService.GetRankListAsync(id, CurrentUserId, IsAdmin, MergeRankListRequest(body, query));
                 return Ok(_responseHelper.Success(rankList, "Rank list retrieved successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -303,15 +345,18 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Download the rank list (leaderboard) for a quiz as an Excel (.xlsx) file (Admin only)
+        /// Download the rank list (leaderboard) for a quiz as an Excel (.xlsx) file (Admin only).
+        /// Takes the same filters as the rank list (batchId, quizType, quizToView).
         /// </summary>
         [HttpGet("{id}/rank-list/download")]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public async Task<IActionResult> DownloadRankList(string id, [FromQuery] string? batchId = null)
+        public async Task<IActionResult> DownloadRankList(string id,
+            [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] RankListRequest? body,
+            [FromQuery] RankListRequest? query)
         {
             try
             {
-                var (content, fileName) = await _quizService.ExportRankListAsync(id, CurrentUserId, IsAdmin, batchId);
+                var (content, fileName) = await _quizService.ExportRankListAsync(id, CurrentUserId, IsAdmin, MergeRankListRequest(body, query));
                 return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (KeyNotFoundException ex)
@@ -327,5 +372,13 @@ namespace LearningBackendAPI.Controllers
                 return StatusCode(StatusCodes.Status403Forbidden, _responseHelper.Forbidden<object>(ex.Message));
             }
         }
+
+        // GET bodies are dropped by some clients, so every filter also works as a query param
+        private static RankListRequest MergeRankListRequest(RankListRequest? body, RankListRequest? query) => new()
+        {
+            BatchId = body?.BatchId ?? query?.BatchId,
+            QuizType = body?.QuizType ?? query?.QuizType,
+            QuizToView = body?.QuizToView ?? query?.QuizToView
+        };
     }
 }
