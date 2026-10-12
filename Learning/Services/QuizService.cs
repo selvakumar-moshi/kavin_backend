@@ -131,7 +131,7 @@ namespace LearningBackendAPI.Services
             }
 
             var quizType = Constants.QuizTypes.Normalize(request.QuizType)
-                ?? throw new InvalidOperationException("Quiz type is required: competitive, school or previousYear");
+                ?? throw new InvalidOperationException("Quiz type is required: competitive, school, previousYear or syllabusWise");
             var classification = await _quizStructureService.ValidateAsync(request.Subject, request.Category, request.Standard, request.Part);
             var folder = await ValidateFolderForTypeAsync(quizType, request.FolderId, request.SubFolderId);
 
@@ -361,7 +361,7 @@ namespace LearningBackendAPI.Services
             if (!string.IsNullOrWhiteSpace(request.QuizType))
             {
                 quiz.QuizType = Constants.QuizTypes.Normalize(request.QuizType)
-                    ?? throw new InvalidOperationException("Quiz type must be competitive, school or previousYear");
+                    ?? throw new InvalidOperationException("Quiz type must be competitive, school, previousYear or syllabusWise");
             }
 
             if (request.Subject != null)
@@ -377,7 +377,7 @@ namespace LearningBackendAPI.Services
             // title of an older previousYear quiz that has no folder still works
             if (request.FolderId != null || !string.IsNullOrWhiteSpace(request.QuizType))
             {
-                var keepFolder = request.FolderId == null && quiz.QuizType == Constants.QuizTypes.PreviousYear && quiz.FolderId != null;
+                var keepFolder = request.FolderId == null && Constants.QuizTypes.UsesFolders(quiz.QuizType) && quiz.FolderId != null;
                 var folder = keepFolder
                     ? new FolderSelection { FolderId = quiz.FolderId, FolderName = quiz.FolderName, SubFolderId = quiz.SubFolderId, SubFolderName = quiz.SubFolderName }
                     : await ValidateFolderForTypeAsync(quiz.QuizType, request.FolderId, request.SubFolderId);
@@ -579,6 +579,7 @@ namespace LearningBackendAPI.Services
 
         public async Task<PagedResult<Quiz>> GetAllQuizzesForAdminAsync(string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize, QuizClassification? classification = null)
         {
+            await ExpandSubFolderAsync(classification);
             var quizzes = FilterByClassification(await _quizRepository.GetAllAsync(), classification);
             var filtered = TextSearchHelper.ApplyFilter(quizzes, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
             return PagingHelper.ToPagedResult(filtered, pageNumber, pageSize);
@@ -611,6 +612,7 @@ namespace LearningBackendAPI.Services
                 .Where(q => q.Status == Constants.QuizStatuses.Published && !q.IsExpired)
                 .Where(q => CanAccess(q, verifiedEnrollments))
                 .ToList();
+            await ExpandSubFolderAsync(classification);
             published = FilterByClassification(published, classification);
 
             var filtered = TextSearchHelper.ApplyFilter(published, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
@@ -941,6 +943,15 @@ namespace LearningBackendAPI.Services
             return (content, fileName);
         }
 
+        // A sub folder filter also matches quizzes filed in any sub folder below it
+        private async Task ExpandSubFolderAsync(QuizClassification? filter)
+        {
+            if (filter?.SubFolderId != null)
+            {
+                filter.SubFolderIds = await _folderService.GetSubtreeIdsAsync(filter.SubFolderId);
+            }
+        }
+
         // Optional Subject/Category/Standard/Part filters (only the ones that are passed are applied)
         private static List<Quiz> FilterByClassification(List<Quiz> quizzes, QuizClassification? filter)
         {
@@ -957,7 +968,7 @@ namespace LearningBackendAPI.Services
                 (filter.Standard == null || q.Standard == filter.Standard) &&
                 (filter.Part == null || string.Equals(q.Part, filter.Part, StringComparison.OrdinalIgnoreCase)) &&
                 (filter.FolderId == null || q.FolderId == filter.FolderId) &&
-                (filter.SubFolderId == null || q.SubFolderId == filter.SubFolderId))
+                (filter.SubFolderId == null || (q.SubFolderId != null && (filter.SubFolderIds ?? new HashSet<string> { filter.SubFolderId }).Contains(q.SubFolderId))))
                 .ToList();
         }
 
@@ -1014,21 +1025,21 @@ namespace LearningBackendAPI.Services
             return questions;
         }
 
-        // A previousYear quiz must be filed in a folder (and sub folder, if the folder has any); other types can't have one
+        // A previousYear or syllabusWise quiz must be filed in a folder (and sub folder, if the folder has any); other types can't have one
         private async Task<FolderSelection> ValidateFolderForTypeAsync(string? quizType, string? folderId, string? subFolderId)
         {
-            if (quizType == Constants.QuizTypes.PreviousYear)
+            if (Constants.QuizTypes.UsesFolders(quizType))
             {
                 if (string.IsNullOrWhiteSpace(folderId))
                 {
-                    throw new InvalidOperationException("Folder is required for a previousYear quiz - pick one from GET /api/Folder");
+                    throw new InvalidOperationException($"Folder is required for a {quizType} quiz - pick one from GET /api/Folder");
                 }
                 return await _folderService.ValidateAsync(folderId, subFolderId);
             }
 
             if (!string.IsNullOrWhiteSpace(folderId) || !string.IsNullOrWhiteSpace(subFolderId))
             {
-                throw new InvalidOperationException("Folder and sub folder can only be set on a previousYear quiz");
+                throw new InvalidOperationException("Folder and sub folder can only be set on a previousYear or syllabusWise quiz");
             }
             return new FolderSelection();
         }

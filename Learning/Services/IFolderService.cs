@@ -20,5 +20,8 @@ namespace LearningBackendAPI.Services
         /// (empty selection). A sub folder is required when the folder has any, and must belong to the folder.
         /// </summary>
         Task<FolderSelection> ValidateAsync(string? folderId, string? subFolderId);
+
+        /// <summary>The sub folder's id plus the ids of every sub folder below it, at any depth.</summary>
+        Task<HashSet<string>> GetSubtreeIdsAsync(string subFolderId);
     }
 }

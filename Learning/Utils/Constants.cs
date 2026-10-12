@@ -33,7 +33,7 @@
             public const string QuizNotDraft = "Only a draft quiz can be deleted";
             public const string QuizAlreadyPublished = "This quiz has already been published";
             public const string RankListNotForFreeQuiz = "Rank list is not available for free quizzes";
-            public const string InvalidQuizTypeFilter = "quizType must be 'competitive', 'school' or 'previousYear'";
+            public const string InvalidQuizTypeFilter = "quizType must be 'competitive', 'school', 'previousYear' or 'syllabusWise'";
             public const string RankListQuizTypeMismatch = "The quiz is not of the requested quizType";
             public const string RankListFreeViewOnPaidQuiz = "Unpaid students can only be ranked for free quizzes";
             public const string QuizNotAttempted = "You have not submitted this quiz yet";
@@ -76,14 +76,18 @@
             public static readonly string[] All = { GooglePay, BankTransfer, Cash };
         }
 
-        // The quiz tabs in the UI: Competitive/Daily, School Book, Previous Year
+        // The quiz tabs in the UI: Competitive/Daily, School Book, Previous Year, Syllabus Wise
         public static class QuizTypes
         {
             public const string Competitive = "competitive";
             public const string School = "school";
             public const string PreviousYear = "previousYear";
+            public const string SyllabusWise = "syllabusWise";
 
-            public static readonly string[] All = { Competitive, School, PreviousYear };
+            public static readonly string[] All = { Competitive, School, PreviousYear, SyllabusWise };
+
+            // Quiz types that are filed under a folder (and sub folder) from GET /api/Folder
+            public static bool UsesFolders(string? quizType) => quizType == PreviousYear || quizType == SyllabusWise;
 
             // Accepts the tab keys or labels in any case/spacing: "school", "School Book", "previous year", "Competitive/Daily" ...
             public static string? Normalize(string? value)
@@ -94,6 +98,7 @@
                     "competitive" or "competitivedaily" or "daily" => Competitive,
                     "school" or "schoolbook" => School,
                     "previousyear" => PreviousYear,
+                    "syllabuswise" or "syllabus" => SyllabusWise,
                     _ => null
                 };
             }

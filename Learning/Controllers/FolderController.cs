@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LearningBackendAPI.Controllers
 {
     /// <summary>
-    /// Folders for "previousYear" quizzes. Reading is open to any signed-in user; creating, updating and
+    /// Folders for "previousYear" and "syllabusWise" quizzes. Reading is open to any signed-in user; creating, updating and
     /// deleting is Admin only. A folder with sub folders, or one that quizzes use, can't be deleted.
     /// </summary>
     [ApiController]
@@ -28,13 +28,17 @@ namespace LearningBackendAPI.Controllers
         public Task<IActionResult> GetAll() => HandleAsync(async () =>
             Ok(_responseHelper.Success(await _folderService.GetFoldersAsync(), "Folders retrieved successfully")));
 
-        /// <summary>Body: { name }.</summary>
+        /// <summary>
+        /// Body: { name, subFolders? } - subFolders is an optional tree, each node { name, subFolders? } nested to any depth,
+        /// created together with the folder in one call.
+        /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
         public Task<IActionResult> Create([FromBody] FolderRequest request) => HandleAsync(async () =>
             Ok(_responseHelper.Success(await _folderService.CreateFolderAsync(request), "Folder created successfully")));
 
-        /// <summary>Body: { name }. Quizzes in the folder pick up the new name.</summary>
+        /// <summary>Body: { name?, subFolders? }. name renames it (quizzes in the folder pick up the new name); subFolders is a
+        /// nested tree added under it - names that already exist are reused, new ones are created.</summary>
         [HttpPut("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
         public Task<IActionResult> Update(string id, [FromBody] FolderRequest request) => HandleAsync(async () =>

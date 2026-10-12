@@ -214,6 +214,22 @@ void ConfigurePipeline(WebApplication app)
 
     app.MapControllers();
 
+    // Anonymous liveness + database check, for verifying a deployment
+    app.MapGet("/healthcheck", async (IMongoDatabase db) =>
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await db.RunCommandAsync<MongoDB.Bson.BsonDocument>(new MongoDB.Bson.BsonDocument("ping", 1), cancellationToken: cts.Token);
+            return Results.Ok(new { status = "Healthy", database = "Connected", timestamp = DateTime.UtcNow });
+        }
+        catch (Exception)
+        {
+            return Results.Json(new { status = "Unhealthy", database = "Unreachable", timestamp = DateTime.UtcNow },
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+    }).AllowAnonymous();
+
     // Seed admin user
     SeedAdminUser(app.Services);
 

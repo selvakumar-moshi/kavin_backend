@@ -4,7 +4,7 @@ namespace LearningBackendAPI.DTOs
     {
         public string? CourseId { get; set; }
         public string? SearchTerm { get; set; }
-        // Optional tab filter: "competitive", "school" or "previousYear"
+        // Optional tab filter: "competitive", "school", "previousYear" or "syllabusWise"
         public string? QuizType { get; set; }
         // Optional access filter: "Free" or "Paid"
         public string? QuizToView { get; set; }
@@ -13,7 +13,7 @@ namespace LearningBackendAPI.DTOs
         public string? Category { get; set; }
         public int? Standard { get; set; }
         public string? Part { get; set; }
-        // Optional filters for previousYear quizzes (ids from GET /api/Folder)
+        // Optional filters for previousYear and syllabusWise quizzes (ids from GET /api/Folder)
         public string? FolderId { get; set; }
         public string? SubFolderId { get; set; }
         public Dictionary<string, string>? GlobalFilter { get; set; }

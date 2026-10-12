@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LearningBackendAPI.Models
 {
-    // A folder that groups "previousYear" quizzes (e.g. an exam), optionally split into sub folders (e.g. a year)
+    // A folder that groups "previousYear" and "syllabusWise" quizzes (e.g. an exam), optionally split into sub folders (e.g. a year)
     [BsonIgnoreExtraElements]
     public class QuizFolder : QuizStructureItem
     {

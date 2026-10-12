@@ -14,8 +14,8 @@ namespace LearningBackendAPI.DTOs
         public string? Category { get; set; }
         public int? Standard { get; set; }
         public string? Part { get; set; }
-        // previousYear quizzes only. Pass FolderId (+ SubFolderId if the folder has sub folders) to replace the
-        // quiz's folder; leave FolderId out to keep it. Switching a quiz to previousYear needs a folder.
+        // previousYear and syllabusWise quizzes only. Pass FolderId (+ SubFolderId if the folder has sub folders) to replace the
+        // quiz's folder; leave FolderId out to keep it. Switching a quiz to previousYear or syllabusWise needs a folder.
         public string? FolderId { get; set; }
         public string? SubFolderId { get; set; }
         public List<QuizQuestionInput>? Questions { get; set; }

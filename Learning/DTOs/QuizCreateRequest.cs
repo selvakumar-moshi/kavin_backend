@@ -6,7 +6,7 @@ namespace LearningBackendAPI.DTOs
         public string? BatchId { get; set; }
         public string? Title { get; set; }
         public string? QuizToView { get; set; }
-        // Required: "competitive", "school" or "previousYear" (the UI tab)
+        // Required: "competitive", "school", "previousYear" or "syllabusWise" (the UI tab)
         public string? QuizType { get; set; }
         // Optional classification for open (Free) quizzes: Subject -> Category (GK only) -> Standard -> Part (std 6/7 only).
         // GET /api/Quiz/categories returns the allowed combinations.
@@ -14,7 +14,7 @@ namespace LearningBackendAPI.DTOs
         public string? Category { get; set; }
         public int? Standard { get; set; }
         public string? Part { get; set; }
-        // Required for quizType "previousYear" (not allowed for other types): ids from GET /api/Folder.
+        // Required for quizType "previousYear" and "syllabusWise" (not allowed for other types): ids from GET /api/Folder.
         // SubFolderId is required when the chosen folder has sub folders.
         public string? FolderId { get; set; }
         public string? SubFolderId { get; set; }

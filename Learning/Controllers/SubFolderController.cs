@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LearningBackendAPI.Controllers
 {
     /// <summary>
-    /// Sub folders inside a folder (see /api/Folder). Reading is open to any signed-in user; creating,
+    /// Sub folders inside a folder or inside another sub folder, to any depth (see /api/Folder). Reading is open to any signed-in user; creating,
     /// updating and deleting is Admin only. A sub folder that quizzes use can't be deleted.
     /// </summary>
     [ApiController]
@@ -28,13 +28,17 @@ namespace LearningBackendAPI.Controllers
         public Task<IActionResult> GetAll([FromQuery] string? folderId) => HandleAsync(async () =>
             Ok(_responseHelper.Success(await _folderService.GetSubFoldersAsync(folderId), "Sub folders retrieved successfully")));
 
-        /// <summary>Body: { folderId, name } - the sub folder is created inside that folder.</summary>
+        /// <summary>
+        /// Body: { folderId, name, subFolders? } - folderId is a folder or another sub folder; subFolders is an optional
+        /// nested branch created under the new sub folder in the same call.
+        /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
         public Task<IActionResult> Create([FromBody] SubFolderRequest request) => HandleAsync(async () =>
             Ok(_responseHelper.Success(await _folderService.CreateSubFolderAsync(request), "Sub folder created successfully")));
 
-        /// <summary>Body: { name }. The folder of a sub folder can't be changed. Quizzes in it pick up the new name.</summary>
+        /// <summary>Body: { name?, subFolders? }. name renames it (quizzes in it pick up the new name); subFolders is a nested
+        /// tree added under it - names that already exist are reused, new ones are created. Its parent can't be changed.</summary>
         [HttpPut("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
         public Task<IActionResult> Update(string id, [FromBody] SubFolderRequest request) => HandleAsync(async () =>

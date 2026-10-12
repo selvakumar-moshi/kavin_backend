@@ -649,6 +649,18 @@
         }
       }
     },
+    "/healthcheck": {
+      "get": {
+        "tags": [
+          "Learning"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Notification": {
       "post": {
         "tags": [
@@ -2645,6 +2657,13 @@
           "name": {
             "type": "string",
             "nullable": true
+          },
+          "subFolders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubFolderNodeRequest"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3111,6 +3130,23 @@
         },
         "additionalProperties": false
       },
+      "SubFolderNodeRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "subFolders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubFolderNodeRequest"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SubFolderRequest": {
         "type": "object",
         "properties": {
@@ -3120,6 +3156,13 @@
           },
           "folderId": {
             "type": "string",
+            "nullable": true
+          },
+          "subFolders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubFolderNodeRequest"
+            },
             "nullable": true
           }
         },

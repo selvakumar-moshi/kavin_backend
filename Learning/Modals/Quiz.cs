@@ -87,7 +87,7 @@ namespace LearningBackendAPI.Models
         [BsonElement("status")]
         public string Status { get; set; }
 
-        // competitive | school | previousYear - which UI tab the quiz belongs to
+        // competitive | school | previousYear | syllabusWise - which UI tab the quiz belongs to
         [BsonElement("quizType")]
         public string? QuizType { get; set; }
 
@@ -103,7 +103,7 @@ namespace LearningBackendAPI.Models
         [BsonElement("part")]
         public string? Part { get; set; }
 
-        // previousYear quizzes: the folder (and sub folder, if the folder has any) the quiz is filed under
+        // previousYear and syllabusWise quizzes: the folder (and sub folder, if the folder has any) the quiz is filed under
         [BsonElement("folderId")]
         public string? FolderId { get; set; }
 
