@@ -11,7 +11,6 @@
           "AWSSDK.S3": "4.0.102.4",
           "BCrypt.Net-Next": "4.0.3",
           "ClosedXML": "0.105.1",
-          "DotNetEnv": "2.5.0",
           "FluentValidation": "11.8.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.0",
           "Microsoft.AspNetCore.OpenApi": "8.0.0",
@@ -111,17 +110,6 @@
           "lib/net8.0/DocumentFormat.OpenXml.Framework.dll": {
             "assemblyVersion": "3.1.1.0",
             "fileVersion": "3.1.1.0"
-          }
-        }
-      },
-      "DotNetEnv/2.5.0": {
-        "dependencies": {
-          "Sprache": "2.3.1"
-        },
-        "runtime": {
-          "lib/netstandard1.3/DotNetEnv.dll": {
-            "assemblyVersion": "2.5.0.0",
-            "fileVersion": "2.5.0.0"
           }
         }
       },
@@ -331,14 +319,6 @@
           }
         }
       },
-      "Sprache/2.3.1": {
-        "runtime": {
-          "lib/netstandard2.1/Sprache.dll": {
-            "assemblyVersion": "2.3.1.0",
-            "fileVersion": "2.3.1.0"
-          }
-        }
-      },
       "Swashbuckle.AspNetCore/6.5.0": {
         "dependencies": {
           "Swashbuckle.AspNetCore.Swagger": "6.5.0",
@@ -475,13 +455,6 @@
       "path": "documentformat.openxml.framework/3.1.1",
       "hashPath": "documentformat.openxml.framework.3.1.1.nupkg.sha512"
     },
-    "DotNetEnv/2.5.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-BjRAEr3fBXo0+1rbC5Z1NTcYH2z+qnjROXKisR78VtL87UAlseelvg0N3aMAk5Bexuph13IKEmxVk5b9CrpdWw==",
-      "path": "dotnetenv/2.5.0",
-      "hashPath": "dotnetenv.2.5.0.nupkg.sha512"
-    },
     "ExcelNumberFormat/1.1.0": {
       "type": "package",
       "serviceable": true,
@@ -614,13 +587,6 @@
       "sha512": "sha512-rFtK2KEI9hIe8gtx3a0YDXdHOpedIf9wYCEYtBEmtlyiWVX3XlCNV03JrmmAi/Cdfn7dxK+k0sjjcLv4fpHnqA==",
       "path": "snappier/1.0.0",
       "hashPath": "snappier.1.0.0.nupkg.sha512"
-    },
-    "Sprache/2.3.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-Q+mXeiTxiUYG3lKYF6TS82/SyB4F2613Q1yXTMwg4jWGHEEVC3yrzHtNcI4B3qnDI0+eJsezGJ0V+cToUytHWw==",
-      "path": "sprache/2.3.1",
-      "hashPath": "sprache.2.3.1.nupkg.sha512"
     },
     "Swashbuckle.AspNetCore/6.5.0": {
       "type": "package",

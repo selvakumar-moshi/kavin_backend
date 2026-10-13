@@ -19,7 +19,6 @@ D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\AWSSDK.Core.
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\AWSSDK.SecurityToken.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\BCrypt.Net-Next.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\DnsClient.dll
-D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\DotNetEnv.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\FluentValidation.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Microsoft.AspNetCore.OpenApi.dll
@@ -36,7 +35,6 @@ D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\MongoDB.Driv
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\MongoDB.Libmongocrypt.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\SharpCompress.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Snappier.dll
-D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Sprache.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll

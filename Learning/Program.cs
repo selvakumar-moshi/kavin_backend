@@ -15,9 +15,6 @@ using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using System.Text;
 
-// Load environment variables (must happen before CreateBuilder so AddEnvironmentVariables() picks them up)
-DotNetEnv.Env.Load();
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure Services
@@ -114,7 +111,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<INotificationRepository, NotificationRepository>();
     services.AddScoped<IQuizStructureRepository, QuizStructureRepository>();
 
-    // Configure AWS S3 (credentials loaded from .env via DotNetEnv)
+    // Configure AWS S3 (credentials loaded from appsettings.json)
     var awsAccessKey = configuration["AWS_ACCESS_KEY_ID"];
     var awsSecretKey = configuration["AWS_SECRET_ACCESS_KEY"];
     var awsRegion = configuration["AWS_REGION"];
