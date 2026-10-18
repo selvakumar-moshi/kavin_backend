@@ -49,6 +49,9 @@
             public const string CourseAlreadyEnrolled = "User is already enrolled in this course";
             public const string NotificationNotFound = "Notification not found";
             public const string InvalidMaterialAccess = "MaterialToView must be either 'Paid' or 'Free'";
+            public const string TransactionReferenceInvalid = "Enter the UPI transaction ID / UTR (6-35 letters or digits)";
+            public const string TransactionReferenceInUse = "This UPI transaction ID has already been submitted for another enrollment";
+            public const string UpiNotConfigured = "UPI payments are not set up yet. Please contact the admin.";
         }
 
         public static class Roles
@@ -72,8 +75,9 @@
             public const string GooglePay = "GooglePay";
             public const string BankTransfer = "BankTransfer";
             public const string Cash = "Cash";
+            public const string Upi = "UPI";
 
-            public static readonly string[] All = { GooglePay, BankTransfer, Cash };
+            public static readonly string[] All = { GooglePay, BankTransfer, Cash, Upi };
         }
 
         // The quiz tabs in the UI: Competitive/Daily, School Book, Previous Year, Syllabus Wise

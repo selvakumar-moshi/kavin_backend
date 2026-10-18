@@ -8,6 +8,7 @@ namespace LearningBackendAPI.Repositories
         Task<List<Enrollment>> GetAllAsync();
         Task<List<Enrollment>> GetByUserIdAsync(string userId);
         Task<List<Enrollment>> GetByCourseIdAsync(string courseId);
+        Task<Enrollment?> GetByTransactionReferenceAsync(string transactionReference);
         Task<bool> DeleteAsync(string id);
         Task<Enrollment> CreateAsync(Enrollment enrollment);
         Task UpdateAsync(string id, Enrollment enrollment);

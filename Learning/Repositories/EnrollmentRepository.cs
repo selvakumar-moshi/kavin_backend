@@ -33,6 +33,11 @@ namespace LearningBackendAPI.Repositories
             return await _enrollments.Find(e => e.CourseId == courseId).ToListAsync();
         }
 
+        public async Task<Enrollment?> GetByTransactionReferenceAsync(string transactionReference)
+        {
+            return await _enrollments.Find(e => e.TransactionReference == transactionReference).FirstOrDefaultAsync();
+        }
+
         public async Task<bool> DeleteAsync(string id)
         {
             var result = await _enrollments.DeleteOneAsync(e => e.Id == id);

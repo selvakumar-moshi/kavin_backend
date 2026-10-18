@@ -228,6 +228,51 @@ namespace LearningBackendAPI.Services
             return enrollment;
         }
 
+        public async Task<Enrollment> SubmitUpiPaymentAsync(string id, string userId, string? transactionReference)
+        {
+            var enrollment = await _enrollmentRepository.GetByIdAsync(id);
+            // Same message for "missing" and "not yours" so enrollment IDs can't be probed
+            if (enrollment == null || enrollment.UserId != userId)
+            {
+                throw new KeyNotFoundException(Constants.Messages.EnrollmentNotFound);
+            }
+
+            var reference = (transactionReference ?? "").Trim().ToUpperInvariant();
+            if (reference.Length < 6 || reference.Length > 35 || !reference.All(char.IsLetterOrDigit))
+            {
+                throw new InvalidOperationException(Constants.Messages.TransactionReferenceInvalid);
+            }
+
+            if (enrollment.Status == Constants.EnrollmentStatuses.Verified)
+            {
+                throw new InvalidOperationException(Constants.Messages.PaymentAlreadyVerified);
+            }
+
+            if (enrollment.Status == Constants.EnrollmentStatuses.Dropped)
+            {
+                throw new InvalidOperationException(Constants.Messages.EnrollmentDropped);
+            }
+
+            // One real payment must not unlock several enrollments
+            var owner = await _enrollmentRepository.GetByTransactionReferenceAsync(reference);
+            if (owner != null && owner.Id != enrollment.Id)
+            {
+                throw new InvalidOperationException(Constants.Messages.TransactionReferenceInUse);
+            }
+
+            // Deliberately stays Pending: the UPI app's "SUCCESS" comes from the phone and can be
+            // forged, so only the admin (after checking the bank statement) can mark it Verified.
+            enrollment.PaymentMethod = Constants.PaymentMethods.Upi;
+            enrollment.TransactionReference = reference;
+            if (enrollment.Status == Constants.EnrollmentStatuses.Rejected)
+            {
+                // Re-submitted after rejection - send it back to the admin's review queue
+                enrollment.Status = Constants.EnrollmentStatuses.Pending;
+            }
+            await _enrollmentRepository.UpdateAsync(id, enrollment);
+            return enrollment;
+        }
+
         public async Task<(byte[] Content, string FileName)> ExportCourseEnrollmentsAsync(string courseId)
         {
             var course = await _courseRepository.GetByIdAsync(courseId);

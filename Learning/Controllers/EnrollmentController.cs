@@ -15,13 +15,59 @@ namespace LearningBackendAPI.Controllers
     {
         private readonly IEnrollmentService _enrollmentService;
         private readonly ResponseHelper _responseHelper;
+        private readonly IConfiguration _configuration;
 
         public EnrollmentController(
             IEnrollmentService enrollmentService,
-            ResponseHelper responseHelper)
+            ResponseHelper responseHelper,
+            IConfiguration configuration)
         {
             _enrollmentService = enrollmentService;
             _responseHelper = responseHelper;
+            _configuration = configuration;
+        }
+
+        /// <summary>
+        /// UPI ID and payee name the mobile app pays to (appsettings "Payment" section), so the
+        /// UPI ID can be changed without shipping a new app.
+        /// </summary>
+        [HttpGet("payment-info")]
+        public IActionResult GetPaymentInfo()
+        {
+            var info = new PaymentInfoResponse
+            {
+                UpiId = _configuration["Payment:UpiId"] ?? "",
+                PayeeName = _configuration["Payment:PayeeName"] ?? ""
+            };
+            if (string.IsNullOrWhiteSpace(info.UpiId))
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(Constants.Messages.UpiNotConfigured));
+            }
+            return Ok(_responseHelper.Success(info, "Payment info retrieved successfully"));
+        }
+
+        /// <summary>
+        /// Student records the UPI transaction ID (UTR) of their payment for their own enrollment.
+        /// The enrollment stays Pending until the admin matches it with the bank statement and
+        /// verifies it via PUT /{id}/status. Body: { transactionReference, upiStatus }.
+        /// </summary>
+        [HttpPost("{id}/upi-payment")]
+        public async Task<IActionResult> SubmitUpiPayment(string id, [FromBody] UpiPaymentRequest request)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                var enrollment = await _enrollmentService.SubmitUpiPaymentAsync(id, userId, request.TransactionReference);
+                return Ok(_responseHelper.Success(enrollment, "Payment submitted. Your course unlocks once the admin verifies it."));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
         }
 
         /// <summary>
