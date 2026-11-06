@@ -2,7 +2,7 @@ namespace LearningBackendAPI.DTOs
 {
     public class NotificationSearchRequest
     {
-        // Optional: only "Push Notification" or only "Job Notification"
+        // Optional: only "Flash Notification" or only "Job Notification"
         public string? NotificationType { get; set; }
         public string? SearchTerm { get; set; }
         public Dictionary<string, string>? GlobalFilter { get; set; }

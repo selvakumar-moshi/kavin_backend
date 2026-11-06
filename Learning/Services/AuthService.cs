@@ -41,8 +41,50 @@ namespace LearningBackendAPI.Services
             return new LoginResponse
             {
                 Token = token,
-                User = MapToUserDto(user)
+                User = MapToUserDto(user),
+                MustChangePassword = user.MustChangePassword
             };
+        }
+
+        // Used after an admin reset: the user proves they hold the temporary (current) password, then sets their own
+        public async Task ChangePasswordAsync(string userId, ChangePasswordRequest request)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
+
+            if (string.IsNullOrEmpty(request.CurrentPassword) || !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            {
+                throw new InvalidOperationException("Current password is incorrect");
+            }
+
+            var errors = new List<string>();
+            var password = request.NewPassword ?? "";
+            if (password.Length < 6) errors.Add("Password must be at least 6 characters");
+            if (!password.Any(char.IsUpper)) errors.Add("Password must contain at least one uppercase letter");
+            if (!password.Any(char.IsLower)) errors.Add("Password must contain at least one lowercase letter");
+            if (!password.Any(char.IsDigit)) errors.Add("Password must contain at least one number");
+            if (!password.Any(c => "@$!%*?&".Contains(c))) errors.Add("Password must contain at least one special character");
+            if (errors.Count > 0)
+            {
+                throw new InvalidOperationException(string.Join("; ", errors));
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                throw new InvalidOperationException("Passwords do not match");
+            }
+            if (request.NewPassword == request.CurrentPassword)
+            {
+                throw new InvalidOperationException("New password must be different from the current password");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.MustChangePassword = false;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _userRepository.UpdateAsync(userId, user);
         }
 
         public async Task<UserDto> RegisterAsync(RegisterRequest request)
@@ -96,7 +138,8 @@ namespace LearningBackendAPI.Services
                 Role = user.Role,
                 ProfileImage = user.ProfileImage ?? "",
                 CreatedAt = user.CreatedAt,
-                UpdatedAt = user.UpdatedAt
+                UpdatedAt = user.UpdatedAt,
+                MustChangePassword = user.MustChangePassword
             };
         }
     }

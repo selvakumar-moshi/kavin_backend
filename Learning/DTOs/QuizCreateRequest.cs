@@ -5,16 +5,13 @@ namespace LearningBackendAPI.DTOs
         public string? CourseId { get; set; }
         public string? BatchId { get; set; }
         public string? Title { get; set; }
+        // Ignored for a "daily" quiz - it is always Free
         public string? QuizToView { get; set; }
-        // Required: "competitive", "school", "previousYear" or "syllabusWise" (the UI tab)
+        // Most times each student may submit the quiz (1 or more); defaults to 1
+        public int? QuizAttempt { get; set; }
+        // Required: "competitive", "school", "previousYear", "syllabusWise", "daily" or "currentAffairs" (the UI tab)
         public string? QuizType { get; set; }
-        // Optional classification for open (Free) quizzes: Subject -> Category (GK only) -> Standard -> Part (std 6/7 only).
-        // GET /api/Quiz/categories returns the allowed combinations.
-        public string? Subject { get; set; }
-        public string? Category { get; set; }
-        public int? Standard { get; set; }
-        public string? Part { get; set; }
-        // Required for quizType "previousYear" and "syllabusWise" (not allowed for other types): ids from GET /api/Folder.
+        // Required for quizType "previousYear", "syllabusWise" and "school" (not allowed for other types): ids from GET /api/Folder.
         // SubFolderId is required when the chosen folder has sub folders.
         public string? FolderId { get; set; }
         public string? SubFolderId { get; set; }
@@ -22,5 +19,9 @@ namespace LearningBackendAPI.DTOs
 
         // Optional Word (.docx) file: when passed, the questions are read from it instead of Questions
         public IFormFile? File { get; set; }
+
+        // The Word (.docx) the questions were imported from (POST /api/Quiz/import), sent together with Questions so
+        // the file is kept with the quiz. Not needed when File is used - that file is kept automatically.
+        public IFormFile? SourceFile { get; set; }
     }
 }

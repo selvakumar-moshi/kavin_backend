@@ -87,23 +87,26 @@ namespace LearningBackendAPI.Models
         [BsonElement("status")]
         public string Status { get; set; }
 
+        // Most times one student may submit this quiz (per publish version); null on older quizzes = 1
+        [BsonElement("quizAttempt")]
+        public int? QuizAttempt { get; set; }
+
+        // Name of the Word file the questions were imported from, e.g. "testQuiz.docx" (null for quizzes entered by hand)
+        [BsonElement("sourceFileName")]
+        public string? SourceFileName { get; set; }
+
+        // The imported Word file itself, kept in S3 (coaching/question/document) so the admin can see which file the questions came from
+        [BsonElement("sourceFileUrl")]
+        public string? SourceFileUrl { get; set; }
+
+        [BsonElement("sourceFileKey")]
+        public string? SourceFileKey { get; set; }
+
         // competitive | school | previousYear | syllabusWise - which UI tab the quiz belongs to
         [BsonElement("quizType")]
         public string? QuizType { get; set; }
 
-        [BsonElement("subject")]
-        public string? Subject { get; set; }
-
-        [BsonElement("category")]
-        public string? Category { get; set; }
-
-        [BsonElement("standard")]
-        public int? Standard { get; set; }
-
-        [BsonElement("part")]
-        public string? Part { get; set; }
-
-        // previousYear and syllabusWise quizzes: the folder (and sub folder, if the folder has any) the quiz is filed under
+        // previousYear, syllabusWise and school quizzes: the folder (and sub folder, if the folder has any) the quiz is filed under
         [BsonElement("folderId")]
         public string? FolderId { get; set; }
 
@@ -115,6 +118,10 @@ namespace LearningBackendAPI.Models
 
         [BsonElement("subFolderName")]
         public string? SubFolderName { get; set; }
+
+        // Computed on read (not stored): every sub folder from the folder's first level down to SubFolderName, joined by "/"
+        [BsonIgnore]
+        public string? SubFolderPath { get; set; }
 
         [BsonElement("quizToView")]
         public string QuizToView { get; set; }

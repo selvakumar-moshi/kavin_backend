@@ -14,16 +14,13 @@ namespace LearningBackendAPI.Controllers
     public class QuizController : ControllerBase
     {
         private readonly IQuizService _quizService;
-        private readonly IQuizStructureService _quizStructureService;
         private readonly ResponseHelper _responseHelper;
 
         public QuizController(
             IQuizService quizService,
-            IQuizStructureService quizStructureService,
             ResponseHelper responseHelper)
         {
             _quizService = quizService;
-            _quizStructureService = quizStructureService;
             _responseHelper = responseHelper;
         }
 
@@ -39,27 +36,12 @@ namespace LearningBackendAPI.Controllers
             {
                 QuizType = string.IsNullOrWhiteSpace(request.QuizType) ? null : (Constants.QuizTypes.Normalize(request.QuizType) ?? request.QuizType.Trim()),
                 QuizToView = string.IsNullOrWhiteSpace(request.QuizToView) ? null : Constants.MaterialAccess.Normalize(request.QuizToView),
-                Subject = string.IsNullOrWhiteSpace(request.Subject) ? null : request.Subject.Trim(),
-                Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim(),
-                Standard = request.Standard,
-                Part = string.IsNullOrWhiteSpace(request.Part) ? null : request.Part.Trim(),
                 FolderId = string.IsNullOrWhiteSpace(request.FolderId) ? null : request.FolderId.Trim(),
                 SubFolderId = string.IsNullOrWhiteSpace(request.SubFolderId) ? null : request.SubFolderId.Trim()
             };
         }
 
         private bool IsAdmin => User.FindFirstValue(ClaimTypes.Role) == Constants.Roles.Admin;
-
-        /// <summary>
-        /// The Subject → Category → Standard → Part options for classifying open quizzes, for the UI's
-        /// cascading dropdowns. Managed through /api/QuizStructure; by default Tamil → standards 6-12,
-        /// GK → Social/Science → standards 6-12, with Part-1/2/3 on standards 6 and 7 only.
-        /// </summary>
-        [HttpGet("categories")]
-        public async Task<IActionResult> GetCategories()
-        {
-            return Ok(_responseHelper.Success(await _quizStructureService.GetTreeAsync(), "Quiz categories retrieved successfully"));
-        }
 
         /// <summary>
         /// Create a new quiz as a Draft with manually-entered questions (Admin only). Each question
@@ -73,6 +55,7 @@ namespace LearningBackendAPI.Controllers
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
         [RequestSizeLimit(20 * 1024 * 1024)]
+        [RequestFormLimits(ValueCountLimit = 20000)] // every question sends ~10 form fields; the 1024 default caps a quiz at ~100 questions
         public async Task<IActionResult> CreateQuiz([FromForm] QuizCreateRequest request)
         {
             try
@@ -144,6 +127,7 @@ namespace LearningBackendAPI.Controllers
         [HttpPut("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
         [RequestSizeLimit(20 * 1024 * 1024)]
+        [RequestFormLimits(ValueCountLimit = 20000)]
         public async Task<IActionResult> UpdateQuiz(string id, [FromForm] QuizUpdateRequest request)
         {
             try

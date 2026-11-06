@@ -8,17 +8,19 @@ namespace LearningBackendAPI.DTOs
         public string Title { get; set; } = "";
         public string QuizToView { get; set; } = "";
         public string? QuizType { get; set; }
-        public string? Subject { get; set; }
-        public string? Category { get; set; }
-        public int? Standard { get; set; }
-        public string? Part { get; set; }
         public string? FolderId { get; set; }
         public string? FolderName { get; set; }
         public string? SubFolderId { get; set; }
         public string? SubFolderName { get; set; }
+        // Every sub folder from the folder's first level down to SubFolderName, e.g. "Sub 1/Sub 1_1/Sub 1_2"
+        public string? SubFolderPath { get; set; }
         public DateTime? PublishedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
         public bool IsExpired { get; set; }
+        // Attempts the admin allows each student, how many this student has used, and how many are left
+        public int QuizAttempt { get; set; }
+        public int AttemptsUsed { get; set; }
+        public int AttemptsRemaining { get; set; }
         public int? TimeLeftSeconds { get; set; }
         public List<QuizStudentQuestionDto> Questions { get; set; } = new();
     }

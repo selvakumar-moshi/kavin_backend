@@ -10,11 +10,34 @@ namespace LearningBackendAPI.Services
 
         private readonly IQuizStructureRepository _repository;
         private readonly IQuizRepository _quizRepository;
+        private readonly ISyllabusMaterialRepository _materialRepository;
+        private readonly ISyllabusWiseRepository _syllabusWiseRepository;
 
-        public FolderService(IQuizStructureRepository repository, IQuizRepository quizRepository)
+        public FolderService(
+            IQuizStructureRepository repository,
+            IQuizRepository quizRepository,
+            ISyllabusMaterialRepository materialRepository,
+            ISyllabusWiseRepository syllabusWiseRepository)
         {
             _repository = repository;
             _quizRepository = quizRepository;
+            _materialRepository = materialRepository;
+            _syllabusWiseRepository = syllabusWiseRepository;
+        }
+
+        // Syllabus materials and plans point at a folder or sub folder by id, so one they use can't be deleted
+        private async Task EnsureNotUsedBySyllabusAsync(string id, string what)
+        {
+            var materials = (await _materialRepository.GetAllAsync()).Count(m => m.FolderId == id || m.SubFolderId == id);
+            if (materials > 0)
+            {
+                throw new InvalidOperationException($"{what} is used by {materials} syllabus material(s) and can't be deleted");
+            }
+            var plans = (await _syllabusWiseRepository.GetPlansAsync()).Count(p => p.FolderId == id);
+            if (plans > 0)
+            {
+                throw new InvalidOperationException($"{what} is used by {plans} syllabus wise plan(s) and can't be deleted");
+            }
         }
 
         // ---------- Folders ----------
@@ -84,6 +107,7 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException($"Folder '{folder.Name}' still has sub folders - delete them first");
             }
             await EnsureNotUsedByQuizzesAsync(q => q.FolderId == id, $"Folder '{folder.Name}'", "can't be deleted");
+            await EnsureNotUsedBySyllabusAsync(id, $"Folder '{folder.Name}'");
             await _repository.DeleteAsync<QuizFolder>(id);
         }
 
@@ -120,9 +144,8 @@ namespace LearningBackendAPI.Services
             {
                 var parentSub = all.FirstOrDefault(s => s.Id == parentId)
                     ?? throw new KeyNotFoundException("Folder not found");
+                // Quizzes already filed here stay where they are; they can be moved into the new child later
                 parentName = parentSub.Name;
-                // Quizzes filed here point at this exact sub folder, so it has to stay the deepest level
-                await EnsureNotUsedByQuizzesAsync(q => q.SubFolderId == parentId, $"Sub folder '{parentName}'", "can't get sub folders");
             }
 
             if (all.Any(s => s.FolderId == parentId && Same(s.Name, name)))
@@ -175,6 +198,7 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException($"Sub folder '{subFolder.Name}' still has sub folders - delete them first");
             }
             await EnsureNotUsedByQuizzesAsync(q => q.SubFolderId == id, $"Sub folder '{subFolder.Name}'", "can't be deleted");
+            await EnsureNotUsedBySyllabusAsync(id, $"Sub folder '{subFolder.Name}'");
             await _repository.DeleteAsync<QuizSubFolder>(id);
         }
 
@@ -255,6 +279,56 @@ namespace LearningBackendAPI.Services
             return ids;
         }
 
+        // Names of folders and sub folders by id (any level); ids that don't exist are left out
+        public async Task<Dictionary<string, string>> GetNodeNamesAsync(IEnumerable<string?> ids)
+        {
+            var wanted = ids.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToHashSet();
+            var names = new Dictionary<string, string>();
+            if (wanted.Count == 0)
+            {
+                return names;
+            }
+
+            foreach (var folder in await _repository.GetAllAsync<QuizFolder>())
+            {
+                if (wanted.Contains(folder.Id)) names[folder.Id] = folder.Name;
+            }
+            foreach (var subFolder in await _repository.GetAllAsync<QuizSubFolder>())
+            {
+                if (wanted.Contains(subFolder.Id)) names[subFolder.Id] = subFolder.Name;
+            }
+            return names;
+        }
+
+        public async Task<Dictionary<string, string>> GetSubFolderPathsAsync(IEnumerable<string?> subFolderIds)
+        {
+            var wanted = subFolderIds.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).Distinct().ToList();
+            var paths = new Dictionary<string, string>();
+            if (wanted.Count == 0)
+            {
+                return paths;
+            }
+
+            var byId = (await _repository.GetAllAsync<QuizSubFolder>()).ToDictionary(s => s.Id);
+            foreach (var id in wanted)
+            {
+                var names = new List<string>();
+                var current = byId.GetValueOrDefault(id);
+                // The parent chain ends at a folder (not in byId); the count guard stops a corrupt cycle
+                while (current != null && names.Count <= byId.Count)
+                {
+                    names.Add(current.Name);
+                    current = byId.GetValueOrDefault(current.FolderId);
+                }
+                if (names.Count > 0)
+                {
+                    names.Reverse();
+                    paths[id] = string.Join("/", names);
+                }
+            }
+            return paths;
+        }
+
         // ---------- Helpers ----------
 
         private async Task<T> FindAsync<T>(string id, string label) where T : QuizStructureItem
@@ -280,29 +354,7 @@ namespace LearningBackendAPI.Services
         {
             ValidateTree(nodes, parentName, depth);
             var all = await _repository.GetAllAsync<QuizSubFolder>();
-            var usedByQuizzes = (await _quizRepository.GetAllAsync())
-                .Where(q => q.SubFolderId != null).Select(q => q.SubFolderId!).ToHashSet();
-
-            CheckMerge(parentId, parentName, nodes, all, usedByQuizzes);
             await MergeTreeAsync(parentId, nodes, all);
-        }
-
-        private static void CheckMerge(string parentId, string parentName, List<SubFolderNodeRequest>? nodes, List<QuizSubFolder> all, HashSet<string> used)
-        {
-            foreach (var node in nodes ?? new List<SubFolderNodeRequest>())
-            {
-                var name = node.Name!.Trim();
-                var existing = all.FirstOrDefault(s => s.FolderId == parentId && Same(s.Name, name));
-                if (existing == null)
-                {
-                    if (used.Contains(parentId))
-                    {
-                        throw new InvalidOperationException($"Sub folder '{parentName}' is used by quiz(zes) and can't get sub folders");
-                    }
-                    continue;
-                }
-                CheckMerge(existing.Id, existing.Name, node.SubFolders, all, used);
-            }
         }
 
         private async Task MergeTreeAsync(string parentId, List<SubFolderNodeRequest>? nodes, List<QuizSubFolder> all)

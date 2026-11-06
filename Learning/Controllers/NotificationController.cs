@@ -24,12 +24,14 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Create a new notification (Admin only). notificationType is "Push Notification" (title,
-        /// description, link, date - date required) or "Job Notification" (same fields, date optional).
+        /// Create a new notification (Admin only). Every field is optional: notificationType ("Flash Notification" -
+        /// the default - or "Job Notification"), title, description, link, startDate, endDate. Sent as multipart/form-data so an optional "file" (PDF, or JPG / PNG / WEBP
+        /// image, up to 10 MB) can be attached; the response carries attachmentUrl and attachmentName.
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public async Task<IActionResult> CreateNotification([FromBody] NotificationCreateRequest request)
+        [RequestSizeLimit(12 * 1024 * 1024)]
+        public async Task<IActionResult> CreateNotification([FromForm] NotificationCreateRequest request)
         {
             try
             {
@@ -43,11 +45,13 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Update a notification (Admin only)
+        /// Update a notification (Admin only). multipart/form-data like create: a new "file" replaces the
+        /// attachment, removeFile=true deletes it.
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public async Task<IActionResult> UpdateNotification(string id, [FromBody] NotificationUpdateRequest request)
+        [RequestSizeLimit(12 * 1024 * 1024)]
+        public async Task<IActionResult> UpdateNotification(string id, [FromForm] NotificationUpdateRequest request)
         {
             try
             {

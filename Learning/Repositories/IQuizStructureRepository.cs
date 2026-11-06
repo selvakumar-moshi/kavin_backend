@@ -2,7 +2,7 @@ using LearningBackendAPI.Models;
 
 namespace LearningBackendAPI.Repositories
 {
-    // One generic repository over the four quiz-structure collections (subjects, categories, standards, parts)
+    // One generic repository over the folder and sub folder collections
     public interface IQuizStructureRepository
     {
         Task<List<T>> GetAllAsync<T>() where T : QuizStructureItem;

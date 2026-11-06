@@ -15,8 +15,8 @@ namespace LearningBackendAPI.Services
         private readonly IFileStorageService _fileStorageService;
         private readonly IExcelExportService _excelExportService;
         private readonly IBatchRepository _batchRepository;
-        private readonly IQuizStructureService _quizStructureService;
         private readonly IFolderService _folderService;
+        private readonly ISyllabusWiseService _syllabusWiseService;
 
         public QuizService(
             IQuizRepository quizRepository,
@@ -27,12 +27,12 @@ namespace LearningBackendAPI.Services
             IFileStorageService fileStorageService,
             IExcelExportService excelExportService,
             IBatchRepository batchRepository,
-            IQuizStructureService quizStructureService,
-            IFolderService folderService)
+            IFolderService folderService,
+            ISyllabusWiseService syllabusWiseService)
         {
+            _syllabusWiseService = syllabusWiseService;
             _folderService = folderService;
             _batchRepository = batchRepository;
-            _quizStructureService = quizStructureService;
             _quizRepository = quizRepository;
             _quizAttemptRepository = quizAttemptRepository;
             _courseRepository = courseRepository;
@@ -44,13 +44,22 @@ namespace LearningBackendAPI.Services
 
         public async Task<Quiz> CreateQuizAsync(QuizCreateRequest request)
         {
-            var quizToView = string.IsNullOrWhiteSpace(request.QuizToView)
-                ? Constants.MaterialAccess.Paid
-                : Constants.MaterialAccess.Normalize(request.QuizToView);
+            var quizType = Constants.QuizTypes.Normalize(request.QuizType)
+                ?? throw new InvalidOperationException("Quiz type is required: competitive, school, previousYear, syllabusWise, daily or currentAffairs");
+            var quizAttempt = ResolveAttemptLimit(request.QuizAttempt, 1);
+
+            // A daily quiz is always Free, whatever quizToView says
+            var quizToView = Constants.QuizTypes.IsAlwaysFree(quizType)
+                ? Constants.MaterialAccess.Free
+                : string.IsNullOrWhiteSpace(request.QuizToView)
+                    ? Constants.MaterialAccess.Paid
+                    : Constants.MaterialAccess.Normalize(request.QuizToView);
             var isFree = quizToView == Constants.MaterialAccess.Free;
 
             // Course and batch are mandatory for a Paid quiz (they decide who can attempt it) and
             // optional for a Free quiz (open to every student). If a Free quiz still gets them, they're validated.
+            // A Paid syllabusWise quiz needs neither: it is unlocked by the student's syllabus wise payment.
+            var needsCourse = !isFree && quizType != Constants.QuizTypes.SyllabusWise;
             Course? course = null;
             if (!string.IsNullOrWhiteSpace(request.CourseId))
             {
@@ -60,12 +69,12 @@ namespace LearningBackendAPI.Services
                     throw new InvalidOperationException("Course not found");
                 }
             }
-            else if (!isFree)
+            else if (needsCourse)
             {
                 throw new InvalidOperationException("Course is required for a Paid quiz");
             }
 
-            if (!isFree && string.IsNullOrWhiteSpace(request.BatchId))
+            if (needsCourse && string.IsNullOrWhiteSpace(request.BatchId))
             {
                 throw new InvalidOperationException("Batch is required for a Paid quiz");
             }
@@ -116,24 +125,54 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException("At least one question is required");
             }
 
-            Batch? batch = null;
-            if (!string.IsNullOrWhiteSpace(request.BatchId))
+            async Task<Batch?> LoadBatchAsync()
             {
-                batch = await _batchRepository.GetByIdAsync(request.BatchId);
-                if (batch == null)
+                if (string.IsNullOrWhiteSpace(request.BatchId))
                 {
-                    throw new InvalidOperationException(Constants.Messages.BatchNotFound);
+                    return null;
                 }
-                if (batch.CourseId != course!.Id)
+                var found = await _batchRepository.GetByIdAsync(request.BatchId)
+                    ?? throw new InvalidOperationException(Constants.Messages.BatchNotFound);
+                if (found.CourseId != course!.Id)
                 {
                     throw new InvalidOperationException(Constants.Messages.BatchCourseMismatch);
                 }
+                return found;
             }
 
-            var quizType = Constants.QuizTypes.Normalize(request.QuizType)
-                ?? throw new InvalidOperationException("Quiz type is required: competitive, school, previousYear or syllabusWise");
-            var classification = await _quizStructureService.ValidateAsync(request.Subject, request.Category, request.Standard, request.Part);
-            var folder = await ValidateFolderForTypeAsync(quizType, request.FolderId, request.SubFolderId);
+            // The Word file the questions came from goes to S3 while the batch and folder lookups run, instead of after them.
+            // If anything is rejected, the upload is removed again so a failed request never leaves a file behind.
+            var sourceFile = request.SourceFile is { Length: > 0 } ? request.SourceFile : request.File;
+            var uploadTask = UploadSourceFileAsync(sourceFile);
+
+            Batch? batch;
+            FolderSelection folder;
+            (string Name, string Url, string Key)? source;
+            try
+            {
+                var batchTask = LoadBatchAsync();
+                var folderTask = ValidateFolderForTypeAsync(quizType, request.FolderId, request.SubFolderId);
+                await Task.WhenAll(batchTask, folderTask, uploadTask);
+                batch = batchTask.Result;
+                folder = folderTask.Result;
+                source = uploadTask.Result;
+            }
+            catch
+            {
+                try
+                {
+                    var uploaded = await uploadTask;
+                    if (uploaded != null)
+                    {
+                        await _fileStorageService.DeleteAsync(uploaded.Value.Key);
+                    }
+                }
+                catch
+                {
+                    // The upload itself failed, so there is nothing to clean up
+                }
+                throw;
+            }
 
             var quiz = new Quiz
             {
@@ -142,15 +181,15 @@ namespace LearningBackendAPI.Services
                 BatchId = batch?.Id,
                 BatchTitle = batch?.Title,
                 QuizType = quizType,
-                Subject = classification.Subject,
-                Category = classification.Category,
-                Standard = classification.Standard,
-                Part = classification.Part,
                 FolderId = folder.FolderId,
                 FolderName = folder.FolderName,
                 SubFolderId = folder.SubFolderId,
                 SubFolderName = folder.SubFolderName,
                 Title = request.Title.Trim(),
+                SourceFileName = source?.Name,
+                SourceFileUrl = source?.Url,
+                SourceFileKey = source?.Key,
+                QuizAttempt = quizAttempt,
                 QuizToView = quizToView,
                 Status = Constants.QuizStatuses.Draft,
                 Questions = await MapQuestionsAsync(request.Questions, null),
@@ -158,6 +197,41 @@ namespace LearningBackendAPI.Services
             };
 
             return await _quizRepository.CreateAsync(quiz);
+        }
+
+        private const string SourceDocumentFolder = "coaching/question/document";
+
+        // Saves an imported Word file in S3. No file (null or empty) means nothing to keep. The stored name gets a unique prefix
+        // so two quizzes imported from the same "TNPSC.docx" never overwrite each other; SourceFileName keeps the original name.
+        private async Task<(string Name, string Url, string Key)?> UploadSourceFileAsync(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return null;
+            }
+
+            var name = Path.GetFileName(file.FileName);
+            if (!string.Equals(Path.GetExtension(name), ".docx", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Only .docx (Word) files are supported - re-save older .doc files as .docx");
+            }
+
+            var (url, key) = await _fileStorageService.UploadDocxAsync(file, SourceDocumentFolder, $"{name}");
+            return (name, url, key);
+        }
+
+        // quizAttempt must be 1 or more; when it isn't passed the fallback applies
+        private static int ResolveAttemptLimit(int? requested, int fallback)
+        {
+            if (requested == null)
+            {
+                return fallback;
+            }
+            if (requested < 1)
+            {
+                throw new InvalidOperationException("quizAttempt must be at least 1");
+            }
+            return requested.Value;
         }
 
         // Reads the questions out of an uploaded Word file. Saves nothing.
@@ -198,6 +272,7 @@ namespace LearningBackendAPI.Services
 
             return Task.FromResult(new QuizImportPreviewResponse
             {
+                FileName = Path.GetFileName(file!.FileName),
                 TotalFoundInDocument = parsed.TotalFound,
                 Readable = parsed.Questions.Count,
                 Questions = parsed.Questions.Select(q => new QuizImportQuestionDto
@@ -231,10 +306,13 @@ namespace LearningBackendAPI.Services
             // The copy can be Paid or Free (defaults to the original's type):
             //  - Paid: a batch is required (and a course - the original's, or request.CourseId if it has none)
             //  - Free: no batch needed; one is still validated and kept if it is passed
-            var quizToView = string.IsNullOrWhiteSpace(request.QuizToView)
-                ? source.QuizToView
-                : Constants.MaterialAccess.Normalize(request.QuizToView);
+            var quizToView = Constants.QuizTypes.IsAlwaysFree(source.QuizType)
+                ? Constants.MaterialAccess.Free
+                : string.IsNullOrWhiteSpace(request.QuizToView)
+                    ? source.QuizToView
+                    : Constants.MaterialAccess.Normalize(request.QuizToView);
             var isFree = quizToView == Constants.MaterialAccess.Free;
+            var quizAttempt = ResolveAttemptLimit(request.QuizAttempt, source.QuizAttempt ?? 1);
 
             Course? course = null;
             var courseId = !string.IsNullOrWhiteSpace(source.CourseId) ? source.CourseId : request.CourseId;
@@ -300,6 +378,9 @@ namespace LearningBackendAPI.Services
                 questions.Add(copy);
             }
 
+            // The Word file is copied too, so deleting or replacing it on one quiz never affects the other
+            var (sourceFileUrl, sourceFileKey) = await CopyFileAsync(source.SourceFileKey, SourceDocumentFolder);
+
             var quiz = new Quiz
             {
                 CourseId = course?.Id,
@@ -307,15 +388,15 @@ namespace LearningBackendAPI.Services
                 BatchId = batch?.Id,
                 BatchTitle = batch?.Title,
                 QuizType = source.QuizType,
-                Subject = source.Subject,
-                Category = source.Category,
-                Standard = source.Standard,
-                Part = source.Part,
                 FolderId = source.FolderId,
                 FolderName = source.FolderName,
                 SubFolderId = source.SubFolderId,
                 SubFolderName = source.SubFolderName,
                 Title = string.IsNullOrWhiteSpace(request.Title) ? source.Title : request.Title.Trim(),
+                SourceFileName = source.SourceFileName,
+                SourceFileUrl = sourceFileUrl,
+                SourceFileKey = sourceFileKey,
+                QuizAttempt = quizAttempt,
                 QuizToView = quizToView,
                 Status = Constants.QuizStatuses.Draft,
                 Questions = questions,
@@ -325,14 +406,17 @@ namespace LearningBackendAPI.Services
             return await _quizRepository.CreateAsync(quiz);
         }
 
-        private async Task<(string? Url, string? Key)> CopyImageAsync(string? sourceKey)
+        private Task<(string? Url, string? Key)> CopyImageAsync(string? sourceKey)
+            => CopyFileAsync(sourceKey, QuestionImageFolder);
+
+        private async Task<(string? Url, string? Key)> CopyFileAsync(string? sourceKey, string folder)
         {
             if (string.IsNullOrWhiteSpace(sourceKey))
             {
                 return (null, null);
             }
 
-            return await _fileStorageService.CopyAsync(sourceKey, QuestionImageFolder);
+            return await _fileStorageService.CopyAsync(sourceKey, folder);
         }
 
         public async Task<Quiz> UpdateQuizAsync(string id, QuizUpdateRequest request)
@@ -361,16 +445,7 @@ namespace LearningBackendAPI.Services
             if (!string.IsNullOrWhiteSpace(request.QuizType))
             {
                 quiz.QuizType = Constants.QuizTypes.Normalize(request.QuizType)
-                    ?? throw new InvalidOperationException("Quiz type must be competitive, school, previousYear or syllabusWise");
-            }
-
-            if (request.Subject != null)
-            {
-                var classification = await _quizStructureService.ValidateAsync(request.Subject, request.Category, request.Standard, request.Part);
-                quiz.Subject = classification.Subject;
-                quiz.Category = classification.Category;
-                quiz.Standard = classification.Standard;
-                quiz.Part = classification.Part;
+                    ?? throw new InvalidOperationException("Quiz type must be competitive, school, previousYear, syllabusWise, daily or currentAffairs");
             }
 
             // Folder: only touched when the request changes the folder or the quiz type, so editing e.g. just the
@@ -397,7 +472,19 @@ namespace LearningBackendAPI.Services
                 quiz.QuizToView = Constants.MaterialAccess.Normalize(request.QuizToView);
             }
 
-            if (quiz.QuizToView != Constants.MaterialAccess.Free && string.IsNullOrWhiteSpace(quiz.CourseId))
+            // A daily quiz is always Free
+            if (Constants.QuizTypes.IsAlwaysFree(quiz.QuizType))
+            {
+                quiz.QuizToView = Constants.MaterialAccess.Free;
+            }
+
+            if (request.QuizAttempt != null)
+            {
+                quiz.QuizAttempt = ResolveAttemptLimit(request.QuizAttempt, 1);
+            }
+
+            if (quiz.QuizToView != Constants.MaterialAccess.Free && string.IsNullOrWhiteSpace(quiz.CourseId)
+                && quiz.QuizType != Constants.QuizTypes.SyllabusWise)
             {
                 throw new InvalidOperationException("This quiz has no course, so it can only be Free - create a new Paid quiz with a course and batch instead");
             }
@@ -405,6 +492,23 @@ namespace LearningBackendAPI.Services
             if (request.Questions != null)
             {
                 quiz.Questions = await MapQuestionsAsync(request.Questions, quiz.Questions);
+            }
+
+            // Word file: a new one replaces the saved one; removeSourceFile clears it. The old S3 object is deleted
+            // only after the quiz is saved, so a failed update never loses the file it still points to.
+            string? oldSourceKey = null;
+            var newSource = await UploadSourceFileAsync(request.SourceFile);
+            if (newSource != null)
+            {
+                oldSourceKey = quiz.SourceFileKey;
+                (quiz.SourceFileName, quiz.SourceFileUrl, quiz.SourceFileKey) = newSource.Value;
+            }
+            else if (request.RemoveSourceFile == true)
+            {
+                oldSourceKey = quiz.SourceFileKey;
+                quiz.SourceFileName = null;
+                quiz.SourceFileUrl = null;
+                quiz.SourceFileKey = null;
             }
 
             if (quiz.Status == Constants.QuizStatuses.Published)
@@ -419,13 +523,26 @@ namespace LearningBackendAPI.Services
             quiz.UpdatedAt = DateTime.UtcNow;
 
             await _quizRepository.UpdateAsync(id, quiz);
+            if (!string.IsNullOrWhiteSpace(oldSourceKey))
+            {
+                await _fileStorageService.DeleteAsync(oldSourceKey);
+            }
             return quiz;
         }
 
         private async Task<List<QuizQuestionItem>> MapQuestionsAsync(List<QuizQuestionInput> questions, List<QuizQuestionItem>? existing)
         {
-            foreach (var q in questions)
+            for (var i = 0; i < questions.Count; i++)
             {
+                var q = questions[i];
+                var prev = existing != null && i < existing.Count ? existing[i] : null;
+
+                // Text OR an image is enough (an image already saved on the question counts too)
+                RequireTextOrImage(i + 1, "the question", q.QuestionText, q.QuestionImage, prev?.QuestionImageUrl);
+                RequireTextOrImage(i + 1, "option A", q.OptionA, q.OptionAImage, prev?.OptionAImageUrl);
+                RequireTextOrImage(i + 1, "option B", q.OptionB, q.OptionBImage, prev?.OptionBImageUrl);
+                RequireTextOrImage(i + 1, "option C", q.OptionC, q.OptionCImage, prev?.OptionCImageUrl);
+
                 if (!string.IsNullOrWhiteSpace(q.CorrectOption) &&
                     !Constants.QuizOptions.All.Contains(q.CorrectOption.ToUpperInvariant()))
                 {
@@ -453,10 +570,10 @@ namespace LearningBackendAPI.Services
                 var item = new QuizQuestionItem
                 {
                     QuestionNumber = index + 1,
-                    QuestionText = q.QuestionText.Trim(),
-                    OptionA = q.OptionA.Trim(),
-                    OptionB = q.OptionB.Trim(),
-                    OptionC = q.OptionC.Trim(),
+                    QuestionText = (q.QuestionText ?? "").Trim(),
+                    OptionA = (q.OptionA ?? "").Trim(),
+                    OptionB = (q.OptionB ?? "").Trim(),
+                    OptionC = (q.OptionC ?? "").Trim(),
                     OptionD = (q.OptionD ?? "").Trim(),
                     CorrectOption = string.IsNullOrWhiteSpace(q.CorrectOption) ? null : q.CorrectOption.ToUpperInvariant(),
                     Mark = q.Mark ?? 1
@@ -477,6 +594,14 @@ namespace LearningBackendAPI.Services
             }
 
             return items;
+        }
+
+        private static void RequireTextOrImage(int questionNumber, string part, string? text, IFormFile? newImage, string? savedImageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(text) && (newImage == null || newImage.Length == 0) && string.IsNullOrWhiteSpace(savedImageUrl))
+            {
+                throw new InvalidOperationException($"Question {questionNumber}: provide text or an image for {part}");
+            }
         }
 
         private const string QuestionImageFolder = "coaching/Question";
@@ -518,10 +643,10 @@ namespace LearningBackendAPI.Services
             }
 
             var incomplete = quiz.Questions.Any(q =>
-                string.IsNullOrWhiteSpace(q.QuestionText) ||
-                string.IsNullOrWhiteSpace(q.OptionA) ||
-                string.IsNullOrWhiteSpace(q.OptionB) ||
-                string.IsNullOrWhiteSpace(q.OptionC) ||
+                (string.IsNullOrWhiteSpace(q.QuestionText) && string.IsNullOrWhiteSpace(q.QuestionImageUrl)) ||
+                (string.IsNullOrWhiteSpace(q.OptionA) && string.IsNullOrWhiteSpace(q.OptionAImageUrl)) ||
+                (string.IsNullOrWhiteSpace(q.OptionB) && string.IsNullOrWhiteSpace(q.OptionBImageUrl)) ||
+                (string.IsNullOrWhiteSpace(q.OptionC) && string.IsNullOrWhiteSpace(q.OptionCImageUrl)) ||
                 string.IsNullOrWhiteSpace(q.CorrectOption) ||
                 // Option D is optional, but it can't be the correct answer if it's empty
                 (q.CorrectOption == "D" && string.IsNullOrWhiteSpace(q.OptionD) && string.IsNullOrWhiteSpace(q.OptionDImageUrl)));
@@ -554,6 +679,11 @@ namespace LearningBackendAPI.Services
             var hasAttempts = (await _quizAttemptRepository.GetByQuizIdAsync(id)).Count > 0;
 
             var deleted = await _quizRepository.DeleteAsync(id);
+            if (deleted)
+            {
+                // Attempts keep their own question snapshot, so the imported Word file isn't needed any more
+                await _fileStorageService.DeleteAsync(quiz.SourceFileKey ?? "");
+            }
             if (deleted && !hasAttempts)
             {
                 foreach (var q in quiz.Questions)
@@ -582,7 +712,13 @@ namespace LearningBackendAPI.Services
             await ExpandSubFolderAsync(classification);
             var quizzes = FilterByClassification(await _quizRepository.GetAllAsync(), classification);
             var filtered = TextSearchHelper.ApplyFilter(quizzes, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
-            return PagingHelper.ToPagedResult(filtered, pageNumber, pageSize);
+            var page = PagingHelper.ToPagedResult(filtered, pageNumber, pageSize);
+            var paths = await _folderService.GetSubFolderPathsAsync(page.Items.Select(q => q.SubFolderId));
+            foreach (var quiz in page.Items)
+            {
+                quiz.SubFolderPath = PathOf(paths, quiz.SubFolderId);
+            }
+            return page;
         }
 
         public async Task<Quiz> GetQuizByIdForAdminAsync(string id)
@@ -592,8 +728,12 @@ namespace LearningBackendAPI.Services
             {
                 throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
             }
+            quiz.SubFolderPath = PathOf(await _folderService.GetSubFolderPathsAsync(new[] { quiz.SubFolderId }), quiz.SubFolderId);
             return quiz;
         }
+
+        private static string? PathOf(Dictionary<string, string> paths, string? subFolderId)
+            => subFolderId != null && paths.TryGetValue(subFolderId, out var path) ? path : null;
 
         public async Task<PagedResult<QuizStudentResponse>> GetAccessibleQuizzesForStudentAsync(string userId, string? courseId, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize, QuizClassification? classification = null)
         {
@@ -605,20 +745,31 @@ namespace LearningBackendAPI.Services
             }
 
             var verifiedEnrollments = await GetVerifiedEnrollmentsAsync(userId);
+            var syllabusAccess = await GetSyllabusAccessAsync(userId);
 
             // A Free quiz is visible to every student regardless of course purchase; a Paid quiz
-            // requires a verified enrollment in that course (and in that batch, if the quiz has one).
+            // requires a verified enrollment in that course (and in that batch, if the quiz has one),
+            // or - for a syllabusWise quiz - a verified payment for a plan covering the quiz's folder.
             var published = quizzes
                 .Where(q => q.Status == Constants.QuizStatuses.Published && !q.IsExpired)
-                .Where(q => CanAccess(q, verifiedEnrollments))
+                .Where(q => CanAccess(q, verifiedEnrollments, syllabusAccess))
                 .ToList();
             await ExpandSubFolderAsync(classification);
             published = FilterByClassification(published, classification);
 
             var filtered = TextSearchHelper.ApplyFilter(published, searchTerm, globalFilter, QuizSearchFields, DefaultQuizSearchFields);
-            var accessible = filtered.Select(q => ToStudentResponse(q, userId)).ToList();
+            var myAttempts = await _quizAttemptRepository.GetAttemptKeysByUserAsync(userId);
+            var accessible = filtered
+                .Select(q => ToStudentResponse(q, userId, myAttempts.Count(a => a.QuizId == q.Id && a.QuizVersion == q.PublishVersion)))
+                .ToList();
 
-            return PagingHelper.ToPagedResult(accessible, pageNumber, pageSize);
+            var page = PagingHelper.ToPagedResult(accessible, pageNumber, pageSize);
+            var paths = await _folderService.GetSubFolderPathsAsync(page.Items.Select(q => q.SubFolderId));
+            foreach (var quiz in page.Items)
+            {
+                quiz.SubFolderPath = PathOf(paths, quiz.SubFolderId);
+            }
+            return page;
         }
 
         public async Task<QuizStudentResponse> GetQuizByIdForStudentAsync(string id, string userId)
@@ -634,7 +785,10 @@ namespace LearningBackendAPI.Services
                 throw new UnauthorizedAccessException(Constants.Messages.NoCourseAccess);
             }
 
-            return ToStudentResponse(quiz, userId);
+            var used = (int)await _quizAttemptRepository.CountByQuizUserAndVersionAsync(id, userId, quiz.PublishVersion);
+            var response = ToStudentResponse(quiz, userId, used);
+            response.SubFolderPath = PathOf(await _folderService.GetSubFolderPathsAsync(new[] { quiz.SubFolderId }), quiz.SubFolderId);
+            return response;
         }
 
         public async Task<QuizResultResponse> SubmitQuizAsync(string quizId, string userId, QuizSubmitRequest request)
@@ -660,10 +814,13 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException(Constants.Messages.QuizExpired);
             }
 
-            var existingAttempt = await _quizAttemptRepository.GetByQuizUserAndVersionAsync(quizId, userId, quiz.PublishVersion);
-            if (existingAttempt != null)
+            var attemptLimit = quiz.QuizAttempt ?? 1;
+            var attemptsUsed = await _quizAttemptRepository.CountByQuizUserAndVersionAsync(quizId, userId, quiz.PublishVersion);
+            if (attemptsUsed >= attemptLimit)
             {
-                throw new InvalidOperationException(Constants.Messages.QuizAlreadyAttempted);
+                throw new InvalidOperationException(attemptLimit == 1
+                    ? Constants.Messages.QuizAlreadyAttempted
+                    : Constants.Messages.QuizAttemptsExhausted);
             }
 
             var answerLookup = request.Answers
@@ -750,7 +907,7 @@ namespace LearningBackendAPI.Services
         // (each ranked separately) with batchId=all.
         // Student: always their own batch.
         // Admin filters (RankListRequest): quizType must match the quiz; quizToView=Paid ranks only students
-        // with a verified paid enrollment (optionally in batchId), quizToView=Free ranks only students without one.
+        // with a verified paid enrollment (optionally in batchId); on a free quiz, quizToView=Free ranks everyone.
         private async Task<(Quiz Quiz, List<RankListEntryDto> RankList, string? BatchTitle)> BuildRankListAsync(
             string quizId, string userId, bool isAdmin, RankListRequest? request)
         {
@@ -789,8 +946,17 @@ namespace LearningBackendAPI.Services
                     {
                         throw new InvalidOperationException(Constants.Messages.RankListFreeViewOnPaidQuiz);
                     }
+
+                    // quizToView=Free on a free quiz just names the quiz's own access type: rank everyone who
+                    // attempted it (paid students included), otherwise enrolled students vanish from the list
+                    if (isFree && studentView == Constants.MaterialAccess.Free)
+                    {
+                        studentView = null;
+                    }
                 }
             }
+
+            var syllabusOnly = !isFree && quiz.QuizType == Constants.QuizTypes.SyllabusWise && string.IsNullOrWhiteSpace(quiz.CourseId);
 
             string? targetBatchId = null;
             if (isFree)
@@ -800,6 +966,14 @@ namespace LearningBackendAPI.Services
                     !batchId.Equals("all", StringComparison.OrdinalIgnoreCase))
                 {
                     targetBatchId = batchId;
+                }
+            }
+            else if (syllabusOnly)
+            {
+                // A Paid syllabusWise quiz without a course has no batches: one list of the students who paid
+                if (!isAdmin && !(await GetSyllabusAccessAsync(userId)).Covers(quiz.FolderId, quiz.SubFolderId))
+                {
+                    throw new UnauthorizedAccessException(Constants.Messages.NoCourseAccess);
                 }
             }
             else if (isAdmin)
@@ -829,6 +1003,7 @@ namespace LearningBackendAPI.Services
             // Only students who currently hold a verified (paid) enrollment in the batch they
             // attempted from are ranked.
             var candidates = new List<(QuizAttempt Attempt, string? BatchId, string? BatchTitle)>();
+            var syllabusByUser = new Dictionary<string, SyllabusAccess>();
             foreach (var attempt in await _quizAttemptRepository.GetByQuizIdAsync(quizId))
             {
                 if (isFree)
@@ -841,22 +1016,25 @@ namespace LearningBackendAPI.Services
                     }
 
                     var verified = await GetVerifiedEnrollmentsAsync(attempt.UserId);
-                    if (studentView == Constants.MaterialAccess.Free)
-                    {
-                        // Unpaid students: no verified enrollment at all
-                        if (verified.Count == 0)
-                        {
-                            candidates.Add((attempt, null, null));
-                        }
-                        continue;
-                    }
-
                     var paid = targetBatchId == null
                         ? verified.FirstOrDefault()
                         : verified.FirstOrDefault(e => e.BatchId == targetBatchId);
                     if (paid != null)
                     {
                         candidates.Add((attempt, paid.BatchId, paid.BatchTitle));
+                    }
+                    continue;
+                }
+
+                if (syllabusOnly)
+                {
+                    if (!syllabusByUser.TryGetValue(attempt.UserId, out var access))
+                    {
+                        access = syllabusByUser[attempt.UserId] = await GetSyllabusAccessAsync(attempt.UserId);
+                    }
+                    if (access.Covers(quiz.FolderId, quiz.SubFolderId))
+                    {
+                        candidates.Add((attempt, null, null));
                     }
                     continue;
                 }
@@ -888,8 +1066,11 @@ namespace LearningBackendAPI.Services
             {
                 // If the quiz was republished while this batch had it, rank only the latest version
                 var latestVersion = group.Max(c => c.Attempt.QuizVersion);
+                // A student may have several attempts: only their best one is ranked (ties go to the earlier submission)
                 var ordered = group
                     .Where(c => c.Attempt.QuizVersion == latestVersion)
+                    .GroupBy(c => c.Attempt.UserId)
+                    .Select(g => g.OrderByDescending(c => c.Attempt.ScoredMarks).ThenBy(c => c.Attempt.SubmittedAt).First())
                     .OrderByDescending(c => c.Attempt.ScoredMarks)
                     .ThenBy(c => c.Attempt.SubmittedAt)
                     .ToList();
@@ -952,7 +1133,7 @@ namespace LearningBackendAPI.Services
             }
         }
 
-        // Optional Subject/Category/Standard/Part filters (only the ones that are passed are applied)
+        // Optional quizType / quizToView / folder filters (only the ones that are passed are applied)
         private static List<Quiz> FilterByClassification(List<Quiz> quizzes, QuizClassification? filter)
         {
             if (filter == null || filter.IsEmpty)
@@ -963,10 +1144,6 @@ namespace LearningBackendAPI.Services
             return quizzes.Where(q =>
                 (filter.QuizType == null || string.Equals(q.QuizType, filter.QuizType, StringComparison.OrdinalIgnoreCase)) &&
                 (filter.QuizToView == null || string.Equals(q.QuizToView, filter.QuizToView, StringComparison.OrdinalIgnoreCase)) &&
-                (filter.Subject == null || string.Equals(q.Subject, filter.Subject, StringComparison.OrdinalIgnoreCase)) &&
-                (filter.Category == null || string.Equals(q.Category, filter.Category, StringComparison.OrdinalIgnoreCase)) &&
-                (filter.Standard == null || q.Standard == filter.Standard) &&
-                (filter.Part == null || string.Equals(q.Part, filter.Part, StringComparison.OrdinalIgnoreCase)) &&
                 (filter.FolderId == null || q.FolderId == filter.FolderId) &&
                 (filter.SubFolderId == null || (q.SubFolderId != null && (filter.SubFolderIds ?? new HashSet<string> { filter.SubFolderId }).Contains(q.SubFolderId))))
                 .ToList();
@@ -984,14 +1161,23 @@ namespace LearningBackendAPI.Services
             {
                 return true;
             }
-            return CanAccess(quiz, await GetVerifiedEnrollmentsAsync(userId));
+            // The payment lookup only happens for a Paid syllabusWise quiz - every other quiz skips it
+            var syllabusAccess = quiz.QuizType == Constants.QuizTypes.SyllabusWise ? await GetSyllabusAccessAsync(userId) : null;
+            return CanAccess(quiz, await GetVerifiedEnrollmentsAsync(userId), syllabusAccess);
         }
 
+        private Task<SyllabusAccess> GetSyllabusAccessAsync(string userId) => _syllabusWiseService.GetAccessAsync(userId);
+
         // Free quizzes are open to everyone. Paid quizzes need a verified enrollment in the quiz's
-        // course, and when the quiz is tied to a batch, in that same batch.
-        private static bool CanAccess(Quiz quiz, List<Enrollment> verifiedEnrollments)
+        // course, and when the quiz is tied to a batch, in that same batch. A Paid syllabusWise quiz is
+        // also open to a student whose verified payment covers the quiz's folder (syllabus).
+        private static bool CanAccess(Quiz quiz, List<Enrollment> verifiedEnrollments, SyllabusAccess? syllabus)
         {
             if (quiz.QuizToView == Constants.MaterialAccess.Free)
+            {
+                return true;
+            }
+            if (quiz.QuizType == Constants.QuizTypes.SyllabusWise && syllabus?.Covers(quiz.FolderId, quiz.SubFolderId) == true)
             {
                 return true;
             }
@@ -1025,7 +1211,7 @@ namespace LearningBackendAPI.Services
             return questions;
         }
 
-        // A previousYear or syllabusWise quiz must be filed in a folder (and sub folder, if the folder has any); other types can't have one
+        // A previousYear, syllabusWise or school quiz must be filed in a folder (and sub folder, if the folder has any); other types can't have one
         private async Task<FolderSelection> ValidateFolderForTypeAsync(string? quizType, string? folderId, string? subFolderId)
         {
             if (Constants.QuizTypes.UsesFolders(quizType))
@@ -1039,25 +1225,25 @@ namespace LearningBackendAPI.Services
 
             if (!string.IsNullOrWhiteSpace(folderId) || !string.IsNullOrWhiteSpace(subFolderId))
             {
-                throw new InvalidOperationException("Folder and sub folder can only be set on a previousYear or syllabusWise quiz");
+                throw new InvalidOperationException("Folder and sub folder can only be set on a previousYear, syllabusWise or school quiz");
             }
             return new FolderSelection();
         }
 
-        private static QuizStudentResponse ToStudentResponse(Quiz quiz, string userId)
+        private static QuizStudentResponse ToStudentResponse(Quiz quiz, string userId, int attemptsUsed)
         {
+            var attemptLimit = quiz.QuizAttempt ?? 1;
             return new QuizStudentResponse
             {
+                QuizAttempt = attemptLimit,
+                AttemptsUsed = attemptsUsed,
+                AttemptsRemaining = Math.Max(0, attemptLimit - attemptsUsed),
                 Id = quiz.Id,
                 CourseId = quiz.CourseId,
                 CourseName = quiz.CourseName,
                 Title = quiz.Title,
                 QuizToView = quiz.QuizToView,
                 QuizType = quiz.QuizType,
-                Subject = quiz.Subject,
-                Category = quiz.Category,
-                Standard = quiz.Standard,
-                Part = quiz.Part,
                 FolderId = quiz.FolderId,
                 FolderName = quiz.FolderName,
                 SubFolderId = quiz.SubFolderId,

@@ -1,6 +1,7 @@
 ﻿using LearningBackendAPI.DTOs;
 using LearningBackendAPI.Models;
 using LearningBackendAPI.Repositories;
+using LearningBackendAPI.Utils;
 
 namespace LearningBackendAPI.Services
 {
@@ -51,9 +52,14 @@ namespace LearningBackendAPI.Services
             return await _courseRepository.CreateAsync(course);
         }
 
-        public async Task<List<Course>> GetAllCoursesAsync()
+        // courseType: "Paid" (amount above 0), "Free" (amount 0) or "All" / not passed (every course)
+        public async Task<List<Course>> GetAllCoursesAsync(string? courseType = null)
         {
-            return await _courseRepository.GetAllAsync();
+            var type = Constants.CourseTypes.Normalize(courseType);
+            var courses = await _courseRepository.GetAllAsync();
+            return type == Constants.CourseTypes.All
+                ? courses
+                : courses.Where(c => c.CourseType == type).ToList();
         }
 
         public async Task<Course> GetCourseByIdAsync(string id)

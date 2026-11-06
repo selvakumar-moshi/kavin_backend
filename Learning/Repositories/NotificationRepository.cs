@@ -20,7 +20,7 @@ namespace LearningBackendAPI.Repositories
         public async Task<List<Notification>> GetAllAsync()
         {
             return await _notifications.Find(_ => true)
-                .SortByDescending(n => n.Date)
+                .SortByDescending(n => n.StartDate)
                 .ToListAsync();
         }
 

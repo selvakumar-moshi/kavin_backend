@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LearningBackendAPI.Controllers
 {
     /// <summary>
-    /// Folders for "previousYear" and "syllabusWise" quizzes. Reading is open to any signed-in user; creating, updating and
+    /// Folders for "previousYear", "syllabusWise" and "school" quizzes. Reading is open to any signed-in user; creating, updating and
     /// deleting is Admin only. A folder with sub folders, or one that quizzes use, can't be deleted.
     /// </summary>
     [ApiController]

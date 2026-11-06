@@ -158,7 +158,9 @@ namespace LearningBackendAPI.Services
                 BatchTitle = batch.Title,
                 CourseAmount = course.CourseAmount,
                 TotalAmount = course.CourseAmount,
-                Status = Constants.EnrollmentStatuses.Pending
+                // A free course (amount 0) has nothing to pay or verify
+                Status = course.IsFree ? Constants.EnrollmentStatuses.Verified : Constants.EnrollmentStatuses.Pending,
+                VerifiedAt = course.IsFree ? DateTime.UtcNow : null
             };
 
             return await _enrollmentRepository.CreateAsync(enrollment);

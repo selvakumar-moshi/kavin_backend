@@ -6,5 +6,6 @@ namespace LearningBackendAPI.Services
     {
         Task<LoginResponse> LoginAsync(LoginRequest request);
         Task<UserDto> RegisterAsync(RegisterRequest request);
+        Task ChangePasswordAsync(string userId, ChangePasswordRequest request);
     }
 }

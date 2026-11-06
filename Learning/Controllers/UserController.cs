@@ -74,6 +74,30 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
+        /// Reset a student's password (Admin only) for a student who forgot it. Passwords are stored as one-way hashes, so the
+        /// current one can't be shown; this sets a new random temporary password and returns it once in "temporaryPassword" -
+        /// give it to the student, who then logs in with it.
+        /// </summary>
+        [HttpPost("{id}/reset-password")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        public async Task<IActionResult> ResetPassword(string id)
+        {
+            try
+            {
+                var password = await _userService.ResetPasswordAsync(id);
+                return Ok(_responseHelper.Success(new { userId = id, temporaryPassword = password }, "Password reset successfully"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
         /// Update the current logged-in user's own details
         /// </summary>
         [HttpPut("me")]

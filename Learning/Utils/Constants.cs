@@ -30,10 +30,11 @@
             public const string QuizNotPublished = "This quiz is not currently published";
             public const string QuizExpired = "This quiz has expired and is no longer accepting submissions";
             public const string QuizAlreadyAttempted = "You have already submitted this quiz";
+            public const string QuizAttemptsExhausted = "You have used all your attempts for this quiz";
             public const string QuizNotDraft = "Only a draft quiz can be deleted";
             public const string QuizAlreadyPublished = "This quiz has already been published";
             public const string RankListNotForFreeQuiz = "Rank list is not available for free quizzes";
-            public const string InvalidQuizTypeFilter = "quizType must be 'competitive', 'school', 'previousYear' or 'syllabusWise'";
+            public const string InvalidQuizTypeFilter = "quizType must be 'competitive', 'school', 'previousYear', 'syllabusWise', 'daily' or 'currentAffairs'";
             public const string RankListQuizTypeMismatch = "The quiz is not of the requested quizType";
             public const string RankListFreeViewOnPaidQuiz = "Unpaid students can only be ranked for free quizzes";
             public const string QuizNotAttempted = "You have not submitted this quiz yet";
@@ -48,6 +49,7 @@
             public const string EnrollmentDropped = "Your enrollment for this course was dropped - please contact the admin to rejoin";
             public const string CourseAlreadyEnrolled = "User is already enrolled in this course";
             public const string NotificationNotFound = "Notification not found";
+            public const string InvalidCourseType = "courseType must be 'Paid', 'Free' or 'All'";
             public const string InvalidMaterialAccess = "MaterialToView must be either 'Paid' or 'Free'";
             public const string TransactionReferenceInvalid = "Enter the UPI transaction ID / UTR (6-35 letters or digits)";
             public const string TransactionReferenceInUse = "This UPI transaction ID has already been submitted for another enrollment";
@@ -87,11 +89,16 @@
             public const string School = "school";
             public const string PreviousYear = "previousYear";
             public const string SyllabusWise = "syllabusWise";
+            public const string Daily = "daily";
+            public const string CurrentAffairs = "currentAffairs";
 
-            public static readonly string[] All = { Competitive, School, PreviousYear, SyllabusWise };
+            public static readonly string[] All = { Competitive, School, PreviousYear, SyllabusWise, Daily, CurrentAffairs };
+
+            // A daily quiz is always Free - it never needs a course, batch or enrollment
+            public static bool IsAlwaysFree(string? quizType) => quizType == Daily;
 
             // Quiz types that are filed under a folder (and sub folder) from GET /api/Folder
-            public static bool UsesFolders(string? quizType) => quizType == PreviousYear || quizType == SyllabusWise;
+            public static bool UsesFolders(string? quizType) => quizType == PreviousYear || quizType == SyllabusWise || quizType == School;
 
             // Accepts the tab keys or labels in any case/spacing: "school", "School Book", "previous year", "Competitive/Daily" ...
             public static string? Normalize(string? value)
@@ -99,7 +106,9 @@
                 var key = new string((value ?? "").Where(char.IsLetter).ToArray()).ToLowerInvariant();
                 return key switch
                 {
-                    "competitive" or "competitivedaily" or "daily" => Competitive,
+                    "competitive" or "competitivedaily" => Competitive,
+                    "daily" => Daily,
+                    "currentaffairs" or "currentaffair" => CurrentAffairs,
                     "school" or "schoolbook" => School,
                     "previousyear" => PreviousYear,
                     "syllabuswise" or "syllabus" => SyllabusWise,
@@ -110,16 +119,17 @@
 
         public static class NotificationTypes
         {
-            public const string Push = "Push Notification";
+            public const string Flash = "Flash Notification";
             public const string Job = "Job Notification";
 
-            // Accepts the dropdown labels in any case/spacing: "Push Notification", "push", "JobNotification" ...
+            // Accepts the dropdown labels in any case/spacing: "Flash Notification", "flash", "JobNotification" ...
+            // "Push Notification" is the old name for Flash and is still accepted (and matches notifications saved under it)
             public static string? Normalize(string? value)
             {
                 var key = (value ?? "").Replace(" ", "").ToLowerInvariant();
                 return key switch
                 {
-                    "push" or "pushnotification" => Push,
+                    "flash" or "flashnotification" or "push" or "pushnotification" => Flash,
                     "job" or "jobnotification" => Job,
                     _ => null
                 };
@@ -136,10 +146,43 @@
             public static readonly string[] All = { Pending, Verified, Dropped, Rejected };
         }
 
+        public static class PaymentStatuses
+        {
+            public const string Pending = "Pending";
+            public const string Verified = "Verified";
+            public const string Rejected = "Rejected";
+
+            public static readonly string[] All = { Pending, Verified, Rejected };
+
+            public static string Normalize(string? value)
+            {
+                var match = All.FirstOrDefault(s => string.Equals(s, value?.Trim(), StringComparison.OrdinalIgnoreCase));
+                return match ?? throw new InvalidOperationException("paymentStatus must be pending, verified or rejected");
+            }
+        }
+
         public static class QuizStatuses
         {
             public const string Draft = "Draft";
             public const string Published = "Published";
+        }
+
+        // Course list filter. A course priced at 0 is Free, anything above 0 is Paid
+        public static class CourseTypes
+        {
+            public const string Paid = "Paid";
+            public const string Free = "Free";
+            public const string All = "All";
+
+            public static string Normalize(string? value)
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    return All;
+                }
+                return new[] { Paid, Free, All }.FirstOrDefault(t => string.Equals(t, value.Trim(), StringComparison.OrdinalIgnoreCase))
+                    ?? throw new InvalidOperationException(Messages.InvalidCourseType);
+            }
         }
 
         public static class MaterialAccess

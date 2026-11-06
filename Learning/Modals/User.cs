@@ -37,6 +37,10 @@ namespace LearningBackendAPI.Models
         [BsonElement("profileImageKey")]
         public string? ProfileImageKey { get; set; }
 
+        // True after an admin reset: the student must replace the temporary password before using the app
+        [BsonElement("mustChangePassword")]
+        public bool MustChangePassword { get; set; }
+
         [BsonElement("role")]
         public string Role { get; set; } = "User";
 

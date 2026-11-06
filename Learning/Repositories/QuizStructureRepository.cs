@@ -7,10 +7,6 @@ namespace LearningBackendAPI.Repositories
     {
         private static readonly Dictionary<Type, string> CollectionNames = new()
         {
-            [typeof(QuizSubject)] = "QuizSubjects",
-            [typeof(QuizCategory)] = "QuizCategories",
-            [typeof(QuizStandard)] = "QuizStandards",
-            [typeof(QuizPart)] = "QuizParts",
             [typeof(QuizFolder)] = "QuizFolders",
             [typeof(QuizSubFolder)] = "QuizSubFolders"
         };

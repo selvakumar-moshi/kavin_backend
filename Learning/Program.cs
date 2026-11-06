@@ -110,6 +110,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<ICounterRepository, CounterRepository>();
     services.AddScoped<INotificationRepository, NotificationRepository>();
     services.AddScoped<IQuizStructureRepository, QuizStructureRepository>();
+    services.AddScoped<ISyllabusWiseRepository, SyllabusWiseRepository>();
+    services.AddScoped<ISyllabusMaterialRepository, SyllabusMaterialRepository>();
 
     // Configure AWS S3 (credentials loaded from appsettings.json)
     var awsAccessKey = configuration["AWS_ACCESS_KEY_ID"];
@@ -120,8 +122,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     var s3Settings = new S3Settings { BucketName = awsBucketName ?? "", Region = awsRegion ?? "" };
     services.AddSingleton(Microsoft.Extensions.Options.Options.Create(s3Settings));
 
-    var awsCredentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
-    var s3Client = new AmazonS3Client(awsCredentials, RegionEndpoint.GetBySystemName(awsRegion));
+    // Keys in config (local development) win. With none, the AWS SDK's default credential chain is used,
+    // which on the server is the instance / task IAM role - no keys stored anywhere.
+    var s3Region = RegionEndpoint.GetBySystemName(awsRegion);
+    var s3Client = !string.IsNullOrWhiteSpace(awsAccessKey) && !string.IsNullOrWhiteSpace(awsSecretKey)
+        ? new AmazonS3Client(new BasicAWSCredentials(awsAccessKey, awsSecretKey), s3Region)
+        : new AmazonS3Client(s3Region);
     services.AddSingleton<IAmazonS3>(s3Client);
     services.AddScoped<IFileStorageService, S3FileStorageService>();
 
@@ -133,8 +139,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IEnrollmentService, EnrollmentService>();
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<IQuizService, QuizService>();
-    services.AddScoped<IQuizStructureService, QuizStructureService>();
     services.AddScoped<IFolderService, FolderService>();
+    services.AddScoped<ISyllabusWiseService, SyllabusWiseService>();
+    services.AddScoped<ISyllabusMaterialService, SyllabusMaterialService>();
     services.AddScoped<IExcelExportService, ExcelExportService>();
     services.AddScoped<IDashboardService, DashboardService>();
     services.AddScoped<IBatchService, BatchService>();
@@ -188,14 +195,14 @@ void ConfigurePipeline(WebApplication app)
     // ========== End CORS ==========
 
     // Swagger
-    if (app.Environment.IsDevelopment())
-    {
+    //if (app.Environment.IsDevelopment())
+    //{
         app.UseSwagger();
         app.UseSwaggerUI(c =>
         {
             c.SwaggerEndpoint("/swagger/v1/swagger.json", "Kavin Backend API v1");
         });
-    }
+    //}
 
     // Skip HTTPS redirect in Development so phones on the LAN can use plain HTTP.
     if (!app.Environment.IsDevelopment())
@@ -230,18 +237,8 @@ void ConfigurePipeline(WebApplication app)
     // Seed admin user
     SeedAdminUser(app.Services);
 
-    // Load the default Tamil / GK subject-standard-part tree the first time
-    SeedQuizStructure(app.Services);
-
     // Backfill applicationNo for any users created before this field existed
     BackfillApplicationNumbers(app.Services);
-}
-
-void SeedQuizStructure(IServiceProvider services)
-{
-    using var scope = services.CreateScope();
-    var quizStructureService = scope.ServiceProvider.GetRequiredService<IQuizStructureService>();
-    quizStructureService.SeedDefaultsAsync().GetAwaiter().GetResult();
 }
 
 void SeedAdminUser(IServiceProvider services)

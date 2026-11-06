@@ -98,11 +98,11 @@ namespace LearningBackendAPI.Services
                 var row = rows[i];
                 var excelRow = firstDataRow + i;
 
-                worksheet.Cell(excelRow, 2).Value = row.ApplicationNo ?? "";
-                worksheet.Cell(excelRow, 1).Value = $"{row.FirstName} {row.LastName}".Trim();
-                worksheet.Cell(excelRow, 5).Value = row.District ?? "";
-                worksheet.Cell(excelRow, 3).Value = row.Email;
-                worksheet.Cell(excelRow, 4).Value = row.PhoneNumber;
+                worksheet.Cell(excelRow, 1).Value = row.ApplicationNo ?? "";
+                worksheet.Cell(excelRow, 2).Value = $"{row.FirstName} {row.LastName}".Trim();
+                worksheet.Cell(excelRow, 3).Value = row.District ?? "";
+                worksheet.Cell(excelRow, 4).Value = row.Email;
+                worksheet.Cell(excelRow, 5).Value = row.PhoneNumber;
                 worksheet.Cell(excelRow, 6).Value = row.BatchTitle ?? "";
                 worksheet.Cell(excelRow, 7).Value = row.Status;
             }

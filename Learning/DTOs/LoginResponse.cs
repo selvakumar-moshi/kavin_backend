@@ -6,6 +6,9 @@ namespace LearningBackendAPI.DTOs
     {
         public string Token { get; set; }
         public UserDto User { get; set; }
+        // True when the user logged in with an admin-issued temporary password; the app should open the
+        // Reset Password screen instead of the dashboard until POST /api/Auth/change-password succeeds
+        public bool MustChangePassword { get; set; }
     }
 
     public class UserDto
@@ -24,5 +27,6 @@ namespace LearningBackendAPI.DTOs
         public DateTime? UpdatedAt { get; set; }
         public string? EnrollmentId { get; set; }
         public string? EnrollmentStatus { get; set; }
+        public bool MustChangePassword { get; set; }
     }
 }

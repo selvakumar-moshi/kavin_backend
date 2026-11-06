@@ -17,6 +17,8 @@ namespace LearningBackendAPI.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IBatchRepository _batchRepository;
         private readonly IFileStorageService _fileStorageService;
+        private readonly ISyllabusWiseRepository _syllabusWiseRepository;
+        private readonly ISyllabusMaterialService _syllabusMaterialService;
 
         public UserService(
             IUserRepository userRepository,
@@ -25,8 +27,12 @@ namespace LearningBackendAPI.Services
             IVideoMaterialRepository videoMaterialRepository,
             ICourseRepository courseRepository,
             IBatchRepository batchRepository,
-            IFileStorageService fileStorageService)
+            IFileStorageService fileStorageService,
+            ISyllabusWiseRepository syllabusWiseRepository,
+            ISyllabusMaterialService syllabusMaterialService)
         {
+            _syllabusMaterialService = syllabusMaterialService;
+            _syllabusWiseRepository = syllabusWiseRepository;
             _userRepository = userRepository;
             _enrollmentRepository = enrollmentRepository;
             _studyMaterialRepository = studyMaterialRepository;
@@ -158,8 +164,57 @@ namespace LearningBackendAPI.Services
                 ProfileImage = user.ProfileImage ?? "",
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
-                Courses = courses
+                Courses = courses,
+                SyllabusWisePayments = (await _syllabusWiseRepository.GetPaymentsAsync(id)).Select(SyllabusWiseService.ToDto).ToList(),
+                SyllabusMaterials = await _syllabusMaterialService.GetPurchasedAsync(id)
             };
+        }
+
+        // Passwords are stored as BCrypt hashes and can't be read back, so for a student who forgot theirs the admin
+        // sets a new temporary one. It is returned once here and never stored in readable form.
+        public async Task<string> ResetPasswordAsync(string id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
+            if (user.Role == Constants.Roles.Admin)
+            {
+                throw new InvalidOperationException("An admin's password can't be reset from here");
+            }
+
+            var password = GenerateTemporaryPassword();
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+            user.MustChangePassword = true;
+            await _userRepository.UpdateAsync(id, user);
+            return password;
+        }
+
+        // 10 characters that satisfy the registration rules (upper, lower, digit, one of @$!%*?&), without look-alikes like O/0 and l/1
+        private static string GenerateTemporaryPassword()
+        {
+            const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+            const string lower = "abcdefghijkmnpqrstuvwxyz";
+            const string digits = "23456789";
+            const string special = "@$!%*?&";
+            const string all = upper + lower + digits + special;
+
+            static char Pick(string chars) => chars[System.Security.Cryptography.RandomNumberGenerator.GetInt32(chars.Length)];
+
+            var chars = new List<char> { Pick(upper), Pick(lower), Pick(digits), Pick(special) };
+            while (chars.Count < 10)
+            {
+                chars.Add(Pick(all));
+            }
+
+            // Shuffle so the guaranteed characters aren't always first
+            for (var i = chars.Count - 1; i > 0; i--)
+            {
+                var j = System.Security.Cryptography.RandomNumberGenerator.GetInt32(i + 1);
+                (chars[i], chars[j]) = (chars[j], chars[i]);
+            }
+            return new string(chars.ToArray());
         }
 
         public async Task<UserDto> UpdateProfileImageAsync(string id, IFormFile file)
@@ -329,7 +384,10 @@ namespace LearningBackendAPI.Services
                     BatchTitle = batch.Title,
                     CourseAmount = course.CourseAmount,
                     TotalAmount = course.CourseAmount,
-                    Status = Constants.EnrollmentStatuses.Pending
+                    // A free course (amount 0) has nothing to pay or verify
+                    Status = course.IsFree ? Constants.EnrollmentStatuses.Verified : Constants.EnrollmentStatuses.Pending,
+                    VerifiedAt = course.IsFree ? DateTime.UtcNow : null,
+                    VerifiedByAdminId = course.IsFree ? adminUserId : null
                 };
 
                 await _enrollmentRepository.CreateAsync(enrollment);
@@ -371,7 +429,8 @@ namespace LearningBackendAPI.Services
                 Role = user.Role,
                 ProfileImage = user.ProfileImage ?? "",
                 CreatedAt = user.CreatedAt,
-                UpdatedAt = user.UpdatedAt
+                UpdatedAt = user.UpdatedAt,
+                MustChangePassword = user.MustChangePassword
             };
         }
     }

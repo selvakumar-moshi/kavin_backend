@@ -26,6 +26,8 @@ namespace LearningBackendAPI.DTOs
 
     public class QuizImportPreviewResponse
     {
+        // The uploaded file's name, e.g. "testQuiz.docx" - send it back as SourceFileName when saving/updating the quiz
+        public string FileName { get; set; } = "";
         public int TotalFoundInDocument { get; set; }
         public int Readable { get; set; }
         public List<QuizImportQuestionDto> Questions { get; set; } = new();

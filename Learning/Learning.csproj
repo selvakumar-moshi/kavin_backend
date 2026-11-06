@@ -4,6 +4,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- The API serves no static web assets. Without this, the build writes Learning.staticwebassets.runtime.json with
+         this machine's absolute wwwroot path, and the app crashes at startup ("The path must be absolute") if that file
+         reaches a server (e.g. a Linux host) running in the Development environment. -->
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
   </PropertyGroup>
 
   <ItemGroup>

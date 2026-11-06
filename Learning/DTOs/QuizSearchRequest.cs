@@ -8,12 +8,7 @@ namespace LearningBackendAPI.DTOs
         public string? QuizType { get; set; }
         // Optional access filter: "Free" or "Paid"
         public string? QuizToView { get; set; }
-        // Optional filters on the quiz's classification
-        public string? Subject { get; set; }
-        public string? Category { get; set; }
-        public int? Standard { get; set; }
-        public string? Part { get; set; }
-        // Optional filters for previousYear and syllabusWise quizzes (ids from GET /api/Folder)
+        // Optional filters for previousYear, syllabusWise and school quizzes (ids from GET /api/Folder)
         public string? FolderId { get; set; }
         public string? SubFolderId { get; set; }
         public Dictionary<string, string>? GlobalFilter { get; set; }

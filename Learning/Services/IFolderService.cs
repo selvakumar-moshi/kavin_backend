@@ -23,5 +23,13 @@ namespace LearningBackendAPI.Services
 
         /// <summary>The sub folder's id plus the ids of every sub folder below it, at any depth.</summary>
         Task<HashSet<string>> GetSubtreeIdsAsync(string subFolderId);
+
+        /// <summary>
+        /// For each sub folder id, its path from the first sub folder under the folder down to itself
+        /// ("Sub 1/Sub 1_1/Sub 1_2"). Ids that no longer exist are left out.
+        /// </summary>
+        Task<Dictionary<string, string>> GetNodeNamesAsync(IEnumerable<string?> ids);
+
+        Task<Dictionary<string, string>> GetSubFolderPathsAsync(IEnumerable<string?> subFolderIds);
     }
 }

@@ -18,6 +18,10 @@ namespace LearningBackendAPI.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public List<EnrolledCourseDto> Courses { get; set; } = new();
+        // Syllabus wise quiz payments (newest first) - lets the admin track each student's payment status
+        public List<SyllabusWisePaymentDto> SyllabusWisePayments { get; set; } = new();
+        // The syllabus PDFs those payments unlock (each with its folder, subFolderPath and pdfUrl)
+        public List<SyllabusMaterial> SyllabusMaterials { get; set; } = new();
     }
 
     public class EnrolledCourseDto

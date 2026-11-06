@@ -1,6 +1,7 @@
 namespace LearningBackendAPI.DTOs
 {
     // One node of a folder tree: a name plus any number of nested sub folders, to any depth
+    [System.Text.Json.Serialization.JsonConverter(typeof(SubFolderNodeRequestConverter))]
     public class SubFolderNodeRequest
     {
         public string? Name { get; set; }

@@ -42,14 +42,22 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Get all courses
+        /// Get all courses. Optional ?courseType=Paid (amount above 0), Free (amount 0) or All (default);
+        /// every course in the response carries its courseType.
         /// </summary>
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllCourses()
+        public async Task<IActionResult> GetAllCourses([FromQuery] string? courseType = null)
         {
-            var courses = await _courseService.GetAllCoursesAsync();
-            return Ok(_responseHelper.Success(courses, "Courses retrieved successfully"));
+            try
+            {
+                var courses = await _courseService.GetAllCoursesAsync(courseType);
+                return Ok(_responseHelper.Success(courses, "Courses retrieved successfully"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
         }
 
         /// <summary>

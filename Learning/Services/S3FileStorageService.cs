@@ -16,14 +16,14 @@ namespace LearningBackendAPI.Services
             _settings = settings.Value;
         }
 
-        public async Task<(string Url, string Key)> UploadPdfAsync(IFormFile file, string folder)
+        public async Task<(string Url, string Key)> UploadPdfAsync(IFormFile file, string folder, string? fileName = null)
         {
-            var fileName = SanitizeFileName(Path.GetFileName(file.FileName));
-            if (!fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            var resolvedFileName = SanitizeFileName(Path.GetFileName(fileName ?? file.FileName));
+            if (!resolvedFileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
             {
-                fileName += ".pdf";
+                resolvedFileName += ".pdf";
             }
-            var key = $"{folder}/{fileName}";
+            var key = $"{folder}/{resolvedFileName}";
 
             using var stream = file.OpenReadStream();
             var putRequest = new PutObjectRequest
@@ -69,10 +69,32 @@ namespace LearningBackendAPI.Services
             return (url, key);
         }
 
+        public async Task<(string Url, string Key)> UploadDocxAsync(IFormFile file, string folder, string? fileName = null)
+        {
+            var resolvedFileName = SanitizeFileName(Path.GetFileName(fileName ?? file.FileName));
+            if (!resolvedFileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
+            {
+                resolvedFileName += ".docx";
+            }
+            var key = $"{folder}/{resolvedFileName}";
+
+            using var stream = file.OpenReadStream();
+            await _s3Client.PutObjectAsync(new PutObjectRequest
+            {
+                BucketName = _settings.BucketName,
+                Key = key,
+                InputStream = stream,
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            });
+
+            var url = $"https://{_settings.BucketName}.s3.{_settings.Region}.amazonaws.com/{key}";
+            return (url, key);
+        }
+
         public async Task<(string Url, string Key)> CopyAsync(string sourceKey, string folder)
         {
             // Unique name so the copy never overwrites (or is overwritten by) another file
-            var key = $"{folder}/{Guid.NewGuid():N}_{Path.GetFileName(sourceKey)}";
+            var key = $"{folder}/{Path.GetFileName(sourceKey)}";
 
             await _s3Client.CopyObjectAsync(new CopyObjectRequest
             {

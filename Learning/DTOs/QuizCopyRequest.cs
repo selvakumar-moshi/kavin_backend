@@ -9,5 +9,7 @@ namespace LearningBackendAPI.DTOs
         // Only needed when copying a course-less Free quiz into a Paid quiz
         public string? CourseId { get; set; }
         public string? Title { get; set; }
+        // Most times each student may submit the copy; defaults to the original's
+        public int? QuizAttempt { get; set; }
     }
 }
