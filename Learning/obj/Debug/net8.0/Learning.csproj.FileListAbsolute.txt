@@ -97,3 +97,14 @@ C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-C
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\a3fc9bd8-b1c7-4cd0-9b8d-01dd1401131f\scratchpad\out\Learning.runtimeconfig.json
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\a3fc9bd8-b1c7-4cd0-9b8d-01dd1401131f\scratchpad\out\Learning.dll
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\D--Software-data-Selva-Coac-kavin-backend\a3fc9bd8-b1c7-4cd0-9b8d-01dd1401131f\scratchpad\out\Learning.pdb
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\FirebaseAdmin.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Google.Api.Gax.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Google.Api.Gax.Rest.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Google.Apis.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Google.Apis.Auth.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Google.Apis.Core.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Newtonsoft.Json.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\System.CodeDom.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\System.Management.dll
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Management.dll

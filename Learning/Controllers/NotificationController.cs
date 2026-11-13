@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using LearningBackendAPI.DTOs;
 using LearningBackendAPI.Helpers;
 using LearningBackendAPI.Services;
@@ -91,6 +92,51 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
+        /// Send this notification's push now (Admin only) - the first time, or again after it was sent. It is queued and
+        /// goes out within seconds; the notification's pushStatus / pushSuccessCount / pushFailureCount show the outcome.
+        /// </summary>
+        [HttpPost("{id}/push")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        public async Task<IActionResult> SendPush(string id)
+        {
+            try
+            {
+                var notification = await _notificationService.QueuePushAsync(id);
+                return Ok(_responseHelper.Success(notification, "Push queued"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Cancel a scheduled push that hasn't gone out yet (Admin only)
+        /// </summary>
+        [HttpPost("{id}/push/cancel")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        public async Task<IActionResult> CancelPush(string id)
+        {
+            try
+            {
+                var notification = await _notificationService.CancelPushAsync(id);
+                return Ok(_responseHelper.Success(notification, "Push cancelled"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
         /// Get all notifications, filtered via a { notificationType (optional), searchTerm, globalFilter, pageNumber, pageSize } body payload
         /// (searchTerm: matches title or description; globalFilter: subset of title/description, both if
         /// omitted; pageNumber/pageSize default to 1/10 if omitted)
@@ -100,8 +146,10 @@ namespace LearningBackendAPI.Controllers
         {
             try
             {
+                var isAdmin = User.IsInRole(Constants.Roles.Admin);
                 var notifications = await _notificationService.GetAllNotificationsAsync(
-                    request?.NotificationType, request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
+                    request?.NotificationType, request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10,
+                    User.FindFirstValue(ClaimTypes.NameIdentifier), isAdmin);
                 return Ok(_responseHelper.Success(notifications, "Notifications retrieved successfully"));
             }
             catch (InvalidOperationException ex)

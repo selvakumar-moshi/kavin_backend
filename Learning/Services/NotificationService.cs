@@ -13,11 +13,68 @@ namespace LearningBackendAPI.Services
 
         private readonly INotificationRepository _notificationRepository;
         private readonly IFileStorageService _fileStorageService;
+        private readonly IEnrollmentRepository _enrollmentRepository;
+        private readonly ISyllabusWiseRepository _syllabusWiseRepository;
 
-        public NotificationService(INotificationRepository notificationRepository, IFileStorageService fileStorageService)
+        public NotificationService(
+            INotificationRepository notificationRepository,
+            IFileStorageService fileStorageService,
+            IEnrollmentRepository enrollmentRepository,
+            ISyllabusWiseRepository syllabusWiseRepository)
         {
             _notificationRepository = notificationRepository;
             _fileStorageService = fileStorageService;
+            _enrollmentRepository = enrollmentRepository;
+            _syllabusWiseRepository = syllabusWiseRepository;
+        }
+
+        // Validates the audience and fills the notification's audience fields. A value that isn't passed keeps its current one.
+        private static void ApplyAudience(Notification notification, string? audienceType, string? courseId, string? batchId, List<string>? userIds)
+        {
+            var type = notification.AudienceType;
+            if (!string.IsNullOrWhiteSpace(audienceType))
+            {
+                type = Constants.NotificationAudiences.Normalize(audienceType)
+                    ?? throw new InvalidOperationException("audienceType must be All, Course, Batch, Users or SyllabusPaid");
+            }
+
+            var course = string.IsNullOrWhiteSpace(courseId) ? notification.CourseId : courseId.Trim();
+            var batch = string.IsNullOrWhiteSpace(batchId) ? notification.BatchId : batchId.Trim();
+            var users = userIds != null
+                ? userIds.Where(u => !string.IsNullOrWhiteSpace(u)).Select(u => u.Trim()).Distinct().ToList()
+                : notification.UserIds;
+
+            if (type == Constants.NotificationAudiences.Course && string.IsNullOrEmpty(course))
+                throw new InvalidOperationException("courseId is required for a Course audience");
+            if (type == Constants.NotificationAudiences.Batch && string.IsNullOrEmpty(batch))
+                throw new InvalidOperationException("batchId is required for a Batch audience");
+            if (type == Constants.NotificationAudiences.Users && (users == null || users.Count == 0))
+                throw new InvalidOperationException("userIds is required for a Users audience");
+
+            // Keep only what the chosen audience uses
+            notification.AudienceType = type;
+            notification.CourseId = type == Constants.NotificationAudiences.Course ? course : null;
+            notification.BatchId = type == Constants.NotificationAudiences.Batch ? batch : null;
+            notification.UserIds = type == Constants.NotificationAudiences.Users ? users : null;
+        }
+
+        // Treat a time without an offset as UTC, so the stored value doesn't depend on the server's time zone
+        private static DateTime ToUtc(DateTime value)
+            => value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(value, DateTimeKind.Utc) : value.ToUniversalTime();
+
+        private static void QueuePush(Notification notification, DateTime? scheduledAt)
+        {
+            if (string.IsNullOrWhiteSpace(notification.Title) && string.IsNullOrWhiteSpace(notification.Description))
+            {
+                throw new InvalidOperationException("A push needs a title or a description");
+            }
+
+            var now = DateTime.UtcNow;
+            var at = scheduledAt.HasValue ? ToUtc(scheduledAt.Value) : now;
+            notification.SendPush = true;
+            notification.PushStatus = Constants.PushStatuses.Scheduled;
+            notification.PushScheduledAt = at < now ? now : at;
+            notification.PushError = null;
         }
 
         public async Task<Notification> CreateNotificationAsync(NotificationCreateRequest request)
@@ -44,6 +101,12 @@ namespace LearningBackendAPI.Services
                 CreatedAt = DateTime.UtcNow
             };
 
+            ApplyAudience(notification, request.AudienceType, request.CourseId, request.BatchId, request.UserIds);
+            if (request.SendPush == true)
+            {
+                QueuePush(notification, request.PushScheduledAt);
+            }
+
             if (HasFile(request.File))
             {
                 await AttachAsync(notification, request.File!);
@@ -67,6 +130,11 @@ namespace LearningBackendAPI.Services
             if (notification == null)
             {
                 throw new KeyNotFoundException(Constants.Messages.NotificationNotFound);
+            }
+
+            if (notification.PushStatus == Constants.PushStatuses.Sending)
+            {
+                throw new InvalidOperationException("This notification's push is being sent right now - try again in a moment");
             }
 
             if (!string.IsNullOrWhiteSpace(request.Title))
@@ -106,6 +174,28 @@ namespace LearningBackendAPI.Services
 
             EnsureValidDateRange(notification.StartDate, notification.EndDate);
             ValidateAttachment(request.File);
+
+            ApplyAudience(notification, request.AudienceType, request.CourseId, request.BatchId, request.UserIds);
+
+            // Push: only one that hasn't gone out can be changed here; a sent one is resent via POST {id}/push
+            var pushPending = notification.PushStatus is Constants.PushStatuses.None or Constants.PushStatuses.Cancelled or Constants.PushStatuses.Scheduled;
+            if (request.SendPush == true)
+            {
+                if (!pushPending)
+                {
+                    throw new InvalidOperationException("This push has already been sent - use POST /api/Notification/{id}/push to send it again");
+                }
+                QueuePush(notification, request.PushScheduledAt ?? notification.PushScheduledAt);
+            }
+            else if (request.SendPush == false && notification.PushStatus == Constants.PushStatuses.Scheduled)
+            {
+                notification.SendPush = false;
+                notification.PushStatus = Constants.PushStatuses.Cancelled;
+            }
+            else if (request.PushScheduledAt.HasValue && notification.PushStatus == Constants.PushStatuses.Scheduled)
+            {
+                QueuePush(notification, request.PushScheduledAt);
+            }
 
             // The old file is only removed once the notification is saved with its replacement
             string? oldKey = null;
@@ -209,9 +299,79 @@ namespace LearningBackendAPI.Services
             }
         }
 
-        public async Task<PagedResult<Notification>> GetAllNotificationsAsync(string? notificationType, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize)
+        public async Task<Notification> QueuePushAsync(string id)
+        {
+            var notification = await _notificationRepository.GetByIdAsync(id)
+                ?? throw new KeyNotFoundException(Constants.Messages.NotificationNotFound);
+            if (string.IsNullOrWhiteSpace(notification.Title) && string.IsNullOrWhiteSpace(notification.Description))
+            {
+                throw new InvalidOperationException("A push needs a title or a description");
+            }
+            if (!await _notificationRepository.QueuePushNowAsync(id))
+            {
+                throw new InvalidOperationException("This notification's push is being sent right now");
+            }
+            return await _notificationRepository.GetByIdAsync(id);
+        }
+
+        public async Task<Notification> CancelPushAsync(string id)
+        {
+            var notification = await _notificationRepository.GetByIdAsync(id)
+                ?? throw new KeyNotFoundException(Constants.Messages.NotificationNotFound);
+            if (!await _notificationRepository.CancelScheduledPushAsync(id))
+            {
+                throw new InvalidOperationException($"Only a scheduled push can be cancelled (this one is {notification.PushStatus})");
+            }
+            return await _notificationRepository.GetByIdAsync(id);
+        }
+
+        // A student sees a notification when its audience covers them
+        private async Task<List<Notification>> VisibleToAsync(List<Notification> notifications, string? userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return notifications.Where(n => n.AudienceType == Constants.NotificationAudiences.All).ToList();
+            }
+
+            var verified = (await _enrollmentRepository.GetByUserIdAsync(userId))
+                .Where(e => e.Status == Constants.EnrollmentStatuses.Verified).ToList();
+            var courseIds = verified.Select(e => e.CourseId).ToHashSet();
+            var batchIds = verified.Where(e => e.BatchId != null).Select(e => e.BatchId!).ToHashSet();
+            var hasSyllabusPayment = (await _syllabusWiseRepository.GetVerifiedPaymentsAsync(userId)).Count > 0;
+
+            return notifications.Where(n => n.AudienceType switch
+            {
+                Constants.NotificationAudiences.Course => n.CourseId != null && courseIds.Contains(n.CourseId),
+                Constants.NotificationAudiences.Batch => n.BatchId != null && batchIds.Contains(n.BatchId),
+                Constants.NotificationAudiences.Users => n.UserIds != null && n.UserIds.Contains(userId),
+                Constants.NotificationAudiences.SyllabusPaid => hasSyllabusPayment,
+                _ => true
+            }).ToList();
+        }
+
+        // Students get the content, not the admin-side targeting and delivery details
+        private static void HidePushDetails(Notification n)
+        {
+            n.UserIds = null;
+            n.SendPush = false;
+            n.PushStatus = Constants.PushStatuses.None;
+            n.PushScheduledAt = null;
+            n.PushSentAt = null;
+            n.PushTargetCount = 0;
+            n.PushSuccessCount = 0;
+            n.PushFailureCount = 0;
+            n.PushError = null;
+        }
+
+        public async Task<PagedResult<Notification>> GetAllNotificationsAsync(string? notificationType, string? searchTerm, Dictionary<string, string>? globalFilter, int pageNumber, int pageSize, string? viewerUserId = null, bool isAdmin = true)
         {
             var notifications = await _notificationRepository.GetAllAsync();
+
+            if (!isAdmin)
+            {
+                notifications = await VisibleToAsync(notifications, viewerUserId);
+                notifications.ForEach(HidePushDetails);
+            }
 
             if (!string.IsNullOrWhiteSpace(notificationType))
             {

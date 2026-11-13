@@ -371,6 +371,120 @@
         }
       }
     },
+    "/api/Device/token": {
+      "post": {
+        "tags": [
+          "Device"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Device"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Enrollment/payment-info": {
+      "get": {
+        "tags": [
+          "Enrollment"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Enrollment/{id}/upi-payment": {
+      "post": {
+        "tags": [
+          "Enrollment"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpiPaymentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpiPaymentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpiPaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Enrollment": {
       "get": {
         "tags": [
@@ -736,6 +850,28 @@
                   "File": {
                     "type": "string",
                     "format": "binary"
+                  },
+                  "AudienceType": {
+                    "type": "string"
+                  },
+                  "CourseId": {
+                    "type": "string"
+                  },
+                  "BatchId": {
+                    "type": "string"
+                  },
+                  "UserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "SendPush": {
+                    "type": "boolean"
+                  },
+                  "PushScheduledAt": {
+                    "type": "string",
+                    "format": "date-time"
                   }
                 }
               },
@@ -759,6 +895,24 @@
                   "style": "form"
                 },
                 "File": {
+                  "style": "form"
+                },
+                "AudienceType": {
+                  "style": "form"
+                },
+                "CourseId": {
+                  "style": "form"
+                },
+                "BatchId": {
+                  "style": "form"
+                },
+                "UserIds": {
+                  "style": "form"
+                },
+                "SendPush": {
+                  "style": "form"
+                },
+                "PushScheduledAt": {
                   "style": "form"
                 }
               }
@@ -820,6 +974,28 @@
                   },
                   "RemoveFile": {
                     "type": "boolean"
+                  },
+                  "AudienceType": {
+                    "type": "string"
+                  },
+                  "CourseId": {
+                    "type": "string"
+                  },
+                  "BatchId": {
+                    "type": "string"
+                  },
+                  "UserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "SendPush": {
+                    "type": "boolean"
+                  },
+                  "PushScheduledAt": {
+                    "type": "string",
+                    "format": "date-time"
                   }
                 }
               },
@@ -847,6 +1023,24 @@
                 },
                 "RemoveFile": {
                   "style": "form"
+                },
+                "AudienceType": {
+                  "style": "form"
+                },
+                "CourseId": {
+                  "style": "form"
+                },
+                "BatchId": {
+                  "style": "form"
+                },
+                "UserIds": {
+                  "style": "form"
+                },
+                "SendPush": {
+                  "style": "form"
+                },
+                "PushScheduledAt": {
+                  "style": "form"
                 }
               }
             }
@@ -859,6 +1053,52 @@
         }
       },
       "delete": {
+        "tags": [
+          "Notification"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Notification/{id}/push": {
+      "post": {
+        "tags": [
+          "Notification"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Notification/{id}/push/cancel": {
+      "post": {
         "tags": [
           "Notification"
         ],
@@ -2819,6 +3059,20 @@
         },
         "additionalProperties": false
       },
+      "DeviceTokenRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "nullable": true
+          },
+          "platform": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "EnrollRequest": {
         "type": "object",
         "properties": {
@@ -3045,6 +3299,26 @@
           "optionDImage": {
             "type": "string",
             "format": "binary",
+            "nullable": true
+          },
+          "removeQuestionImage": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "removeOptionAImage": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "removeOptionBImage": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "removeOptionCImage": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "removeOptionDImage": {
+            "type": "boolean",
             "nullable": true
           },
           "correctOption": {
@@ -3334,6 +3608,20 @@
             "items": {
               "$ref": "#/components/schemas/CourseEnrollmentRequest"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpiPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "transactionReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "upiStatus": {
+            "type": "string",
             "nullable": true
           }
         },

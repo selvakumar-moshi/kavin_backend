@@ -538,10 +538,10 @@ namespace LearningBackendAPI.Services
                 var prev = existing != null && i < existing.Count ? existing[i] : null;
 
                 // Text OR an image is enough (an image already saved on the question counts too)
-                RequireTextOrImage(i + 1, "the question", q.QuestionText, q.QuestionImage, prev?.QuestionImageUrl);
-                RequireTextOrImage(i + 1, "option A", q.OptionA, q.OptionAImage, prev?.OptionAImageUrl);
-                RequireTextOrImage(i + 1, "option B", q.OptionB, q.OptionBImage, prev?.OptionBImageUrl);
-                RequireTextOrImage(i + 1, "option C", q.OptionC, q.OptionCImage, prev?.OptionCImageUrl);
+                RequireTextOrImage(i + 1, "the question", q.QuestionText, q.QuestionImage, q.RemoveQuestionImage == true ? null : prev?.QuestionImageUrl);
+                RequireTextOrImage(i + 1, "option A", q.OptionA, q.OptionAImage, q.RemoveOptionAImage == true ? null : prev?.OptionAImageUrl);
+                RequireTextOrImage(i + 1, "option B", q.OptionB, q.OptionBImage, q.RemoveOptionBImage == true ? null : prev?.OptionBImageUrl);
+                RequireTextOrImage(i + 1, "option C", q.OptionC, q.OptionCImage, q.RemoveOptionCImage == true ? null : prev?.OptionCImageUrl);
 
                 if (!string.IsNullOrWhiteSpace(q.CorrectOption) &&
                     !Constants.QuizOptions.All.Contains(q.CorrectOption.ToUpperInvariant()))
@@ -580,15 +580,15 @@ namespace LearningBackendAPI.Services
                 };
 
                 (item.QuestionImageUrl, item.QuestionImageKey) = await ResolveImageAsync(
-                    q.QuestionImage, previous?.QuestionImageUrl, previous?.QuestionImageKey);
+                    q.QuestionImage, previous?.QuestionImageUrl, previous?.QuestionImageKey, q.RemoveQuestionImage == true);
                 (item.OptionAImageUrl, item.OptionAImageKey) = await ResolveImageAsync(
-                    q.OptionAImage, previous?.OptionAImageUrl, previous?.OptionAImageKey);
+                    q.OptionAImage, previous?.OptionAImageUrl, previous?.OptionAImageKey, q.RemoveOptionAImage == true);
                 (item.OptionBImageUrl, item.OptionBImageKey) = await ResolveImageAsync(
-                    q.OptionBImage, previous?.OptionBImageUrl, previous?.OptionBImageKey);
+                    q.OptionBImage, previous?.OptionBImageUrl, previous?.OptionBImageKey, q.RemoveOptionBImage == true);
                 (item.OptionCImageUrl, item.OptionCImageKey) = await ResolveImageAsync(
-                    q.OptionCImage, previous?.OptionCImageUrl, previous?.OptionCImageKey);
+                    q.OptionCImage, previous?.OptionCImageUrl, previous?.OptionCImageKey, q.RemoveOptionCImage == true);
                 (item.OptionDImageUrl, item.OptionDImageKey) = await ResolveImageAsync(
-                    q.OptionDImage, previous?.OptionDImageUrl, previous?.OptionDImageKey);
+                    q.OptionDImage, previous?.OptionDImageUrl, previous?.OptionDImageKey, q.RemoveOptionDImage == true);
 
                 items.Add(item);
             }
@@ -607,11 +607,20 @@ namespace LearningBackendAPI.Services
         private const string QuestionImageFolder = "coaching/Question";
 
         private async Task<(string? Url, string? Key)> ResolveImageAsync(
-            IFormFile? file, string? previousUrl, string? previousKey)
+            IFormFile? file, string? previousUrl, string? previousKey, bool remove = false)
         {
             if (file == null || file.Length == 0)
             {
-                return (previousUrl, previousKey);
+                if (!remove)
+                {
+                    return (previousUrl, previousKey);
+                }
+
+                if (!string.IsNullOrWhiteSpace(previousKey))
+                {
+                    await _fileStorageService.DeleteAsync(previousKey);
+                }
+                return (null, null);
             }
 
             if (!string.IsNullOrWhiteSpace(previousKey))

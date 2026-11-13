@@ -19,6 +19,7 @@ namespace LearningBackendAPI.Services
         private readonly IFileStorageService _fileStorageService;
         private readonly ISyllabusWiseRepository _syllabusWiseRepository;
         private readonly ISyllabusMaterialService _syllabusMaterialService;
+        private readonly IDeviceTokenRepository _deviceTokenRepository;
 
         public UserService(
             IUserRepository userRepository,
@@ -29,8 +30,10 @@ namespace LearningBackendAPI.Services
             IBatchRepository batchRepository,
             IFileStorageService fileStorageService,
             ISyllabusWiseRepository syllabusWiseRepository,
-            ISyllabusMaterialService syllabusMaterialService)
+            ISyllabusMaterialService syllabusMaterialService,
+            IDeviceTokenRepository deviceTokenRepository)
         {
+            _deviceTokenRepository = deviceTokenRepository;
             _syllabusMaterialService = syllabusMaterialService;
             _syllabusWiseRepository = syllabusWiseRepository;
             _userRepository = userRepository;
@@ -405,6 +408,8 @@ namespace LearningBackendAPI.Services
             var deleted = await _userRepository.DeleteAsync(id);
             if (deleted)
             {
+                // A deleted student's phones must stop receiving pushes
+                await _deviceTokenRepository.RemoveByUserAsync(id);
                 var enrollments = await _enrollmentRepository.GetByUserIdAsync(id);
                 foreach (var enrollment in enrollments)
                 {

@@ -136,6 +136,32 @@
             }
         }
 
+        // Who a notification is for (and, with sendPush, who gets the push)
+        public static class NotificationAudiences
+        {
+            public const string All = "All";
+            public const string Course = "Course";
+            public const string Batch = "Batch";
+            public const string Users = "Users";
+            public const string SyllabusPaid = "SyllabusPaid";
+
+            public static readonly string[] AllValues = { All, Course, Batch, Users, SyllabusPaid };
+
+            public static string? Normalize(string? value)
+                => AllValues.FirstOrDefault(a => string.Equals(a, value?.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static class PushStatuses
+        {
+            public const string None = "None";
+            public const string Scheduled = "Scheduled";
+            public const string Sending = "Sending";
+            public const string Sent = "Sent";
+            public const string PartiallyFailed = "PartiallyFailed";
+            public const string Failed = "Failed";
+            public const string Cancelled = "Cancelled";
+        }
+
         public static class EnrollmentStatuses
         {
             public const string Pending = "Pending";

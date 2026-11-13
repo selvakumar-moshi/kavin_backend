@@ -42,6 +42,53 @@ namespace LearningBackendAPI.Models
         [JsonIgnore]
         public string? AttachmentKey { get; set; }
 
+        // Who the notification is for: All (default, also for notifications saved before audiences existed), Course, Batch,
+        // Users (specific students) or SyllabusPaid (students with a verified syllabusWise payment). It filters the in-app
+        // list for students and is the audience of the push.
+        [BsonElement("audienceType")]
+        public string AudienceType { get; set; } = Utils.Constants.NotificationAudiences.All;
+
+        [BsonElement("courseId")]
+        public string? CourseId { get; set; }
+
+        [BsonElement("batchId")]
+        public string? BatchId { get; set; }
+
+        [BsonElement("userIds")]
+        public List<string>? UserIds { get; set; }
+
+        // Push delivery. SendPush is separate from NotificationType: a Flash or a Job notification can be pushed or not.
+        [BsonElement("sendPush")]
+        public bool SendPush { get; set; }
+
+        // When the push goes out (UTC); a push without a schedule is queued for "now"
+        [BsonElement("pushScheduledAt")]
+        public DateTime? PushScheduledAt { get; set; }
+
+        // None, Scheduled, Sending, Sent, PartiallyFailed, Failed or Cancelled
+        [BsonElement("pushStatus")]
+        public string PushStatus { get; set; } = Utils.Constants.PushStatuses.None;
+
+        [BsonElement("pushClaimedAt")]
+        [JsonIgnore]
+        public DateTime? PushClaimedAt { get; set; }
+
+        [BsonElement("pushSentAt")]
+        public DateTime? PushSentAt { get; set; }
+
+        // Devices targeted / accepted by FCM / rejected. "Accepted" means FCM took the message, not that it was seen.
+        [BsonElement("pushTargetCount")]
+        public int PushTargetCount { get; set; }
+
+        [BsonElement("pushSuccessCount")]
+        public int PushSuccessCount { get; set; }
+
+        [BsonElement("pushFailureCount")]
+        public int PushFailureCount { get; set; }
+
+        [BsonElement("pushError")]
+        public string? PushError { get; set; }
+
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; }
 

@@ -112,6 +112,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IQuizStructureRepository, QuizStructureRepository>();
     services.AddScoped<ISyllabusWiseRepository, SyllabusWiseRepository>();
     services.AddScoped<ISyllabusMaterialRepository, SyllabusMaterialRepository>();
+    services.AddScoped<IDeviceTokenRepository, DeviceTokenRepository>();
+
+    // Push notifications (FCM): the sender is a singleton (it holds the Firebase app); the scheduler sends queued pushes
+    services.AddSingleton<IPushSender, FcmPushSender>();
+    services.AddScoped<INotificationPushService, NotificationPushService>();
+    services.AddHostedService<PushSchedulerService>();
 
     // Configure AWS S3 (credentials loaded from appsettings.json)
     var awsAccessKey = configuration["AWS_ACCESS_KEY_ID"];
