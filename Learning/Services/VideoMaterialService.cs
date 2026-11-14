@@ -105,20 +105,28 @@ namespace LearningBackendAPI.Services
                 return await _videoMaterialRepository.GetAllAsync();
             }
 
+            // Free materials are visible to every logged-in student (no enrollment / batch check)
+            var all = await _videoMaterialRepository.GetAllAsync();
+            var free = all.Where(IsFree).ToList();
+
             var verifiedEnrollments = await GetVerifiedEnrollmentsAsync(userId);
             if (verifiedEnrollments.Count == 0)
             {
-                return new List<VideoMaterial>();
+                return free;
             }
 
-            var courseIds = verifiedEnrollments.Select(e => e.CourseId).ToList();
-            var enrollmentByCourse = verifiedEnrollments.ToDictionary(e => e.CourseId);
-            var allMaterials = await _videoMaterialRepository.GetByCourseIdsAsync(courseIds);
+            var enrollmentByCourse = verifiedEnrollments
+                .GroupBy(e => e.CourseId)
+                .ToDictionary(g => g.Key, g => g.First());
 
-            return allMaterials
-                .Where(m => enrollmentByCourse.TryGetValue(m.CourseId, out var e) && MatchesBatch(m, e))
-                .ToList();
+            var enrolled = all
+                .Where(m => enrollmentByCourse.TryGetValue(m.CourseId, out var e) && MatchesBatch(m, e));
+
+            return enrolled.Concat(free).GroupBy(m => m.Id).Select(g => g.First()).ToList();
         }
+
+        private static bool IsFree(VideoMaterial m)
+            => string.Equals(m.MaterialToView, Constants.MaterialAccess.Free, StringComparison.OrdinalIgnoreCase);
 
         public async Task<VideoMaterial> GetVideoMaterialByIdAsync(string id, string userId, string role)
         {
@@ -128,7 +136,7 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException("Video material not found");
             }
 
-            if (role != Constants.Roles.Admin)
+            if (role != Constants.Roles.Admin && !IsFree(videoMaterial))
             {
                 var enrollment = await GetVerifiedEnrollmentAsync(userId, videoMaterial.CourseId);
                 if (enrollment == null || !MatchesBatch(videoMaterial, enrollment))

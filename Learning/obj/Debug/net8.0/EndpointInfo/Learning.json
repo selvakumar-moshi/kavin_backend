@@ -773,37 +773,6 @@
         }
       }
     },
-    "/api/FreeMaterial": {
-      "post": {
-        "tags": [
-          "FreeMaterial"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FreeMaterialSearchRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FreeMaterialSearchRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/FreeMaterialSearchRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/healthcheck": {
       "get": {
         "tags": [
@@ -3104,20 +3073,6 @@
         },
         "additionalProperties": false
       },
-      "FreeMaterialSearchRequest": {
-        "type": "object",
-        "properties": {
-          "courseId": {
-            "type": "string",
-            "nullable": true
-          },
-          "searchTerm": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -3144,6 +3099,10 @@
             "nullable": true
           },
           "searchTerm": {
+            "type": "string",
+            "nullable": true
+          },
+          "materialToView": {
             "type": "string",
             "nullable": true
           },

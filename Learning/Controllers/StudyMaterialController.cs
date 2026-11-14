@@ -56,8 +56,16 @@ namespace LearningBackendAPI.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var role = User.FindFirstValue(ClaimTypes.Role) ?? Constants.Roles.User;
+            var globalFilter = request?.GlobalFilter == null
+                ? new Dictionary<string, string>()
+                : new Dictionary<string, string>(request.GlobalFilter);
+            if (!string.IsNullOrWhiteSpace(request?.MaterialToView) &&
+                !string.Equals(request.MaterialToView, "All", StringComparison.OrdinalIgnoreCase))
+            {
+                globalFilter["materialToView"] = request.MaterialToView;
+            }
             var studyMaterials = await _studyMaterialService.GetAccessibleStudyMaterialsAsync(
-                userId, role, request?.CourseId, request?.SearchTerm, request?.GlobalFilter, request?.PageNumber ?? 1, request?.PageSize ?? 10);
+                userId, role, request?.CourseId, request?.SearchTerm, globalFilter.Count > 0 ? globalFilter : null, request?.PageNumber ?? 1, request?.PageSize ?? 10);
             return Ok(_responseHelper.Success(studyMaterials, "Study materials retrieved successfully"));
         }
 
