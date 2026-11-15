@@ -21,6 +21,11 @@ namespace LearningBackendAPI.DTOs
         public decimal ScoredMarks { get; set; }
         public string Score { get; set; } = "";
         public DateTime SubmittedAt { get; set; }
+        // Only filled by my-result, and only when a rank list applies to this quiz/student (null otherwise, e.g. free quizzes)
+        public int? Rank { get; set; }
+        public int? TotalParticipants { get; set; }
+        public List<RankListEntryDto>? Leaderboard { get; set; }
+        public string? LeaderboardUnavailableReason { get; set; }
         public List<QuizResultQuestionDto> Questions { get; set; } = new();
     }
 

@@ -901,7 +901,23 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.QuizNotAttempted);
             }
 
-            return ToResultResponse(attempt);
+            var response = ToResultResponse(attempt);
+
+            // Rank list rules (free quiz, no enrollment, ...) can reject a student: the result itself must still load
+            try
+            {
+                var (_, rankList, _) = await BuildRankListAsync(quizId, userId, false, null, allowFreeForStudent: true);
+                var mine = rankList.FirstOrDefault(r => r.UserId == userId);
+                response.Leaderboard = rankList;
+                response.TotalParticipants = rankList.Count;
+                response.Rank = mine?.Rank;
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is KeyNotFoundException)
+            {
+                response.LeaderboardUnavailableReason = ex.Message;
+            }
+
+            return response;
         }
 
         public async Task<List<RankListEntryDto>> GetRankListAsync(string quizId, string userId, bool isAdmin, RankListRequest? request = null)
@@ -918,7 +934,7 @@ namespace LearningBackendAPI.Services
         // Admin filters (RankListRequest): quizType must match the quiz; quizToView=Paid ranks only students
         // with a verified paid enrollment (optionally in batchId); on a free quiz, quizToView=Free ranks everyone.
         private async Task<(Quiz Quiz, List<RankListEntryDto> RankList, string? BatchTitle)> BuildRankListAsync(
-            string quizId, string userId, bool isAdmin, RankListRequest? request)
+            string quizId, string userId, bool isAdmin, RankListRequest? request, bool allowFreeForStudent = false)
         {
             var quiz = await _quizRepository.GetByIdAsync(quizId);
             if (quiz == null)
@@ -927,7 +943,7 @@ namespace LearningBackendAPI.Services
             }
 
             var isFree = quiz.QuizToView == Constants.MaterialAccess.Free;
-            if (isFree && !isAdmin)
+            if (isFree && !isAdmin && !allowFreeForStudent)
             {
                 throw new InvalidOperationException(Constants.Messages.RankListNotForFreeQuiz);
             }
