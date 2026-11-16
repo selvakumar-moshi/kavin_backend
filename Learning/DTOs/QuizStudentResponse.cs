@@ -6,6 +6,7 @@ namespace LearningBackendAPI.DTOs
         public string? CourseId { get; set; }
         public string? CourseName { get; set; }
         public string Title { get; set; } = "";
+        public string? Description { get; set; }
         public string QuizToView { get; set; } = "";
         public string? QuizType { get; set; }
         public string? FolderId { get; set; }

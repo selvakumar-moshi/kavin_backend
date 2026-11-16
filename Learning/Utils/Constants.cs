@@ -98,7 +98,7 @@
             public static bool IsAlwaysFree(string? quizType) => quizType == Daily;
 
             // Quiz types that are filed under a folder (and sub folder) from GET /api/Folder
-            public static bool UsesFolders(string? quizType) => quizType == PreviousYear || quizType == SyllabusWise || quizType == School;
+            public static bool UsesFolders(string? quizType) => quizType == PreviousYear || quizType == SyllabusWise || quizType == School || quizType == CurrentAffairs;
 
             // Accepts the tab keys or labels in any case/spacing: "school", "School Book", "previous year", "Competitive/Daily" ...
             public static string? Normalize(string? value)
@@ -185,6 +185,13 @@
                 var match = All.FirstOrDefault(s => string.Equals(s, value?.Trim(), StringComparison.OrdinalIgnoreCase));
                 return match ?? throw new InvalidOperationException("paymentStatus must be pending, verified or rejected");
             }
+        }
+
+        public static class LiveClassStatuses
+        {
+            public const string NotStarted = "Not Started";
+            public const string Online = "Online";
+            public const string Expired = "Expired";
         }
 
         public static class QuizStatuses

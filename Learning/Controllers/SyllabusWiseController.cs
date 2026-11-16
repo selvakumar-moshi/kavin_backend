@@ -56,14 +56,20 @@ namespace LearningBackendAPI.Controllers
         });
 
         /// <summary>
-        /// The signed-in student reports their payment. Body: { paymentStatus: "verified", userId?, planId?, paymentMethod?,
-        /// transactionReference? }. The student is taken from the token - userId is optional and rejected if it isn't theirs.
-        /// planId can be left out while there is only one plan. Sending it again updates the same payment; a payment that is
-        /// already Verified is left as it is.
+        /// The signed-in student uploads the screenshot of their payment (multipart/form-data: file, planId?, paymentMethod?,
+        /// transactionReference?). The payment is created as Pending and the related syllabus materials stay locked until the
+        /// admin sets it to Verified. If it was Rejected, upload a new screenshot to resubmit it (back to Pending). A Verified
+        /// payment can't be resubmitted. planId can be left out while there is only one plan.
         /// </summary>
         [HttpPost("payment")]
-        public Task<IActionResult> SubmitPayment([FromBody] SyllabusWisePaymentRequest request) => HandleAsync(async () =>
-            Ok(_responseHelper.Success(await _service.SubmitPaymentAsync(CurrentUserId, request), "Payment saved successfully")));
+        [RequestSizeLimit(5 * 1024 * 1024)]
+        public Task<IActionResult> SubmitPayment([FromForm] SyllabusWisePaymentRequest request) => HandleAsync(async () =>
+            Ok(_responseHelper.Success(await _service.SubmitPaymentAsync(CurrentUserId, request), "Payment screenshot uploaded. Your syllabus materials unlock once the admin verifies it.")));
+
+        /// <summary>The signed-in student's own payments, with their status (Pending / Verified / Rejected) and screenshot.</summary>
+        [HttpGet("payments/my")]
+        public Task<IActionResult> GetMyPayments() => HandleAsync(async () =>
+            Ok(_responseHelper.Success(await _service.GetPaymentsAsync(CurrentUserId), "Payments retrieved successfully")));
 
         /// <summary>Payments of every student, newest first; ?userId= narrows it to one student (Admin only).</summary>
         [HttpGet("payments")]
@@ -71,10 +77,10 @@ namespace LearningBackendAPI.Controllers
         public Task<IActionResult> GetPayments([FromQuery] string? userId) => HandleAsync(async () =>
             Ok(_responseHelper.Success(await _service.GetPaymentsAsync(userId), "Payments retrieved successfully")));
 
-        /// <summary>Body: { paymentStatus: "pending" | "verified" | "rejected" } - lets the admin confirm or revoke a payment (Admin only).</summary>
+        /// <summary>Body: { paymentStatus: "pending" | "verified" | "rejected" } - the admin reviews the uploaded screenshot and verifies or rejects the payment (Admin only).</summary>
         [HttpPut("payments/{id}/status")]
         [Authorize(Roles = Constants.Roles.Admin)]
         public Task<IActionResult> UpdatePaymentStatus(string id, [FromBody] SyllabusWisePaymentStatusRequest request) => HandleAsync(async () =>
-            Ok(_responseHelper.Success(await _service.UpdatePaymentStatusAsync(id, request), "Payment status updated successfully")));
+            Ok(_responseHelper.Success(await _service.UpdatePaymentStatusAsync(id, request, CurrentUserId), "Payment status updated successfully")));
     }
 }

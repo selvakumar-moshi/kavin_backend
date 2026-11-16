@@ -102,6 +102,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IUserRepository, UserRepository>();
     services.AddScoped<ICourseRepository, CourseRepository>();
     services.AddScoped<IStudyMaterialRepository, StudyMaterialRepository>();
+    services.AddScoped<IQuestionPaperRepository, QuestionPaperRepository>();
+    services.AddScoped<ILiveClassRepository, LiveClassRepository>();
     services.AddScoped<IVideoMaterialRepository, VideoMaterialRepository>();
     services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
     services.AddScoped<IQuizRepository, QuizRepository>();
@@ -141,6 +143,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<ICourseService, CourseService>();
     services.AddScoped<IStudyMaterialService, StudyMaterialService>();
+    services.AddScoped<IQuestionPaperService, QuestionPaperService>();
+    services.AddScoped<ILiveClassService, LiveClassService>();
     services.AddScoped<IVideoMaterialService, VideoMaterialService>();
     services.AddScoped<IEnrollmentService, EnrollmentService>();
     services.AddScoped<IUserService, UserService>();

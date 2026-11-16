@@ -186,6 +186,7 @@ namespace LearningBackendAPI.Services
                 SubFolderId = folder.SubFolderId,
                 SubFolderName = folder.SubFolderName,
                 Title = request.Title.Trim(),
+                Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
                 SourceFileName = source?.Name,
                 SourceFileUrl = source?.Url,
                 SourceFileKey = source?.Key,
@@ -393,6 +394,7 @@ namespace LearningBackendAPI.Services
                 SubFolderId = source.SubFolderId,
                 SubFolderName = source.SubFolderName,
                 Title = string.IsNullOrWhiteSpace(request.Title) ? source.Title : request.Title.Trim(),
+                Description = source.Description,
                 SourceFileName = source.SourceFileName,
                 SourceFileUrl = sourceFileUrl,
                 SourceFileKey = sourceFileKey,
@@ -465,6 +467,11 @@ namespace LearningBackendAPI.Services
             if (!string.IsNullOrWhiteSpace(request.Title))
             {
                 quiz.Title = request.Title.Trim();
+            }
+
+            if (request.Description != null)
+            {
+                quiz.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
             }
 
             if (!string.IsNullOrWhiteSpace(request.QuizToView))
@@ -1236,7 +1243,7 @@ namespace LearningBackendAPI.Services
             return questions;
         }
 
-        // A previousYear, syllabusWise or school quiz must be filed in a folder (and sub folder, if the folder has any); other types can't have one
+        // A previousYear, syllabusWise, school or currentAffairs quiz must be filed in a folder (and sub folder, if the folder has any); other types can't have one
         private async Task<FolderSelection> ValidateFolderForTypeAsync(string? quizType, string? folderId, string? subFolderId)
         {
             if (Constants.QuizTypes.UsesFolders(quizType))
@@ -1250,7 +1257,7 @@ namespace LearningBackendAPI.Services
 
             if (!string.IsNullOrWhiteSpace(folderId) || !string.IsNullOrWhiteSpace(subFolderId))
             {
-                throw new InvalidOperationException("Folder and sub folder can only be set on a previousYear, syllabusWise or school quiz");
+                throw new InvalidOperationException("Folder and sub folder can only be set on a previousYear, syllabusWise, school or currentAffairs quiz");
             }
             return new FolderSelection();
         }
@@ -1267,6 +1274,7 @@ namespace LearningBackendAPI.Services
                 CourseId = quiz.CourseId,
                 CourseName = quiz.CourseName,
                 Title = quiz.Title,
+                Description = quiz.Description,
                 QuizToView = quiz.QuizToView,
                 QuizType = quiz.QuizType,
                 FolderId = quiz.FolderId,

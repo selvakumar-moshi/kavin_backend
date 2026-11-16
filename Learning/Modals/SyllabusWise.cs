@@ -69,8 +69,18 @@ namespace LearningBackendAPI.Models
         [BsonElement("transactionReference")]
         public string? TransactionReference { get; set; }
 
+        // The screenshot the student uploaded (stored under coaching/payment/syllabus); the admin reviews it
+        [BsonElement("paymentScreenshot")]
+        public string? PaymentScreenshot { get; set; }
+
+        [BsonElement("paymentScreenshotKey")]
+        public string? PaymentScreenshotKey { get; set; }
+
         [BsonElement("paymentStatus")]
         public string PaymentStatus { get; set; } = string.Empty;
+
+        [BsonElement("verifiedByAdminId")]
+        public string? VerifiedByAdminId { get; set; }
 
         [BsonElement("verifiedAt")]
         public DateTime? VerifiedAt { get; set; }

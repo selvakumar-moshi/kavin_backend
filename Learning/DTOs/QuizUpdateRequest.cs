@@ -4,6 +4,8 @@ namespace LearningBackendAPI.DTOs
     {
         public string? BatchId { get; set; }
         public string? Title { get; set; }
+        // Leave out to keep it; send "" to clear it
+        public string? Description { get; set; }
         public string? QuizToView { get; set; }
         public string? QuizType { get; set; }
         // Most times each student may submit the quiz (1 or more); leave out to keep it

@@ -10,15 +10,14 @@ namespace LearningBackendAPI.DTOs
         public string? FolderId { get; set; }
     }
 
-    // POST /api/SyllabusWise/payment - sent by the student after paying
+    // POST /api/SyllabusWise/payment (multipart/form-data) - the student uploads the screenshot of their payment.
+    // The payment is always created as Pending; only the admin can verify or reject it.
     public class SyllabusWisePaymentRequest
     {
-        // "verified", "pending" or "rejected" (any case)
-        public string? PaymentStatus { get; set; }
-        // Optional. The payer is always the signed-in student; if this is sent it must be that student's own id
-        public string? UserId { get; set; }
         // Optional when exactly one plan exists
         public string? PlanId { get; set; }
+        // GPay / PhonePe / UPI screenshot (JPG, PNG or WEBP, up to 5 MB)
+        public IFormFile? File { get; set; }
         public string? PaymentMethod { get; set; }
         public string? TransactionReference { get; set; }
     }
@@ -39,6 +38,7 @@ namespace LearningBackendAPI.DTOs
         public decimal Amount { get; set; }
         public string? PaymentMethod { get; set; }
         public string? TransactionReference { get; set; }
+        public string? PaymentScreenshot { get; set; }
         public string PaymentStatus { get; set; } = string.Empty;
         public DateTime? VerifiedAt { get; set; }
         public DateTime CreatedAt { get; set; }

@@ -5,6 +5,7 @@ namespace LearningBackendAPI.DTOs
         public string? CourseId { get; set; }
         public string? BatchId { get; set; }
         public string? Title { get; set; }
+        public string? Description { get; set; }
         // Ignored for a "daily" quiz - it is always Free
         public string? QuizToView { get; set; }
         // Most times each student may submit the quiz (1 or more); defaults to 1

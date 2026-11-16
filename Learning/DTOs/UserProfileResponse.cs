@@ -39,6 +39,7 @@ namespace LearningBackendAPI.DTOs
         public string EnrollmentStatus { get; set; }
         public DateTime? VerifiedAt { get; set; }
         public List<StudyMaterial> StudyMaterials { get; set; } = new();
+        public List<QuestionPaper> QuestionPapers { get; set; } = new();
         public List<VideoMaterial> VideoMaterials { get; set; } = new();
 
         // Batches of this course the student can be moved to (admin view only): not ended, and not

@@ -84,6 +84,9 @@ namespace LearningBackendAPI.Models
         [BsonElement("title")]
         public string Title { get; set; }
 
+        [BsonElement("description")]
+        public string? Description { get; set; }
+
         [BsonElement("status")]
         public string Status { get; set; }
 

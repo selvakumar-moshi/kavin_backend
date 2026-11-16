@@ -785,6 +785,131 @@
         }
       }
     },
+    "/api/LiveClasses": {
+      "post": {
+        "tags": [
+          "LiveClasses"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveClassRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveClassRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveClassRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "LiveClasses"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/LiveClasses/{id}": {
+      "get": {
+        "tags": [
+          "LiveClasses"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LiveClasses"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveClassRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveClassRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveClassRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LiveClasses"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Notification": {
       "post": {
         "tags": [
@@ -1120,6 +1245,214 @@
         }
       }
     },
+    "/api/QuestionPaper": {
+      "post": {
+        "tags": [
+          "QuestionPaper"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "CourseId": {
+                    "type": "string"
+                  },
+                  "BatchId": {
+                    "type": "string"
+                  },
+                  "MaterialToView": {
+                    "type": "string"
+                  },
+                  "PdfFile": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "Title": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "CourseId": {
+                  "style": "form"
+                },
+                "BatchId": {
+                  "style": "form"
+                },
+                "MaterialToView": {
+                  "style": "form"
+                },
+                "PdfFile": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/QuestionPaper/search": {
+      "post": {
+        "tags": [
+          "QuestionPaper"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialSearchRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialSearchRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialSearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/QuestionPaper/{id}": {
+      "get": {
+        "tags": [
+          "QuestionPaper"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "QuestionPaper"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "CourseId": {
+                    "type": "string"
+                  },
+                  "BatchId": {
+                    "type": "string"
+                  },
+                  "MaterialToView": {
+                    "type": "string"
+                  },
+                  "PdfFile": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "Title": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "CourseId": {
+                  "style": "form"
+                },
+                "BatchId": {
+                  "style": "form"
+                },
+                "MaterialToView": {
+                  "style": "form"
+                },
+                "PdfFile": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "QuestionPaper"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Quiz": {
       "post": {
         "tags": [
@@ -1138,6 +1471,9 @@
                     "type": "string"
                   },
                   "Title": {
+                    "type": "string"
+                  },
+                  "Description": {
                     "type": "string"
                   },
                   "QuizToView": {
@@ -1180,6 +1516,9 @@
                   "style": "form"
                 },
                 "Title": {
+                  "style": "form"
+                },
+                "Description": {
                   "style": "form"
                 },
                 "QuizToView": {
@@ -1308,6 +1647,9 @@
                   "Title": {
                     "type": "string"
                   },
+                  "Description": {
+                    "type": "string"
+                  },
                   "QuizToView": {
                     "type": "string"
                   },
@@ -1344,6 +1686,9 @@
                   "style": "form"
                 },
                 "Title": {
+                  "style": "form"
+                },
+                "Description": {
                   "style": "form"
                 },
                 "QuizToView": {
@@ -2397,23 +2742,54 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SyllabusWisePaymentRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyllabusWisePaymentRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyllabusWisePaymentRequest"
+                "type": "object",
+                "properties": {
+                  "PlanId": {
+                    "type": "string"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "PaymentMethod": {
+                    "type": "string"
+                  },
+                  "TransactionReference": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "PlanId": {
+                  "style": "form"
+                },
+                "File": {
+                  "style": "form"
+                },
+                "PaymentMethod": {
+                  "style": "form"
+                },
+                "TransactionReference": {
+                  "style": "form"
+                }
               }
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/SyllabusWise/payments/my": {
+      "get": {
+        "tags": [
+          "SyllabusWise"
+        ],
         "responses": {
           "200": {
             "description": "Success"
@@ -3073,6 +3449,36 @@
         },
         "additionalProperties": false
       },
+      "LiveClassRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "nullable": true
+          },
+          "startTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "endTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -3462,32 +3868,6 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
-      "SyllabusWisePaymentRequest": {
-        "type": "object",
-        "properties": {
-          "paymentStatus": {
-            "type": "string",
-            "nullable": true
-          },
-          "userId": {
-            "type": "string",
-            "nullable": true
-          },
-          "planId": {
-            "type": "string",
-            "nullable": true
-          },
-          "paymentMethod": {
-            "type": "string",
-            "nullable": true
-          },
-          "transactionReference": {
-            "type": "string",
-            "nullable": true
           }
         },
         "additionalProperties": false

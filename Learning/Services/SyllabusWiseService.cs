@@ -9,11 +9,23 @@ namespace LearningBackendAPI.Services
     {
         private readonly ISyllabusWiseRepository _repository;
         private readonly IFolderService _folderService;
+        private readonly IUserRepository _userRepository;
+        private readonly IFileStorageService _fileStorageService;
 
-        public SyllabusWiseService(ISyllabusWiseRepository repository, IFolderService folderService)
+        private const long MaxScreenshotSizeInBytes = 5 * 1024 * 1024; // 5 MB
+        // Kept apart from the course payment screenshots (coaching/payment) so the two never overwrite each other
+        private const string PaymentFolder = "coaching/payment/syllabus";
+
+        public SyllabusWiseService(
+            ISyllabusWiseRepository repository,
+            IFolderService folderService,
+            IUserRepository userRepository,
+            IFileStorageService fileStorageService)
         {
             _repository = repository;
             _folderService = folderService;
+            _userRepository = userRepository;
+            _fileStorageService = fileStorageService;
         }
 
         // ---------- Plans (admin) ----------
@@ -122,33 +134,59 @@ namespace LearningBackendAPI.Services
 
         // ---------- Payments ----------
 
+        // Same manual flow as a course payment: the student uploads a screenshot, the payment is Pending, and only the
+        // admin can set it to Verified or Rejected. A Rejected payment can be resubmitted with a new screenshot (back to Pending).
         public async Task<SyllabusWisePaymentDto> SubmitPaymentAsync(string userId, SyllabusWisePaymentRequest request)
         {
-            // The payer is whoever is signed in. A userId in the body is only accepted when it's their own.
-            if (!string.IsNullOrWhiteSpace(request.UserId) && request.UserId.Trim() != userId)
+            var file = request.File;
+            if (file == null || file.Length == 0)
             {
-                throw new InvalidOperationException("userId doesn't match the signed-in student");
+                throw new InvalidOperationException(Constants.Messages.PaymentScreenshotRequired);
             }
 
-            var status = Constants.PaymentStatuses.Normalize(request.PaymentStatus);
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!new[] { ".jpg", ".jpeg", ".png", ".webp" }.Contains(extension))
+            {
+                throw new InvalidOperationException(Constants.Messages.PaymentScreenshotInvalidType);
+            }
+
+            if (file.Length > MaxScreenshotSizeInBytes)
+            {
+                throw new InvalidOperationException(Constants.Messages.PaymentScreenshotTooLarge);
+            }
+
             var plan = await ResolvePlanAsync(request.PlanId);
 
             var payment = await _repository.GetPaymentAsync(userId, plan.Id);
             if (payment?.PaymentStatus == Constants.PaymentStatuses.Verified)
             {
-                // Already verified: a repeated or late call never takes access away (only the admin can change it)
-                return ToDto(payment);
+                // Already verified: nothing to pay again, and a late upload never takes access away
+                throw new InvalidOperationException("Payment is already verified for this plan");
             }
+
+            var user = await _userRepository.GetByIdAsync(userId)
+                ?? throw new KeyNotFoundException(Constants.Messages.UserNotFound);
+
+            // Named after the student (plus application no.), e.g. Ajith_kumar_RSK-1004_<planId>.png
+            var rawName = $"{user.FirstName}_{user.LastName}_{user.ApplicationNo}_{plan.Id}".Trim('_');
+            var safeName = new string(rawName.Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_').ToArray());
+            var oldKey = payment?.PaymentScreenshotKey;
+            var (url, key) = await _fileStorageService.UploadImageAsync(file, PaymentFolder, $"{safeName}{extension}");
 
             var isNew = payment == null;
             payment ??= new SyllabusWisePayment { UserId = userId, PlanId = plan.Id };
+            // The plan's current title, amount and folder are copied now, so later plan edits don't rewrite what was paid
             payment.PlanTitle = plan.Title;
             payment.Amount = plan.Amount;
             payment.FolderId = plan.FolderId;
             payment.PaymentMethod = string.IsNullOrWhiteSpace(request.PaymentMethod) ? payment.PaymentMethod : request.PaymentMethod.Trim();
             payment.TransactionReference = string.IsNullOrWhiteSpace(request.TransactionReference) ? payment.TransactionReference : request.TransactionReference.Trim();
-            payment.PaymentStatus = status;
-            payment.VerifiedAt = status == Constants.PaymentStatuses.Verified ? DateTime.UtcNow : null;
+            payment.PaymentScreenshot = url;
+            payment.PaymentScreenshotKey = key;
+            // New, or re-submitted after a rejection: goes to the admin's review queue
+            payment.PaymentStatus = Constants.PaymentStatuses.Pending;
+            payment.VerifiedAt = null;
+            payment.VerifiedByAdminId = null;
 
             if (isNew)
             {
@@ -157,6 +195,12 @@ namespace LearningBackendAPI.Services
             else
             {
                 await _repository.UpdatePaymentAsync(payment);
+            }
+
+            // Same name means the upload already overwrote the old file - deleting it would remove the new one
+            if (!string.IsNullOrWhiteSpace(oldKey) && oldKey != key)
+            {
+                await _fileStorageService.DeleteAsync(oldKey);
             }
             return ToDto(payment);
         }
@@ -181,13 +225,15 @@ namespace LearningBackendAPI.Services
         public async Task<List<SyllabusWisePaymentDto>> GetPaymentsAsync(string? userId)
             => (await _repository.GetPaymentsAsync(userId)).Select(ToDto).ToList();
 
-        public async Task<SyllabusWisePaymentDto> UpdatePaymentStatusAsync(string id, SyllabusWisePaymentStatusRequest request)
+        public async Task<SyllabusWisePaymentDto> UpdatePaymentStatusAsync(string id, SyllabusWisePaymentStatusRequest request, string? adminUserId = null)
         {
             var payment = await _repository.GetPaymentByIdAsync(id)
                 ?? throw new KeyNotFoundException("Payment not found");
 
             payment.PaymentStatus = Constants.PaymentStatuses.Normalize(request.PaymentStatus);
-            payment.VerifiedAt = payment.PaymentStatus == Constants.PaymentStatuses.Verified ? DateTime.UtcNow : null;
+            var verified = payment.PaymentStatus == Constants.PaymentStatuses.Verified;
+            payment.VerifiedAt = verified ? DateTime.UtcNow : null;
+            payment.VerifiedByAdminId = verified ? adminUserId : null;
             await _repository.UpdatePaymentAsync(payment);
             return ToDto(payment);
         }
@@ -220,6 +266,7 @@ namespace LearningBackendAPI.Services
             Amount = payment.Amount,
             PaymentMethod = payment.PaymentMethod,
             TransactionReference = payment.TransactionReference,
+            PaymentScreenshot = payment.PaymentScreenshot,
             PaymentStatus = payment.PaymentStatus,
             VerifiedAt = payment.VerifiedAt,
             CreatedAt = payment.CreatedAt

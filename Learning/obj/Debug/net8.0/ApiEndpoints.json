@@ -448,6 +448,85 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "LearningBackendAPI.Controllers.LiveClassesController",
+    "Method": "Create",
+    "RelativePath": "api/LiveClasses",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.LiveClassRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.LiveClassesController",
+    "Method": "GetAll",
+    "RelativePath": "api/LiveClasses",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.LiveClassesController",
+    "Method": "GetById",
+    "RelativePath": "api/LiveClasses/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.LiveClassesController",
+    "Method": "Update",
+    "RelativePath": "api/LiveClasses/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.LiveClassRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.LiveClassesController",
+    "Method": "Delete",
+    "RelativePath": "api/LiveClasses/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "LearningBackendAPI.Controllers.NotificationController",
     "Method": "CreateNotification",
     "RelativePath": "api/Notification",
@@ -674,6 +753,141 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "LearningBackendAPI.Controllers.QuestionPaperController",
+    "Method": "CreateQuestionPaper",
+    "RelativePath": "api/QuestionPaper",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Description",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "CourseId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "BatchId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "MaterialToView",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "PdfFile",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuestionPaperController",
+    "Method": "GetQuestionPaperById",
+    "RelativePath": "api/QuestionPaper/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuestionPaperController",
+    "Method": "UpdateQuestionPaper",
+    "RelativePath": "api/QuestionPaper/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Description",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "CourseId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "BatchId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "MaterialToView",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "PdfFile",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuestionPaperController",
+    "Method": "DeleteQuestionPaper",
+    "RelativePath": "api/QuestionPaper/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.QuestionPaperController",
+    "Method": "GetAllQuestionPapers",
+    "RelativePath": "api/QuestionPaper/search",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LearningBackendAPI.DTOs.MaterialSearchRequest",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "LearningBackendAPI.Controllers.QuizController",
     "Method": "CreateQuiz",
     "RelativePath": "api/Quiz",
@@ -693,6 +907,11 @@
       },
       {
         "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Description",
         "Type": "System.String",
         "IsRequired": false
       },
@@ -759,6 +978,11 @@
       },
       {
         "Name": "Title",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Description",
         "Type": "System.String",
         "IsRequired": false
       },
@@ -1468,9 +1692,24 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "request",
-        "Type": "LearningBackendAPI.DTOs.SyllabusWisePaymentRequest",
-        "IsRequired": true
+        "Name": "PlanId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "File",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "PaymentMethod",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "TransactionReference",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -1510,6 +1749,16 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.SyllabusWiseController",
+    "Method": "GetMyPayments",
+    "RelativePath": "api/SyllabusWise/payments/my",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

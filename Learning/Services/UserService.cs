@@ -13,6 +13,7 @@ namespace LearningBackendAPI.Services
         private readonly IUserRepository _userRepository;
         private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly IStudyMaterialRepository _studyMaterialRepository;
+        private readonly IQuestionPaperRepository _questionPaperRepository;
         private readonly IVideoMaterialRepository _videoMaterialRepository;
         private readonly ICourseRepository _courseRepository;
         private readonly IBatchRepository _batchRepository;
@@ -25,6 +26,7 @@ namespace LearningBackendAPI.Services
             IUserRepository userRepository,
             IEnrollmentRepository enrollmentRepository,
             IStudyMaterialRepository studyMaterialRepository,
+            IQuestionPaperRepository questionPaperRepository,
             IVideoMaterialRepository videoMaterialRepository,
             ICourseRepository courseRepository,
             IBatchRepository batchRepository,
@@ -39,6 +41,7 @@ namespace LearningBackendAPI.Services
             _userRepository = userRepository;
             _enrollmentRepository = enrollmentRepository;
             _studyMaterialRepository = studyMaterialRepository;
+            _questionPaperRepository = questionPaperRepository;
             _videoMaterialRepository = videoMaterialRepository;
             _courseRepository = courseRepository;
             _batchRepository = batchRepository;
@@ -108,6 +111,9 @@ namespace LearningBackendAPI.Services
                 var studyMaterials = isVerified
                     ? await _studyMaterialRepository.GetByCourseIdAsync(enrollment.CourseId)
                     : new List<StudyMaterial>();
+                var questionPapers = isVerified
+                    ? await _questionPaperRepository.GetByCourseIdAsync(enrollment.CourseId)
+                    : new List<QuestionPaper>();
                 var videoMaterials = isVerified
                     ? await _videoMaterialRepository.GetByCourseIdAsync(enrollment.CourseId)
                     : new List<VideoMaterial>();
@@ -149,6 +155,7 @@ namespace LearningBackendAPI.Services
                     EnrollmentStatus = enrollment.Status,
                     VerifiedAt = enrollment.VerifiedAt,
                     StudyMaterials = studyMaterials,
+                    QuestionPapers = questionPapers,
                     VideoMaterials = videoMaterials,
                     AllowedBatches = allowedBatches
                 });
