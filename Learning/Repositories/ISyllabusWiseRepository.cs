@@ -16,5 +16,6 @@ namespace LearningBackendAPI.Repositories
         Task<SyllabusWisePayment> CreatePaymentAsync(SyllabusWisePayment payment);
         Task UpdatePaymentAsync(SyllabusWisePayment payment);
         Task<List<SyllabusWisePayment>> GetVerifiedPaymentsAsync(string userId);
+        Task<SyllabusWisePayment?> GetPaymentByTransactionReferenceAsync(string transactionReference);
     }
 }

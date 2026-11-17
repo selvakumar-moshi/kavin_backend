@@ -55,6 +55,22 @@ namespace LearningBackendAPI.Models
         [BsonElement("verifiedByAdminId")]
         public string? VerifiedByAdminId { get; set; }
 
+        // Set when the admin moves the student from one batch to another (the new batch replaces the old one)
+        [BsonElement("transferredFromBatchId")]
+        public string? TransferredFromBatchId { get; set; }
+
+        [BsonElement("transferredFromBatchTitle")]
+        public string? TransferredFromBatchTitle { get; set; }
+
+        [BsonElement("transferReason")]
+        public string? TransferReason { get; set; }
+
+        [BsonElement("transferredAt")]
+        public DateTime? TransferredAt { get; set; }
+
+        [BsonElement("transferredByAdminId")]
+        public string? TransferredByAdminId { get; set; }
+
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; }
 

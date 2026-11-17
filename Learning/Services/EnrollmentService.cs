@@ -13,6 +13,7 @@ namespace LearningBackendAPI.Services
         private readonly IExcelExportService _excelExportService;
         private readonly IFileStorageService _fileStorageService;
         private readonly IBatchRepository _batchRepository;
+        private readonly ISyllabusWiseRepository _syllabusWiseRepository;
 
         private const long MaxScreenshotSizeInBytes = 5 * 1024 * 1024; // 5 MB
         private const string PaymentFolder = "coaching/payment";
@@ -23,8 +24,10 @@ namespace LearningBackendAPI.Services
             IUserRepository userRepository,
             IExcelExportService excelExportService,
             IFileStorageService fileStorageService,
-            IBatchRepository batchRepository)
+            IBatchRepository batchRepository,
+            ISyllabusWiseRepository syllabusWiseRepository)
         {
+            _syllabusWiseRepository = syllabusWiseRepository;
             _batchRepository = batchRepository;
             _fileStorageService = fileStorageService;
             _enrollmentRepository = enrollmentRepository;
@@ -80,6 +83,8 @@ namespace LearningBackendAPI.Services
 
             if (!string.IsNullOrWhiteSpace(transactionReference))
             {
+                transactionReference = transactionReference.Trim().ToUpperInvariant();
+                await EnsureReferenceNotUsedAsync(transactionReference, enrollment.Id);
                 enrollment.TransactionReference = transactionReference;
             }
 
@@ -166,7 +171,7 @@ namespace LearningBackendAPI.Services
             return await _enrollmentRepository.CreateAsync(enrollment);
         }
 
-        public async Task<Enrollment> UploadPaymentAttachmentAsync(string id, string userId, IFormFile file)
+        public async Task<Enrollment> UploadPaymentAttachmentAsync(string id, string userId, IFormFile file, string? transactionId)
         {
             var enrollment = await _enrollmentRepository.GetByIdAsync(id);
             // Same message for "missing" and "not yours" so enrollment IDs can't be probed
@@ -202,6 +207,11 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.UserNotFound);
             }
 
+            // The student sends the transaction ID (UPI reference / UTR) together with the screenshot. It is checked before anything
+            // is stored, so an ID that was already used leaves no file behind.
+            var reference = NormalizeReference(transactionId);
+            await EnsureReferenceNotUsedAsync(reference, enrollment.Id);
+
             // File is named after the student (plus application no. so two students with the same
             // name don't overwrite each other), e.g. Ajith_kumar_RSK-1004.png
             var rawName = $"{user.FirstName}_{user.LastName}_{user.ApplicationNo}".Trim('_');
@@ -213,6 +223,8 @@ namespace LearningBackendAPI.Services
 
             enrollment.PaymentScreenshot = url;
             enrollment.PaymentScreenshotKey = key;
+            enrollment.TransactionReference = reference;
+            enrollment.PaymentMethod ??= Constants.PaymentMethods.Upi;
             if (enrollment.Status == Constants.EnrollmentStatuses.Rejected)
             {
                 // Re-submitted after rejection - send it back to the admin's review queue
@@ -230,49 +242,29 @@ namespace LearningBackendAPI.Services
             return enrollment;
         }
 
-        public async Task<Enrollment> SubmitUpiPaymentAsync(string id, string userId, string? transactionReference)
+        // 6-35 letters or digits (UPI reference / UTR), stored in upper case
+        private static string NormalizeReference(string? transactionId)
         {
-            var enrollment = await _enrollmentRepository.GetByIdAsync(id);
-            // Same message for "missing" and "not yours" so enrollment IDs can't be probed
-            if (enrollment == null || enrollment.UserId != userId)
-            {
-                throw new KeyNotFoundException(Constants.Messages.EnrollmentNotFound);
-            }
-
-            var reference = (transactionReference ?? "").Trim().ToUpperInvariant();
+            var reference = (transactionId ?? "").Trim().ToUpperInvariant();
             if (reference.Length < 6 || reference.Length > 35 || !reference.All(char.IsLetterOrDigit))
             {
                 throw new InvalidOperationException(Constants.Messages.TransactionReferenceInvalid);
             }
+            return reference;
+        }
 
-            if (enrollment.Status == Constants.EnrollmentStatuses.Verified)
-            {
-                throw new InvalidOperationException(Constants.Messages.PaymentAlreadyVerified);
-            }
-
-            if (enrollment.Status == Constants.EnrollmentStatuses.Dropped)
-            {
-                throw new InvalidOperationException(Constants.Messages.EnrollmentDropped);
-            }
-
-            // One real payment must not unlock several enrollments
+        // One real payment must not unlock several enrollments (or a syllabus wise payment): an ID that belongs to any other payment is refused
+        private async Task EnsureReferenceNotUsedAsync(string reference, string? enrollmentId)
+        {
             var owner = await _enrollmentRepository.GetByTransactionReferenceAsync(reference);
-            if (owner != null && owner.Id != enrollment.Id)
+            if (owner != null && owner.Id != enrollmentId)
             {
                 throw new InvalidOperationException(Constants.Messages.TransactionReferenceInUse);
             }
-
-            // Deliberately stays Pending: the UPI app's "SUCCESS" comes from the phone and can be
-            // forged, so only the admin (after checking the bank statement) can mark it Verified.
-            enrollment.PaymentMethod = Constants.PaymentMethods.Upi;
-            enrollment.TransactionReference = reference;
-            if (enrollment.Status == Constants.EnrollmentStatuses.Rejected)
+            if (await _syllabusWiseRepository.GetPaymentByTransactionReferenceAsync(reference) != null)
             {
-                // Re-submitted after rejection - send it back to the admin's review queue
-                enrollment.Status = Constants.EnrollmentStatuses.Pending;
+                throw new InvalidOperationException(Constants.Messages.TransactionReferenceInUse);
             }
-            await _enrollmentRepository.UpdateAsync(id, enrollment);
-            return enrollment;
         }
 
         public async Task<(byte[] Content, string FileName)> ExportCourseEnrollmentsAsync(string courseId)

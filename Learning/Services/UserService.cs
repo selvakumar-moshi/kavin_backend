@@ -103,32 +103,57 @@ namespace LearningBackendAPI.Services
             var enrollments = await _enrollmentRepository.GetByUserIdAsync(id);
             var courses = new List<EnrolledCourseDto>();
 
-            var batchesByCourse = new Dictionary<string, List<Batch>>();
-
-            foreach (var enrollment in enrollments)
+            foreach (var courseGroup in enrollments.GroupBy(e => e.CourseId).OrderBy(g => g.Min(e => e.CreatedAt)))
             {
-                var isVerified = enrollment.Status == Constants.EnrollmentStatuses.Verified;
-                var studyMaterials = isVerified
-                    ? await _studyMaterialRepository.GetByCourseIdAsync(enrollment.CourseId)
+                var ordered = courseGroup.OrderBy(e => e.CreatedAt).ToList();
+                var batches = new List<EnrolledBatchDto>();
+
+                // Content is only loaded when some enrollment is Verified, and each batch only gets its own content (or content with no batch)
+                var anyVerified = ordered.Any(e => e.Status == Constants.EnrollmentStatuses.Verified);
+                var courseStudyMaterials = anyVerified
+                    ? await _studyMaterialRepository.GetByCourseIdAsync(courseGroup.Key)
                     : new List<StudyMaterial>();
-                var questionPapers = isVerified
-                    ? await _questionPaperRepository.GetByCourseIdAsync(enrollment.CourseId)
+                var courseQuestionPapers = anyVerified
+                    ? await _questionPaperRepository.GetByCourseIdAsync(courseGroup.Key)
                     : new List<QuestionPaper>();
-                var videoMaterials = isVerified
-                    ? await _videoMaterialRepository.GetByCourseIdAsync(enrollment.CourseId)
+                var courseVideoMaterials = anyVerified
+                    ? await _videoMaterialRepository.GetByCourseIdAsync(courseGroup.Key)
                     : new List<VideoMaterial>();
+
+                foreach (var enrollment in ordered)
+                {
+                    var isVerified = enrollment.Status == Constants.EnrollmentStatuses.Verified;
+                    var batchId = enrollment.BatchId;
+                    bool InBatch(string? contentBatchId) => string.IsNullOrWhiteSpace(contentBatchId) || contentBatchId == batchId;
+
+                    batches.Add(new EnrolledBatchDto
+                    {
+                        EnrollmentId = enrollment.Id,
+                        BatchId = enrollment.BatchId,
+                        BatchTitle = enrollment.BatchTitle,
+                        Amount = enrollment.CourseAmount,
+                        PaymentMethod = enrollment.PaymentMethod,
+                        TransactionReference = enrollment.TransactionReference,
+                        PaymentScreenshot = enrollment.PaymentScreenshot,
+                        EnrollmentStatus = enrollment.Status,
+                        VerifiedAt = enrollment.VerifiedAt,
+                        EnrolledAt = enrollment.CreatedAt,
+                        TransferredFromBatchId = enrollment.TransferredFromBatchId,
+                        TransferredFromBatchTitle = enrollment.TransferredFromBatchTitle,
+                        TransferReason = enrollment.TransferReason,
+                        TransferredAt = enrollment.TransferredAt,
+                        StudyMaterials = isVerified ? courseStudyMaterials.Where(m => InBatch(m.BatchId)).ToList() : new List<StudyMaterial>(),
+                        QuestionPapers = isVerified ? courseQuestionPapers.Where(m => InBatch(m.BatchId)).ToList() : new List<QuestionPaper>(),
+                        VideoMaterials = isVerified ? courseVideoMaterials.Where(m => InBatch(m.BatchId)).ToList() : new List<VideoMaterial>()
+                    });
+                }
 
                 List<AllowedBatchDto>? allowedBatches = null;
                 if (includeAllowedBatches)
                 {
-                    if (!batchesByCourse.TryGetValue(enrollment.CourseId, out var courseBatches))
-                    {
-                        courseBatches = await _batchRepository.GetByCourseIdAsync(enrollment.CourseId);
-                        batchesByCourse[enrollment.CourseId] = courseBatches;
-                    }
-
-                    allowedBatches = courseBatches
-                        .Where(b => !b.IsExpired && b.Id != enrollment.BatchId)
+                    var joined = ordered.Where(e => e.Status != Constants.EnrollmentStatuses.Dropped).Select(e => e.BatchId).ToHashSet();
+                    allowedBatches = (await _batchRepository.GetByCourseIdAsync(courseGroup.Key))
+                        .Where(b => !b.IsExpired && !joined.Contains(b.Id))
                         .OrderBy(b => b.BatchFrom)
                         .Select(b => new AllowedBatchDto
                         {
@@ -142,21 +167,9 @@ namespace LearningBackendAPI.Services
 
                 courses.Add(new EnrolledCourseDto
                 {
-                    EnrollmentId = enrollment.Id,
-                    CourseId = enrollment.CourseId,
-                    CourseName = enrollment.CourseName,
-                    BatchId = enrollment.BatchId,
-                    BatchTitle = enrollment.BatchTitle,
-                    CourseAmount = enrollment.CourseAmount,
-                    TotalAmount = enrollment.TotalAmount,
-                    PaymentMethod = enrollment.PaymentMethod,
-                    TransactionReference = enrollment.TransactionReference,
-                    PaymentScreenshot = enrollment.PaymentScreenshot,
-                    EnrollmentStatus = enrollment.Status,
-                    VerifiedAt = enrollment.VerifiedAt,
-                    StudyMaterials = studyMaterials,
-                    QuestionPapers = questionPapers,
-                    VideoMaterials = videoMaterials,
+                    CourseId = courseGroup.Key,
+                    CourseName = ordered[0].CourseName,
+                    Batches = batches,
                     AllowedBatches = allowedBatches
                 });
             }
@@ -304,12 +317,17 @@ namespace LearningBackendAPI.Services
             return MapToUserDto(user);
         }
 
+        // Admin adds or moves a student into a batch. Every batch the student is in is its own enrollment (own amount, payment,
+        // status), so the course price at the time of joining is kept per batch.
+        //  - default (mode left out or "add"): the new batch is IN ADDITION to the batches the student already has, at today's
+        //    course price. Pending until paid; paymentRequired = false grants it free. Nothing the student already has is touched.
+        //  - mode "transfer": the new batch REPLACES a current one. The old batch is kept as a Dropped record (with what it was
+        //    bought for) and the new batch is a new record that says where it came from. Free by default; paymentRequired = true
+        //    makes it Pending at today's price until the new payment is verified.
+        //  - first enrollment in the course (or rejoining after a drop): Pending (paid course) unless paymentRequired = false.
         private async Task AddCourseEnrollmentsAsync(string userId, List<CourseEnrollmentRequest> courses, string? adminUserId)
         {
             var existingEnrollments = await _enrollmentRepository.GetByUserIdAsync(userId);
-            var enrollmentsByCourse = existingEnrollments
-                .GroupBy(e => e.CourseId)
-                .ToDictionary(g => g.Key, g => g.ToList());
 
             foreach (var request in courses)
             {
@@ -318,21 +336,12 @@ namespace LearningBackendAPI.Services
                     throw new InvalidOperationException(Constants.Messages.BatchNotFound);
                 }
 
-                // An existing enrollment for this course is never duplicated - the same record is
-                // reused, since the course was already paid for:
-                //  - Pending/Verified/Rejected (still active): the student is moved to the new batch,
-                //    keeping their status and payment details. Same batch -> "already enrolled".
-                //  - Dropped: the student is rejoining, so it is re-verified in the new batch.
-                Enrollment? activeEnrollment = null;
-                Enrollment? droppedEnrollment = null;
-                if (enrollmentsByCourse.TryGetValue(request.CourseId, out var courseEnrollments))
+                var mode = (request.Mode ?? "").Trim().ToLowerInvariant();
+                if (mode != "" && mode != "transfer" && mode != "add")
                 {
-                    activeEnrollment = courseEnrollments.FirstOrDefault(e => e.Status != Constants.EnrollmentStatuses.Dropped);
-                    if (activeEnrollment == null)
-                    {
-                        droppedEnrollment = courseEnrollments.OrderByDescending(e => e.CreatedAt).First();
-                    }
+                    throw new InvalidOperationException("mode must be transfer or add");
                 }
+                var isTransfer = mode == "transfer";
 
                 var course = await _courseRepository.GetByIdAsync(request.CourseId);
                 if (course == null)
@@ -356,35 +365,54 @@ namespace LearningBackendAPI.Services
                     throw new InvalidOperationException(Constants.Messages.BatchExpired);
                 }
 
-                if (activeEnrollment != null)
+                var courseEnrollments = existingEnrollments.Where(e => e.CourseId == course.Id).ToList();
+                var active = courseEnrollments.Where(e => e.Status != Constants.EnrollmentStatuses.Dropped).ToList();
+
+                if (active.Any(e => e.BatchId == batch.Id))
                 {
-                    if (activeEnrollment.BatchId == batch.Id)
+                    throw new InvalidOperationException("User is already enrolled in this batch");
+                }
+
+                var mustPay = request.PaymentRequired == true && course.CourseAmount > 0;
+
+                if (active.Count > 0 && isTransfer)
+                {
+                    // Transfer: the new batch replaces one the student is in
+                    Enrollment source;
+                    if (active.Count == 1)
                     {
-                        throw new InvalidOperationException(Constants.Messages.CourseAlreadyEnrolled);
+                        source = active[0];
+                    }
+                    else
+                    {
+                        source = active.FirstOrDefault(e => e.BatchId == request.FromBatchId)
+                            ?? throw new InvalidOperationException("The student is in several batches of this course - send fromBatchId (the batch being replaced), or leave mode out to add this batch as well");
                     }
 
-                    // Batch change: only the batch moves - status, payment and verification stay.
-                    activeEnrollment.BatchId = batch.Id;
-                    activeEnrollment.BatchTitle = batch.Title;
-
-                    await _enrollmentRepository.UpdateAsync(activeEnrollment.Id, activeEnrollment);
+                    if (source.Status != Constants.EnrollmentStatuses.Verified)
+                    {
+                        // Never paid (Pending / Rejected): nothing to keep, the same record just points at the new batch
+                        ApplyTransfer(source, batch, request, adminUserId);
+                        await _enrollmentRepository.UpdateAsync(source.Id, source);
+                    }
+                    else
+                    {
+                        existingEnrollments.Add(await MoveToBatchAsync(source, course, batch, request, adminUserId, mustPay));
+                    }
                     continue;
                 }
 
-                if (droppedEnrollment != null)
+                if (active.Count == 0 && courseEnrollments.Count > 0)
                 {
-                    // Rejoin: update the existing enrollment in place. CourseAmount/TotalAmount/
-                    // PaymentMethod/TransactionReference are left untouched - no re-payment needed.
-                    droppedEnrollment.BatchId = batch.Id;
-                    droppedEnrollment.BatchTitle = batch.Title;
-                    droppedEnrollment.Status = Constants.EnrollmentStatuses.Verified;
-                    droppedEnrollment.VerifiedAt = DateTime.UtcNow;
-                    droppedEnrollment.VerifiedByAdminId = adminUserId;
-
-                    await _enrollmentRepository.UpdateAsync(droppedEnrollment.Id, droppedEnrollment);
+                    // Rejoin after a drop: the dropped record stays as history, and the new batch is a new record that carries over
+                    // what the student had paid (free by default, same as a transfer)
+                    var dropped = courseEnrollments.OrderByDescending(e => e.CreatedAt).First();
+                    existingEnrollments.Add(await MoveToBatchAsync(dropped, course, batch, request, adminUserId, mustPay));
                     continue;
                 }
 
+                // New enrollment (first one, or an extra batch): the amount is the course price today, kept with this batch only
+                var granted = course.IsFree || request.PaymentRequired == false;
                 var enrollment = new Enrollment
                 {
                     UserId = userId,
@@ -394,14 +422,62 @@ namespace LearningBackendAPI.Services
                     BatchTitle = batch.Title,
                     CourseAmount = course.CourseAmount,
                     TotalAmount = course.CourseAmount,
-                    // A free course (amount 0) has nothing to pay or verify
-                    Status = course.IsFree ? Constants.EnrollmentStatuses.Verified : Constants.EnrollmentStatuses.Pending,
-                    VerifiedAt = course.IsFree ? DateTime.UtcNow : null,
-                    VerifiedByAdminId = course.IsFree ? adminUserId : null
+                    Status = granted ? Constants.EnrollmentStatuses.Verified : Constants.EnrollmentStatuses.Pending,
+                    VerifiedAt = granted ? DateTime.UtcNow : null,
+                    VerifiedByAdminId = granted ? adminUserId : null
                 };
 
-                await _enrollmentRepository.CreateAsync(enrollment);
+                existingEnrollments.Add(await _enrollmentRepository.CreateAsync(enrollment));
             }
+        }
+
+        // The student leaves one batch for another without losing the record of the first: the old enrollment is kept as Dropped
+        // (its amount, payment and screenshot stay on it) and the new batch is a new enrollment that notes where it came from.
+        // Free move: the new batch keeps the amount the student paid and starts Verified. Payment required: it starts Pending at
+        // today's course price until the student uploads a screenshot and the admin verifies it.
+        private async Task<Enrollment> MoveToBatchAsync(Enrollment source, Course course, Batch batch, CourseEnrollmentRequest request, string? adminUserId, bool mustPay)
+        {
+            var amount = mustPay ? course.CourseAmount : source.CourseAmount;
+            var moved = new Enrollment
+            {
+                UserId = source.UserId,
+                CourseId = course.Id,
+                CourseName = course.CourseName,
+                BatchId = batch.Id,
+                BatchTitle = batch.Title,
+                CourseAmount = amount,
+                TotalAmount = amount,
+                Status = mustPay ? Constants.EnrollmentStatuses.Pending : Constants.EnrollmentStatuses.Verified,
+                VerifiedAt = mustPay ? null : DateTime.UtcNow,
+                VerifiedByAdminId = mustPay ? null : adminUserId,
+                TransferredFromBatchId = source.BatchId,
+                TransferredFromBatchTitle = source.BatchTitle,
+                TransferReason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim(),
+                TransferredAt = DateTime.UtcNow,
+                TransferredByAdminId = adminUserId
+            };
+            moved = await _enrollmentRepository.CreateAsync(moved);
+
+            if (source.Status != Constants.EnrollmentStatuses.Dropped)
+            {
+                source.Status = Constants.EnrollmentStatuses.Dropped;
+                source.UpdatedAt = DateTime.UtcNow;
+                await _enrollmentRepository.UpdateAsync(source.Id, source);
+            }
+            return moved;
+        }
+
+        // Moves the enrollment to the new batch and records where it came from and why
+        private static void ApplyTransfer(Enrollment enrollment, Batch batch, CourseEnrollmentRequest request, string? adminUserId)
+        {
+            enrollment.TransferredFromBatchId = enrollment.BatchId;
+            enrollment.TransferredFromBatchTitle = enrollment.BatchTitle;
+            enrollment.TransferReason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
+            enrollment.TransferredAt = DateTime.UtcNow;
+            enrollment.TransferredByAdminId = adminUserId;
+            enrollment.BatchId = batch.Id;
+            enrollment.BatchTitle = batch.Title;
+            enrollment.UpdatedAt = DateTime.UtcNow;
         }
 
         public async Task<bool> DeleteUserAsync(string id)

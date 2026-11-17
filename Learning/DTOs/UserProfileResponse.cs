@@ -24,27 +24,41 @@ namespace LearningBackendAPI.DTOs
         public List<SyllabusMaterial> SyllabusMaterials { get; set; } = new();
     }
 
+    // One entry per course; every batch the student joined is its own entry in Batches, each with its own
+    // amount, payment and status, so a later price change never touches what an earlier batch was bought for.
     public class EnrolledCourseDto
     {
-        public string EnrollmentId { get; set; }
         public string CourseId { get; set; }
         public string CourseName { get; set; }
+        public List<EnrolledBatchDto> Batches { get; set; } = new();
+
+        // Batches of this course the student can still be added to or moved to (admin view only): not ended, and not
+        // one they are already in. Pass one as batchId to PUT /api/User/{id}.
+        public List<AllowedBatchDto>? AllowedBatches { get; set; }
+    }
+
+    public class EnrolledBatchDto
+    {
+        public string EnrollmentId { get; set; }
         public string? BatchId { get; set; }
         public string? BatchTitle { get; set; }
-        public decimal CourseAmount { get; set; }
-        public decimal TotalAmount { get; set; }
+        // What this batch was bought for (the course price on the day it was added)
+        public decimal Amount { get; set; }
         public string? PaymentMethod { get; set; }
         public string? TransactionReference { get; set; }
         public string? PaymentScreenshot { get; set; }
         public string EnrollmentStatus { get; set; }
         public DateTime? VerifiedAt { get; set; }
+        public DateTime EnrolledAt { get; set; }
+        // Set when the admin moved the student into this batch from another one
+        public string? TransferredFromBatchId { get; set; }
+        public string? TransferredFromBatchTitle { get; set; }
+        public string? TransferReason { get; set; }
+        public DateTime? TransferredAt { get; set; }
+        // Only filled while the enrollment is Verified: this batch's content (plus the course content that has no batch)
         public List<StudyMaterial> StudyMaterials { get; set; } = new();
         public List<QuestionPaper> QuestionPapers { get; set; } = new();
         public List<VideoMaterial> VideoMaterials { get; set; } = new();
-
-        // Batches of this course the student can be moved to (admin view only): not ended, and not
-        // the batch they are already in. Pass one as batchId to PUT /api/User/{id}.
-        public List<AllowedBatchDto>? AllowedBatches { get; set; }
     }
 
     public class AllowedBatchDto

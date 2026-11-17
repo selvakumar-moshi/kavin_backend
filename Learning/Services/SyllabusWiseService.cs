@@ -11,6 +11,7 @@ namespace LearningBackendAPI.Services
         private readonly IFolderService _folderService;
         private readonly IUserRepository _userRepository;
         private readonly IFileStorageService _fileStorageService;
+        private readonly IEnrollmentRepository _enrollmentRepository;
 
         private const long MaxScreenshotSizeInBytes = 5 * 1024 * 1024; // 5 MB
         // Kept apart from the course payment screenshots (coaching/payment) so the two never overwrite each other
@@ -20,8 +21,10 @@ namespace LearningBackendAPI.Services
             ISyllabusWiseRepository repository,
             IFolderService folderService,
             IUserRepository userRepository,
-            IFileStorageService fileStorageService)
+            IFileStorageService fileStorageService,
+            IEnrollmentRepository enrollmentRepository)
         {
+            _enrollmentRepository = enrollmentRepository;
             _repository = repository;
             _folderService = folderService;
             _userRepository = userRepository;
@@ -167,6 +170,18 @@ namespace LearningBackendAPI.Services
             var user = await _userRepository.GetByIdAsync(userId)
                 ?? throw new KeyNotFoundException(Constants.Messages.UserNotFound);
 
+            // A transaction ID that is sent must not belong to any other payment (course or syllabus wise)
+            var reference = string.IsNullOrWhiteSpace(request.TransactionReference) ? null : request.TransactionReference.Trim().ToUpperInvariant();
+            if (reference != null)
+            {
+                var courseOwner = await _enrollmentRepository.GetByTransactionReferenceAsync(reference);
+                var syllabusOwner = await _repository.GetPaymentByTransactionReferenceAsync(reference);
+                if (courseOwner != null || (syllabusOwner != null && syllabusOwner.Id != payment?.Id))
+                {
+                    throw new InvalidOperationException(Constants.Messages.TransactionReferenceInUse);
+                }
+            }
+
             // Named after the student (plus application no.), e.g. Ajith_kumar_RSK-1004_<planId>.png
             var rawName = $"{user.FirstName}_{user.LastName}_{user.ApplicationNo}_{plan.Id}".Trim('_');
             var safeName = new string(rawName.Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_').ToArray());
@@ -180,7 +195,7 @@ namespace LearningBackendAPI.Services
             payment.Amount = plan.Amount;
             payment.FolderId = plan.FolderId;
             payment.PaymentMethod = string.IsNullOrWhiteSpace(request.PaymentMethod) ? payment.PaymentMethod : request.PaymentMethod.Trim();
-            payment.TransactionReference = string.IsNullOrWhiteSpace(request.TransactionReference) ? payment.TransactionReference : request.TransactionReference.Trim();
+            payment.TransactionReference = reference ?? payment.TransactionReference;
             payment.PaymentScreenshot = url;
             payment.PaymentScreenshotKey = key;
             // New, or re-submitted after a rejection: goes to the admin's review queue

@@ -47,30 +47,6 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Student records the UPI transaction ID (UTR) of their payment for their own enrollment.
-        /// The enrollment stays Pending until the admin matches it with the bank statement and
-        /// verifies it via PUT /{id}/status. Body: { transactionReference, upiStatus }.
-        /// </summary>
-        [HttpPost("{id}/upi-payment")]
-        public async Task<IActionResult> SubmitUpiPayment(string id, [FromBody] UpiPaymentRequest request)
-        {
-            try
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-                var enrollment = await _enrollmentService.SubmitUpiPaymentAsync(id, userId, request.TransactionReference);
-                return Ok(_responseHelper.Success(enrollment, "Payment submitted. Your course unlocks once the admin verifies it."));
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(_responseHelper.NotFound<object>(ex.Message));
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
-            }
-        }
-
-        /// <summary>
         /// Get all enrollments (Admin only)
         /// </summary>
         [HttpGet]
@@ -158,17 +134,18 @@ namespace LearningBackendAPI.Controllers
 
         /// <summary>
         /// Upload (or replace) the GPay/PhonePe payment screenshot for the current student's own
-        /// enrollment. Stored in S3 under coaching/payment; admin sees it as paymentScreenshot on
-        /// each course in the user profile response.
+        /// enrollment, together with its UPI transaction ID (multipart/form-data: file, transactionId). Stored in S3 under
+        /// coaching/payment; the admin sees the screenshot and the transaction ID on the enrollment. A transaction ID that was
+        /// already used for another payment is refused: "This transaction ID has already been used for a payment."
         /// </summary>
         [HttpPost("{id}/payment-attachment")]
         [RequestSizeLimit(5 * 1024 * 1024)]
-        public async Task<IActionResult> UploadPaymentAttachment(string id, IFormFile file)
+        public async Task<IActionResult> UploadPaymentAttachment(string id, [FromForm] PaymentAttachmentRequest request)
         {
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-                var enrollment = await _enrollmentService.UploadPaymentAttachmentAsync(id, userId, file);
+                var enrollment = await _enrollmentService.UploadPaymentAttachmentAsync(id, userId, request.File!, request.TransactionId);
                 return Ok(_responseHelper.Success(enrollment, "Payment screenshot uploaded successfully"));
             }
             catch (KeyNotFoundException ex)

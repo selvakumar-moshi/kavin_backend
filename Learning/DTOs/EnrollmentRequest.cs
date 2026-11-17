@@ -13,16 +13,13 @@ namespace LearningBackendAPI.DTOs
         public string? BatchId { get; set; }
     }
 
-    /// <summary>
-    /// Sent by the mobile app after the student returns from their UPI app. The UPI app's reply is
-    /// produced on the phone and can be faked, so this never verifies anything - it only records the
-    /// transaction ID for the admin to match against the bank statement.
-    /// </summary>
-    public class UpiPaymentRequest
+    // POST /api/Enrollment/{id}/payment-attachment (multipart/form-data)
+    public class PaymentAttachmentRequest
     {
-        public string? TransactionReference { get; set; }
-        /// <summary>Status the UPI app reported (SUCCESS / SUBMITTED / FAILURE / empty). Informational only.</summary>
-        public string? UpiStatus { get; set; }
+        // GPay / PhonePe / UPI screenshot (JPG, PNG or WEBP, up to 5 MB)
+        public IFormFile? File { get; set; }
+        // The UPI transaction ID / UTR shown in the payment app (6-35 letters or digits). An ID already used for another payment is refused.
+        public string? TransactionId { get; set; }
     }
 
     public class PaymentInfoResponse

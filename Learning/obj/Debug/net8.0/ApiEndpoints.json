@@ -299,8 +299,13 @@
         "IsRequired": true
       },
       {
-        "Name": "file",
+        "Name": "File",
         "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "TransactionId",
+        "Type": "System.String",
         "IsRequired": false
       }
     ],
@@ -322,27 +327,6 @@
       {
         "Name": "request",
         "Type": "LearningBackendAPI.DTOs.UpdateEnrollmentStatusRequest",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "LearningBackendAPI.Controllers.EnrollmentController",
-    "Method": "SubmitUpiPayment",
-    "RelativePath": "api/Enrollment/{id}/upi-payment",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.String",
-        "IsRequired": true
-      },
-      {
-        "Name": "request",
-        "Type": "LearningBackendAPI.DTOs.UpiPaymentRequest",
         "IsRequired": true
       }
     ],

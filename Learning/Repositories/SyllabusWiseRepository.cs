@@ -67,6 +67,9 @@ namespace LearningBackendAPI.Repositories
             await _payments.ReplaceOneAsync(p => p.Id == payment.Id, payment);
         }
 
+        public async Task<SyllabusWisePayment?> GetPaymentByTransactionReferenceAsync(string transactionReference)
+            => await _payments.Find(p => p.TransactionReference == transactionReference).FirstOrDefaultAsync();
+
         public async Task<List<SyllabusWisePayment>> GetVerifiedPaymentsAsync(string userId)
             => await _payments.Find(p => p.UserId == userId && p.PaymentStatus == Constants.PaymentStatuses.Verified).ToListAsync();
     }

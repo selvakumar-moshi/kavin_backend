@@ -34,12 +34,12 @@ namespace LearningBackendAPI.Services
                 }
             }
 
-            var courseAmount = request.CourseAmount ?? 0;
-
-            if (courseAmount < 0)
+            // Required: leaving it out must not silently create a Free course
+            if (request.CourseAmount == null)
             {
-                throw new InvalidOperationException("Course amount cannot be negative");
+                throw new InvalidOperationException("Course amount is required (0 for a Free course, 1 or more for a Paid course)");
             }
+            var courseAmount = ValidateAmount(request.CourseAmount.Value);
 
             var course = new Course
             {
@@ -50,6 +50,16 @@ namespace LearningBackendAPI.Services
             };
 
             return await _courseRepository.CreateAsync(course);
+        }
+
+        // 0 = Free course, 1 or more = Paid course. Nothing in between (e.g. 0.5) and nothing negative.
+        private static decimal ValidateAmount(decimal amount)
+        {
+            if (amount < 0 || (amount > 0 && amount < 1))
+            {
+                throw new InvalidOperationException("Course amount must be 0 (Free course) or 1 and above (Paid course)");
+            }
+            return amount;
         }
 
         // courseType: "Paid" (amount above 0), "Free" (amount 0) or "All" / not passed (every course)
@@ -103,11 +113,7 @@ namespace LearningBackendAPI.Services
 
             if (request.CourseAmount.HasValue)
             {
-                if (request.CourseAmount.Value < 0)
-                {
-                    throw new InvalidOperationException("Course amount cannot be negative");
-                }
-                existingCourse.CourseAmount = request.CourseAmount.Value;
+                existingCourse.CourseAmount = ValidateAmount(request.CourseAmount.Value);
             }
 
             existingCourse.UpdatedAt = DateTime.UtcNow;

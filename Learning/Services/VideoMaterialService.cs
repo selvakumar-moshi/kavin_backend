@@ -115,12 +115,9 @@ namespace LearningBackendAPI.Services
                 return free;
             }
 
-            var enrollmentByCourse = verifiedEnrollments
-                .GroupBy(e => e.CourseId)
-                .ToDictionary(g => g.Key, g => g.First());
-
+            // A student can hold several verified enrollments in one course (one per batch): any of them counts
             var enrolled = all
-                .Where(m => enrollmentByCourse.TryGetValue(m.CourseId, out var e) && MatchesBatch(m, e));
+                .Where(m => verifiedEnrollments.Any(e => e.CourseId == m.CourseId && MatchesBatch(m, e)));
 
             return enrolled.Concat(free).GroupBy(m => m.Id).Select(g => g.First()).ToList();
         }
@@ -138,8 +135,8 @@ namespace LearningBackendAPI.Services
 
             if (role != Constants.Roles.Admin && !IsFree(videoMaterial))
             {
-                var enrollment = await GetVerifiedEnrollmentAsync(userId, videoMaterial.CourseId);
-                if (enrollment == null || !MatchesBatch(videoMaterial, enrollment))
+                var enrollments = await GetVerifiedEnrollmentsAsync(userId);
+                if (!enrollments.Any(e => e.CourseId == videoMaterial.CourseId && MatchesBatch(videoMaterial, e)))
                 {
                     throw new UnauthorizedAccessException(Constants.Messages.NoCourseAccess);
                 }

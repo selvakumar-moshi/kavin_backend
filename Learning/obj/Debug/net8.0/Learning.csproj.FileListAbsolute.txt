@@ -108,3 +108,10 @@ D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Newtonsoft.J
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\System.CodeDom.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\System.Management.dll
 D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Management.dll
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\appsettings.Development.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\appsettings.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\Learning.exe
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\Learning.deps.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\Learning.runtimeconfig.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\Learning.dll
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\Learning.pdb

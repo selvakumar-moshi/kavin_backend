@@ -47,12 +47,12 @@
             public const string BatchCourseMismatch = "Selected batch does not belong to the selected course";
             public const string BatchExpired = "Selected batch has already ended";
             public const string EnrollmentDropped = "Your enrollment for this course was dropped - please contact the admin to rejoin";
-            public const string CourseAlreadyEnrolled = "User is already enrolled in this course";
+            public const string CourseAlreadyEnrolled = "You are already enrolled in this course. To join another batch, please contact the Administration.";
             public const string NotificationNotFound = "Notification not found";
             public const string InvalidCourseType = "courseType must be 'Paid', 'Free' or 'All'";
             public const string InvalidMaterialAccess = "MaterialToView must be either 'Paid' or 'Free'";
             public const string TransactionReferenceInvalid = "Enter the UPI transaction ID / UTR (6-35 letters or digits)";
-            public const string TransactionReferenceInUse = "This UPI transaction ID has already been submitted for another enrollment";
+            public const string TransactionReferenceInUse = "This transaction ID has already been used for a payment.";
             public const string UpiNotConfigured = "UPI payments are not set up yet. Please contact the admin.";
         }
 
