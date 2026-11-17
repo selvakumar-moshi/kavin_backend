@@ -16,6 +16,12 @@ namespace LearningBackendAPI.Models
         [BsonElement("description")]
         public string? Description { get; set; }
 
+        [BsonElement("youTubeLink")]
+        public string? YouTubeLink { get; set; }
+
+        [BsonElement("googleMeetLink")]
+        public string? GoogleMeetLink { get; set; }
+
         // Calendar day of the class, "yyyy-MM-dd"
         [BsonElement("date")]
         public string Date { get; set; } = string.Empty;

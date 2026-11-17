@@ -3440,6 +3440,14 @@
             "type": "string",
             "nullable": true
           },
+          "youTubeLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "googleMeetLink": {
+            "type": "string",
+            "nullable": true
+          },
           "date": {
             "type": "string",
             "nullable": true

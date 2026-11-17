@@ -61,6 +61,8 @@ namespace LearningBackendAPI.Services
             {
                 Title = request.Title.Trim(),
                 Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
+                YouTubeLink = ParseLink(request.YouTubeLink, "YouTube link"),
+                GoogleMeetLink = ParseLink(request.GoogleMeetLink, "Google Meet link"),
                 Date = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 StartTime = start.ToString(@"hh\:mm"),
                 EndTime = end.ToString(@"hh\:mm"),
@@ -117,6 +119,14 @@ namespace LearningBackendAPI.Services
             {
                 existing.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
             }
+            if (request.YouTubeLink != null)
+            {
+                existing.YouTubeLink = ParseLink(request.YouTubeLink, "YouTube link");
+            }
+            if (request.GoogleMeetLink != null)
+            {
+                existing.GoogleMeetLink = ParseLink(request.GoogleMeetLink, "Google Meet link");
+            }
             if (!string.IsNullOrWhiteSpace(request.Date))
             {
                 existing.Date = ParseDate(request.Date).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -158,6 +168,21 @@ namespace LearningBackendAPI.Services
                 return Constants.LiveClassStatuses.Expired;
             }
             return now >= start ? Constants.LiveClassStatuses.Online : Constants.LiveClassStatuses.NotStarted;
+        }
+
+        // Blank = no link; otherwise it has to be an http(s) URL
+        private static string? ParseLink(string? value, string label)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+            var text = value.Trim();
+            if (!Uri.TryCreate(text, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                throw new InvalidOperationException($"{label} must be a valid link starting with http:// or https://");
+            }
+            return text;
         }
 
         private static DateTime ParseDate(string? value)
