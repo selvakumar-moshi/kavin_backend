@@ -18,7 +18,12 @@ namespace LearningBackendAPI.DTOs
         public int CorrectAnswers { get; set; }
         public int WrongAnswers { get; set; }
         public decimal TotalMarks { get; set; }
+        // ScoredMarks is the final score, already reduced by NegativeMarksDeducted
         public decimal ScoredMarks { get; set; }
+        public decimal NegativeMark { get; set; }
+        public int IncorrectAnswered { get; set; }
+        public int WrongAnswersPerDeduction { get; set; } = 1;
+        public decimal NegativeMarksDeducted { get; set; }
         public string Score { get; set; } = "";
         public DateTime SubmittedAt { get; set; }
         // Only filled by my-result, and only when a rank list applies to this quiz/student (null otherwise, e.g. free quizzes)

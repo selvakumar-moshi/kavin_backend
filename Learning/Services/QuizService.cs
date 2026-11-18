@@ -191,11 +191,15 @@ namespace LearningBackendAPI.Services
                 SourceFileUrl = source?.Url,
                 SourceFileKey = source?.Key,
                 QuizAttempt = quizAttempt,
+                NegativeMark = ResolveNegativeMark(request.NegativeMark, null),
+                WrongAnswersPerDeduction = ResolveWrongPerDeduction(request.WrongAnswersPerDeduction, null),
                 QuizToView = quizToView,
                 Status = Constants.QuizStatuses.Draft,
                 Questions = await MapQuestionsAsync(request.Questions, null),
                 CreatedAt = DateTime.UtcNow
             };
+
+            ApplyMarkPerQuestion(quiz, request.MarkPerQuestion);
 
             return await _quizRepository.CreateAsync(quiz);
         }
@@ -233,6 +237,51 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException("quizAttempt must be at least 1");
             }
             return requested.Value;
+        }
+
+        private static int? ResolveWrongPerDeduction(int? requested, int? fallback)
+        {
+            if (requested == null)
+            {
+                return fallback;
+            }
+            if (requested < 1)
+            {
+                throw new InvalidOperationException("wrongAnswersPerDeduction must be at least 1");
+            }
+            return requested;
+        }
+
+        private static void ApplyMarkPerQuestion(Quiz quiz, decimal? requested)
+        {
+            if (requested != null)
+            {
+                if (requested <= 0)
+                {
+                    throw new InvalidOperationException(Constants.Messages.InvalidMark);
+                }
+                quiz.MarkPerQuestion = requested;
+            }
+
+            if (quiz.MarkPerQuestion != null)
+            {
+                foreach (var q in quiz.Questions)
+                {
+                    q.Mark = quiz.MarkPerQuestion.Value;
+                }
+            }
+        }
+
+        // Accepts -1.5 or 1.5 (both mean 1.5 marks off per wrong answer); stored as a positive amount, null = off.
+        // When it isn't passed the fallback applies.
+        private static decimal? ResolveNegativeMark(decimal? requested, decimal? fallback)
+        {
+            if (requested == null)
+            {
+                return fallback;
+            }
+            var amount = Math.Abs(requested.Value);
+            return amount == 0 ? null : amount;
         }
 
         // Reads the questions out of an uploaded Word file. Saves nothing.
@@ -399,6 +448,9 @@ namespace LearningBackendAPI.Services
                 SourceFileUrl = sourceFileUrl,
                 SourceFileKey = sourceFileKey,
                 QuizAttempt = quizAttempt,
+                NegativeMark = ResolveNegativeMark(request.NegativeMark, source.NegativeMark),
+                WrongAnswersPerDeduction = ResolveWrongPerDeduction(request.WrongAnswersPerDeduction, source.WrongAnswersPerDeduction),
+                MarkPerQuestion = source.MarkPerQuestion,
                 QuizToView = quizToView,
                 Status = Constants.QuizStatuses.Draft,
                 Questions = questions,
@@ -490,15 +542,19 @@ namespace LearningBackendAPI.Services
                 quiz.QuizAttempt = ResolveAttemptLimit(request.QuizAttempt, 1);
             }
 
+            quiz.NegativeMark = ResolveNegativeMark(request.NegativeMark, quiz.NegativeMark);
+            quiz.WrongAnswersPerDeduction = ResolveWrongPerDeduction(request.WrongAnswersPerDeduction, quiz.WrongAnswersPerDeduction);
+            // Runs after the questions are (re)mapped below only if they changed, so apply it once they are final
+            if (request.Questions != null)
+            {
+                quiz.Questions = await MapQuestionsAsync(request.Questions, quiz.Questions);
+            }
+            ApplyMarkPerQuestion(quiz, request.MarkPerQuestion);
+
             if (quiz.QuizToView != Constants.MaterialAccess.Free && string.IsNullOrWhiteSpace(quiz.CourseId)
                 && quiz.QuizType != Constants.QuizTypes.SyllabusWise)
             {
                 throw new InvalidOperationException("This quiz has no course, so it can only be Free - create a new Paid quiz with a course and batch instead");
-            }
-
-            if (request.Questions != null)
-            {
-                quiz.Questions = await MapQuestionsAsync(request.Questions, quiz.Questions);
             }
 
             // Word file: a new one replaces the saved one; removeSourceFile clears it. The old S3 object is deleted
@@ -844,6 +900,7 @@ namespace LearningBackendAPI.Services
                 .ToDictionary(a => a.QuestionNumber, a => a.SelectedOption!.Trim().ToUpperInvariant());
 
             var correctCount = 0;
+            var incorrectAnswered = 0;
             var totalMarks = 0m;
             var scoredMarks = 0m;
             var answers = new List<QuizAnswerItem>();
@@ -860,6 +917,10 @@ namespace LearningBackendAPI.Services
                 {
                     correctCount++;
                     scoredMarks += question.Mark;
+                }
+                else if (normalizedSelected != null)
+                {
+                    incorrectAnswered++;
                 }
 
                 answers.Add(new QuizAnswerItem
@@ -878,6 +939,14 @@ namespace LearningBackendAPI.Services
                     (string.IsNullOrWhiteSpace(quiz.BatchId) || quiz.BatchId == e.BatchId));
             }
 
+            // Negative marking: NegativeMark is deducted once per complete group of WrongAnswersPerDeduction wrong answers
+            // (only answered-but-wrong questions count). 40 wrong, 0.5 per 3 => floor(40/3) = 13 groups x 0.5 = 6.5 off.
+            // With the default group size of 1 it is simply wrong x NegativeMark.
+            var negativeMark = quiz.NegativeMark ?? 0m;
+            var groupSize = Math.Max(1, quiz.WrongAnswersPerDeduction ?? 1);
+            var negativeDeducted = (incorrectAnswered / groupSize) * negativeMark;
+            scoredMarks -= negativeDeducted;
+
             var totalQuestions = quiz.Questions.Count;
             var attempt = new QuizAttempt
             {
@@ -892,6 +961,10 @@ namespace LearningBackendAPI.Services
                 CorrectCount = correctCount,
                 WrongCount = totalQuestions - correctCount,
                 TotalMarks = totalMarks,
+                IncorrectAnswered = incorrectAnswered,
+                NegativeMark = negativeMark,
+                WrongAnswersPerDeduction = groupSize,
+                NegativeMarksDeducted = negativeDeducted,
                 ScoredMarks = scoredMarks
             };
 
@@ -1270,6 +1343,8 @@ namespace LearningBackendAPI.Services
                 QuizAttempt = attemptLimit,
                 AttemptsUsed = attemptsUsed,
                 AttemptsRemaining = Math.Max(0, attemptLimit - attemptsUsed),
+                NegativeMark = quiz.NegativeMark ?? 0m,
+                WrongAnswersPerDeduction = quiz.WrongAnswersPerDeduction ?? 1,
                 Id = quiz.Id,
                 CourseId = quiz.CourseId,
                 CourseName = quiz.CourseName,
@@ -1342,6 +1417,10 @@ namespace LearningBackendAPI.Services
                 WrongAnswers = attempt.WrongCount,
                 TotalMarks = attempt.TotalMarks,
                 ScoredMarks = attempt.ScoredMarks,
+                NegativeMark = attempt.NegativeMark,
+                WrongAnswersPerDeduction = Math.Max(1, attempt.WrongAnswersPerDeduction),
+                IncorrectAnswered = attempt.IncorrectAnswered,
+                NegativeMarksDeducted = attempt.NegativeMarksDeducted,
                 Score = $"{attempt.ScoredMarks}/{attempt.TotalMarks}",
                 SubmittedAt = attempt.SubmittedAt,
                 Questions = questions

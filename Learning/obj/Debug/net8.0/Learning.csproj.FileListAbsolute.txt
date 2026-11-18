@@ -115,3 +115,10 @@ C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\Learning.runtimeconfig.json
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\Learning.dll
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\c29dca5d-0a60-4097-8a37-613ee3aa645e\scratchpad\out\Learning.pdb
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\appsettings.Development.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\appsettings.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\Learning.exe
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\Learning.deps.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\Learning.runtimeconfig.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\Learning.dll
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\Learning.pdb

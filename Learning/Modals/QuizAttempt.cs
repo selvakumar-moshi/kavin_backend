@@ -55,6 +55,21 @@ namespace LearningBackendAPI.Models
         [BsonElement("totalMarks")]
         public decimal TotalMarks { get; set; }
 
+        // Answered-but-wrong questions (unanswered ones are not penalised)
+        [BsonElement("incorrectAnswered")]
+        public int IncorrectAnswered { get; set; }
+
+        // Negative mark per wrong answer in force when the student submitted, and the total deducted (positive number)
+        [BsonElement("negativeMark")]
+        public decimal NegativeMark { get; set; }
+
+        [BsonElement("wrongAnswersPerDeduction")]
+        public int WrongAnswersPerDeduction { get; set; } = 1;
+
+        [BsonElement("negativeMarksDeducted")]
+        public decimal NegativeMarksDeducted { get; set; }
+
+        // Final score: marks for correct answers minus NegativeMarksDeducted
         [BsonElement("scoredMarks")]
         public decimal ScoredMarks { get; set; }
 

@@ -22,6 +22,10 @@ namespace LearningBackendAPI.DTOs
         public int QuizAttempt { get; set; }
         public int AttemptsUsed { get; set; }
         public int AttemptsRemaining { get; set; }
+        // Marks deducted per wrong answer (0 = no negative marking)
+        public decimal NegativeMark { get; set; }
+        // NegativeMark is deducted once for every this-many wrong answers
+        public int WrongAnswersPerDeduction { get; set; } = 1;
         public int? TimeLeftSeconds { get; set; }
         public List<QuizStudentQuestionDto> Questions { get; set; } = new();
     }

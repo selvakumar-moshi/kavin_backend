@@ -94,6 +94,25 @@ namespace LearningBackendAPI.Models
         [BsonElement("quizAttempt")]
         public int? QuizAttempt { get; set; }
 
+        // Marks deducted for each answered-but-wrong question (stored as a positive amount, e.g. 1.5); null or 0 = no negative marking
+        [BsonElement("negativeMark")]
+        public decimal? NegativeMark { get; set; }
+
+        // The deduction applies once per this many wrong answers (e.g. 3 with NegativeMark 0.5 = 0.5 off for every 3 wrong). null = 1
+        [BsonElement("wrongAnswersPerDeduction")]
+        public int? WrongAnswersPerDeduction { get; set; }
+
+        // Marks for each correct answer, applied to every question of the quiz (null = marks stay per question)
+        [BsonElement("markPerQuestion")]
+        public decimal? MarkPerQuestion { get; set; }
+
+        // Computed on read (not stored), for the Configure Negative Marking screen
+        [BsonIgnore]
+        public int TotalQuestions => Questions.Count;
+
+        [BsonIgnore]
+        public decimal MaxMarks => Questions.Sum(q => q.Mark);
+
         // Name of the Word file the questions were imported from, e.g. "testQuiz.docx" (null for quizzes entered by hand)
         [BsonElement("sourceFileName")]
         public string? SourceFileName { get; set; }

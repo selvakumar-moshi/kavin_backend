@@ -11,5 +11,9 @@ namespace LearningBackendAPI.DTOs
         public string? Title { get; set; }
         // Most times each student may submit the copy; defaults to the original's
         public int? QuizAttempt { get; set; }
+        // Negative mark per wrong answer for the copy; defaults to the original's
+        public decimal? NegativeMark { get; set; }
+        // Defaults to the original's
+        public int? WrongAnswersPerDeduction { get; set; }
     }
 }
