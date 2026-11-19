@@ -92,6 +92,27 @@ namespace LearningBackendAPI.Repositories
                         continue;
                     }
 
+                    // Date columns: the value is a date (e.g. "2026-11-19") and matches every user whose date falls on that day (UTC)
+                    var key = field.ToLowerInvariant();
+                    if (key is "paymentuploadedat" or "joinedat" or "createdat")
+                    {
+                        if (!DateTime.TryParse(value.Trim(), System.Globalization.CultureInfo.InvariantCulture,
+                                System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var day))
+                        {
+                            throw new InvalidOperationException($"'{value}' is not a valid date for {field}; use e.g. 2026-11-19");
+                        }
+
+                        if (key == "paymentuploadedat")
+                        {
+                            AddDateRange(conditions, u => u.PaymentUploadedAt, day.Date, day.Date);
+                        }
+                        else
+                        {
+                            AddDateRange(conditions, u => u.CreatedAt, day.Date, day.Date);
+                        }
+                        continue;
+                    }
+
                     var pattern = new BsonRegularExpression(Regex.Escape(value.Trim()), "i");
                     FilterDefinition<User>? fieldFilter = field.ToLowerInvariant() switch
                     {

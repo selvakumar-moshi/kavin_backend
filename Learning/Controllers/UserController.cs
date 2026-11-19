@@ -51,8 +51,15 @@ namespace LearningBackendAPI.Controllers
         [Authorize(Roles = Constants.Roles.Admin)]
         public async Task<IActionResult> GetAllUsers([FromBody] UserSearchRequest? request)
         {
-            var users = await _userService.GetAllUsersAsync(request);
-            return Ok(_responseHelper.Success(users, "Users retrieved successfully"));
+            try
+            {
+                var users = await _userService.GetAllUsersAsync(request);
+                return Ok(_responseHelper.Success(users, "Users retrieved successfully"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
         }
 
         /// <summary>
