@@ -36,6 +36,17 @@ namespace LearningBackendAPI.Services
                 throw new UnauthorizedAccessException("Invalid email or password");
             }
 
+            // Single-device lock for students only (an admin must be able to sign in anywhere).
+            // Checked after the password so the device state isn't revealed to someone who doesn't know it.
+            if (user.Role != Constants.Roles.Admin)
+            {
+                await EnforceSingleDeviceAsync(user, request.DeviceId);
+            }
+
+            var now = DateTime.UtcNow;
+            await _userRepository.SetLastLoginAsync(user.Id, now);
+            user.LastLoginDate = now;
+
             var token = _jwtService.GenerateToken(user);
 
             return new LoginResponse
@@ -44,6 +55,42 @@ namespace LearningBackendAPI.Services
                 User = MapToUserDto(user),
                 MustChangePassword = user.MustChangePassword
             };
+        }
+
+        private async Task EnforceSingleDeviceAsync(User user, string? deviceId)
+        {
+            if (string.IsNullOrWhiteSpace(deviceId))
+            {
+                throw new InvalidOperationException(Constants.Messages.DeviceIdRequired);
+            }
+
+            var incoming = HashDeviceId(deviceId);
+
+            if (string.IsNullOrEmpty(user.SavedDeviceId))
+            {
+                // First login: bind this device. The write is conditional, so if two logins race, only one wins.
+                if (await _userRepository.TryRegisterDeviceAsync(user.Id, incoming))
+                {
+                    return;
+                }
+                user = await _userRepository.GetByIdAsync(user.Id);
+            }
+
+            var saved = user.SavedDeviceId ?? "";
+            var matches = System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
+                System.Text.Encoding.UTF8.GetBytes(saved),
+                System.Text.Encoding.UTF8.GetBytes(incoming));
+            if (!matches)
+            {
+                throw new DeviceMismatchException();
+            }
+        }
+
+        // Only a hash is stored, so a database leak doesn't expose the devices' real ids
+        private static string HashDeviceId(string deviceId)
+        {
+            var bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(deviceId.Trim()));
+            return Convert.ToHexString(bytes);
         }
 
         // Used after an admin reset: the user proves they hold the temporary (current) password, then sets their own

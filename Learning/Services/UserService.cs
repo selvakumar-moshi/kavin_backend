@@ -21,6 +21,7 @@ namespace LearningBackendAPI.Services
         private readonly ISyllabusWiseRepository _syllabusWiseRepository;
         private readonly ISyllabusMaterialService _syllabusMaterialService;
         private readonly IDeviceTokenRepository _deviceTokenRepository;
+        private readonly IExcelExportService _excelExportService;
 
         public UserService(
             IUserRepository userRepository,
@@ -33,8 +34,10 @@ namespace LearningBackendAPI.Services
             IFileStorageService fileStorageService,
             ISyllabusWiseRepository syllabusWiseRepository,
             ISyllabusMaterialService syllabusMaterialService,
-            IDeviceTokenRepository deviceTokenRepository)
+            IDeviceTokenRepository deviceTokenRepository,
+            IExcelExportService excelExportService)
         {
+            _excelExportService = excelExportService;
             _deviceTokenRepository = deviceTokenRepository;
             _syllabusMaterialService = syllabusMaterialService;
             _syllabusWiseRepository = syllabusWiseRepository;
@@ -56,8 +59,12 @@ namespace LearningBackendAPI.Services
             var hasSearchTerm = !string.IsNullOrWhiteSpace(request?.SearchTerm);
             var hasGlobalFilter = request?.GlobalFilter != null && request.GlobalFilter.Any(kv => !string.IsNullOrWhiteSpace(kv.Value));
 
-            var (users, totalCount) = hasSearchTerm || hasGlobalFilter
-                ? await _userRepository.SearchAsync(request!.SearchTerm, request.GlobalFilter, pageNumber, pageSize)
+            var hasDateFilter = request != null &&
+                (request.PaymentUploadedFrom.HasValue || request.PaymentUploadedTo.HasValue || request.JoinedFrom.HasValue || request.JoinedTo.HasValue);
+
+            var (users, totalCount) = hasSearchTerm || hasGlobalFilter || hasDateFilter
+                ? await _userRepository.SearchAsync(request!.SearchTerm, request.GlobalFilter, pageNumber, pageSize,
+                    request.PaymentUploadedFrom, request.PaymentUploadedTo, request.JoinedFrom, request.JoinedTo)
                 : await _userRepository.GetAllAsync(pageNumber, pageSize);
 
             var result = new List<UserDto>();
@@ -69,6 +76,10 @@ namespace LearningBackendAPI.Services
                 var latestEnrollment = enrollments.OrderByDescending(e => e.CreatedAt).FirstOrDefault();
                 dto.EnrollmentId = latestEnrollment?.Id;
                 dto.EnrollmentStatus = latestEnrollment?.Status;
+                dto.PaymentUploadedAt = user.PaymentUploadedAt;
+                dto.SavedDeviceId = user.SavedDeviceId;
+                dto.DeviceRegisteredAt = user.DeviceRegisteredAt;
+                dto.LastLoginDate = user.LastLoginDate;
 
                 result.Add(dto);
             }
@@ -187,6 +198,9 @@ namespace LearningBackendAPI.Services
                 ProfileImage = user.ProfileImage ?? "",
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
+                SavedDeviceId = includeAllowedBatches ? user.SavedDeviceId : null,
+                DeviceRegisteredAt = includeAllowedBatches ? user.DeviceRegisteredAt : null,
+                LastLoginDate = includeAllowedBatches ? user.LastLoginDate : null,
                 Courses = courses,
                 SyllabusWisePayments = (await _syllabusWiseRepository.GetPaymentsAsync(id)).Select(SyllabusWiseService.ToDto).ToList(),
                 SyllabusMaterials = await _syllabusMaterialService.GetPurchasedAsync(id)
@@ -212,6 +226,22 @@ namespace LearningBackendAPI.Services
             user.MustChangePassword = true;
             await _userRepository.UpdateAsync(id, user);
             return password;
+        }
+
+        // Every student (admins are left out), oldest first
+        public async Task<(byte[] Content, string FileName)> ExportUsersAsync()
+        {
+            var users = await _userRepository.GetAllByRoleAsync(Constants.Roles.User);
+            return (_excelExportService.GenerateUserListExcel(users), $"Users_{DateTime.UtcNow:yyyyMMdd_HHmm}.xlsx");
+        }
+
+        // Clears the student's registered device so the next login (from any device) registers a new one
+        public async Task ResetDeviceAsync(string id)
+        {
+            if (!await _userRepository.ClearDeviceAsync(id))
+            {
+                throw new KeyNotFoundException("User not found");
+            }
         }
 
         // 10 characters that satisfy the registration rules (upper, lower, digit, one of @$!%*?&), without look-alikes like O/0 and l/1

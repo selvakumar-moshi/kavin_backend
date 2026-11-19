@@ -56,6 +56,17 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
+        /// Download every student as an Excel sheet: Application No, User Name, Email, Phone Number, District, Joined At (Admin only)
+        /// </summary>
+        [HttpGet("download")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        public async Task<IActionResult> DownloadUsers()
+        {
+            var (content, fileName) = await _userService.ExportUsersAsync();
+            return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        /// <summary>
         /// Get a specific user's details by ID, including study materials for verified courses (Admin only)
         /// </summary>
         [HttpGet("{id}")]
@@ -94,6 +105,25 @@ namespace LearningBackendAPI.Controllers
             catch (InvalidOperationException ex)
             {
                 return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Clear a student's registered device (Admin only), so they can log in from a new phone. The next successful
+        /// login registers whichever device it comes from.
+        /// </summary>
+        [HttpPost("{id}/reset-device")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        public async Task<IActionResult> ResetDevice(string id)
+        {
+            try
+            {
+                await _userService.ResetDeviceAsync(id);
+                return Ok(_responseHelper.Success(new { userId = id }, "Device reset successfully"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(_responseHelper.NotFound<object>(ex.Message));
             }
         }
 

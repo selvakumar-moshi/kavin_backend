@@ -6,6 +6,8 @@
         {
             public const string LoginSuccess = "Login successful";
             public const string LoginFailed = "Invalid email or password";
+            public const string DeviceMismatch = "Your account is already registered on another device. Please contact the administrator to reset your device access.";
+            public const string DeviceIdRequired = "Device id is required";
             public const string RegistrationSuccess = "Registration successful";
             public const string EmailExists = "Email is already registered";
             public const string UserNotFound = "User not found";

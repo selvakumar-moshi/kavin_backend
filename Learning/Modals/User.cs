@@ -41,6 +41,22 @@ namespace LearningBackendAPI.Models
         [BsonElement("mustChangePassword")]
         public bool MustChangePassword { get; set; }
 
+        // SHA-256 hash of the device id the student first logged in from (null = no device registered yet).
+        // Only admin reset clears it. The raw id is never stored.
+        [BsonElement("savedDeviceId")]
+        public string? SavedDeviceId { get; set; }
+
+        [BsonElement("deviceRegisteredAt")]
+        public DateTime? DeviceRegisteredAt { get; set; }
+
+        [BsonElement("lastLoginDate")]
+        public DateTime? LastLoginDate { get; set; }
+
+        // When the student last uploaded a payment screenshot (course enrollment or syllabus wise), kept here so the admin
+        // user table can show and filter by it. Set on every upload; null = never uploaded one.
+        [BsonElement("paymentUploadedAt")]
+        public DateTime? PaymentUploadedAt { get; set; }
+
         [BsonElement("role")]
         public string Role { get; set; } = "User";
 

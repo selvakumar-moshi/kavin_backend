@@ -17,6 +17,10 @@ namespace LearningBackendAPI.DTOs
         public string ProfileImage { get; set; } = "";
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        // Admin view only (GET /api/User/{id}); null on /me. SavedDeviceId is the SHA-256 hash of the registered device id
+        public string? SavedDeviceId { get; set; }
+        public DateTime? DeviceRegisteredAt { get; set; }
+        public DateTime? LastLoginDate { get; set; }
         public List<EnrolledCourseDto> Courses { get; set; } = new();
         // Syllabus wise quiz payments (newest first) - lets the admin track each student's payment status
         public List<SyllabusWisePaymentDto> SyllabusWisePayments { get; set; } = new();

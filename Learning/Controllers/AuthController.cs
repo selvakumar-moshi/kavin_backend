@@ -2,6 +2,7 @@
 using LearningBackendAPI.DTOs;
 using LearningBackendAPI.Helpers;
 using LearningBackendAPI.Services;
+using LearningBackendAPI.Utils;
 using LearningBackendAPI.Validators;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +41,14 @@ namespace LearningBackendAPI.Controllers
             catch (UnauthorizedAccessException ex)
             {
                 return Unauthorized(_responseHelper.Unauthorized<object>(ex.Message));
+            }
+            catch (DeviceMismatchException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, _responseHelper.Forbidden<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
             }
         }
 

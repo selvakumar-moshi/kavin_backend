@@ -230,8 +230,11 @@ namespace LearningBackendAPI.Services
                 // Re-submitted after rejection - send it back to the admin's review queue
                 enrollment.Status = Constants.EnrollmentStatuses.Pending;
             }
-            enrollment.UpdatedAt = DateTime.UtcNow;
+            var uploadedAt = DateTime.UtcNow;
+            enrollment.PaymentUploadedAt = uploadedAt;
+            enrollment.UpdatedAt = uploadedAt;
             await _enrollmentRepository.UpdateAsync(id, enrollment);
+            await _userRepository.SetPaymentUploadedAtAsync(userId, uploadedAt);
 
             // Same name means the upload already overwrote the old file - deleting it would remove the new one
             if (!string.IsNullOrWhiteSpace(oldKey) && oldKey != key)

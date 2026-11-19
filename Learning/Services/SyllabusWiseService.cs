@@ -198,6 +198,8 @@ namespace LearningBackendAPI.Services
             payment.TransactionReference = reference ?? payment.TransactionReference;
             payment.PaymentScreenshot = url;
             payment.PaymentScreenshotKey = key;
+            var uploadedAt = DateTime.UtcNow;
+            payment.PaymentUploadedAt = uploadedAt;
             // New, or re-submitted after a rejection: goes to the admin's review queue
             payment.PaymentStatus = Constants.PaymentStatuses.Pending;
             payment.VerifiedAt = null;
@@ -211,6 +213,7 @@ namespace LearningBackendAPI.Services
             {
                 await _repository.UpdatePaymentAsync(payment);
             }
+            await _userRepository.SetPaymentUploadedAtAsync(userId, uploadedAt);
 
             // Same name means the upload already overwrote the old file - deleting it would remove the new one
             if (!string.IsNullOrWhiteSpace(oldKey) && oldKey != key)

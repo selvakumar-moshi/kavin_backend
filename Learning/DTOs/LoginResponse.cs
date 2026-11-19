@@ -28,5 +28,11 @@ namespace LearningBackendAPI.DTOs
         public string? EnrollmentId { get; set; }
         public string? EnrollmentStatus { get; set; }
         public bool MustChangePassword { get; set; }
+        // Admin views only (POST /api/User list); left null everywhere else, e.g. login
+        // Last time this student uploaded a payment screenshot (course or syllabus wise); admin list only
+        public DateTime? PaymentUploadedAt { get; set; }
+        public string? SavedDeviceId { get; set; }
+        public DateTime? DeviceRegisteredAt { get; set; }
+        public DateTime? LastLoginDate { get; set; }
     }
 }

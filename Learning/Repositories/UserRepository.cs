@@ -62,9 +62,13 @@ namespace LearningBackendAPI.Repositories
             return (users, totalCount);
         }
 
-        public async Task<(List<User> Users, long TotalCount)> SearchAsync(string? searchTerm, Dictionary<string, string>? fieldFilters, int pageNumber, int pageSize)
+        public async Task<(List<User> Users, long TotalCount)> SearchAsync(string? searchTerm, Dictionary<string, string>? fieldFilters, int pageNumber, int pageSize,
+            DateTime? paymentFrom = null, DateTime? paymentTo = null, DateTime? joinedFrom = null, DateTime? joinedTo = null)
         {
             var conditions = new List<FilterDefinition<User>>();
+
+            AddDateRange(conditions, u => u.PaymentUploadedAt, paymentFrom, paymentTo);
+            AddDateRange(conditions, u => u.CreatedAt, joinedFrom, joinedTo);
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -118,6 +122,62 @@ namespace LearningBackendAPI.Repositories
                 .ToListAsync();
 
             return (users, totalCount);
+        }
+
+        // Targeted updates (not ReplaceOne) so concurrent logins can't overwrite each other or other profile changes.
+        // {savedDeviceId: null} also matches users created before this field existed.
+        public async Task<bool> TryRegisterDeviceAsync(string id, string deviceHash)
+        {
+            var result = await _users.UpdateOneAsync(
+                u => u.Id == id && u.SavedDeviceId == null,
+                Builders<User>.Update
+                    .Set(u => u.SavedDeviceId, deviceHash)
+                    .Set(u => u.DeviceRegisteredAt, DateTime.UtcNow));
+            return result.ModifiedCount > 0;
+        }
+
+        public async Task SetLastLoginAsync(string id, DateTime when)
+        {
+            await _users.UpdateOneAsync(u => u.Id == id, Builders<User>.Update.Set(u => u.LastLoginDate, when));
+        }
+
+        public async Task<bool> ClearDeviceAsync(string id)
+        {
+            var result = await _users.UpdateOneAsync(
+                u => u.Id == id,
+                Builders<User>.Update
+                    .Set(u => u.SavedDeviceId, null)
+                    .Set(u => u.DeviceRegisteredAt, null)
+                    .Set(u => u.UpdatedAt, DateTime.UtcNow));
+            return result.MatchedCount > 0;
+        }
+
+        // from is inclusive; a "to" at midnight is treated as a date and covers that whole day (exclusive upper bound = next midnight)
+        private static void AddDateRange(List<FilterDefinition<User>> conditions, System.Linq.Expressions.Expression<Func<User, DateTime?>> field,
+            DateTime? from, DateTime? to)
+        {
+            if (from.HasValue)
+            {
+                conditions.Add(Builders<User>.Filter.Gte(field, from.Value));
+            }
+            if (to.HasValue)
+            {
+                var upper = to.Value.TimeOfDay == TimeSpan.Zero ? to.Value.AddDays(1) : to.Value;
+                conditions.Add(to.Value.TimeOfDay == TimeSpan.Zero
+                    ? Builders<User>.Filter.Lt(field, upper)
+                    : Builders<User>.Filter.Lte(field, upper));
+            }
+        }
+
+        public async Task<List<User>> GetAllByRoleAsync(string role)
+        {
+            return await _users.Find(u => u.Role == role).SortBy(u => u.CreatedAt).ToListAsync();
+        }
+
+        // Targeted update so it can't overwrite other profile changes
+        public async Task SetPaymentUploadedAtAsync(string id, DateTime when)
+        {
+            await _users.UpdateOneAsync(u => u.Id == id, Builders<User>.Update.Set(u => u.PaymentUploadedAt, when));
         }
 
         public async Task<long> CountByRoleAsync(string role)

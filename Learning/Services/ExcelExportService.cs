@@ -1,5 +1,6 @@
 using ClosedXML.Excel;
 using LearningBackendAPI.DTOs;
+using LearningBackendAPI.Models;
 
 namespace LearningBackendAPI.Services
 {
@@ -24,6 +25,38 @@ namespace LearningBackendAPI.Services
             var worksheet = workbook.Worksheet(1);
 
             FillRankListRows(worksheet, rankList);
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
+        }
+
+        private static readonly string[] UserListHeaders =
+        {
+            "Application No", "User Name", "Email", "Phone Number", "District", "Joined At"
+        };
+
+        public byte[] GenerateUserListExcel(List<User> users)
+        {
+            using var workbook = CreateTemplate("Users", "Users", UserListHeaders);
+            var worksheet = workbook.Worksheet(1);
+
+            for (var i = 0; i < users.Count; i++)
+            {
+                var user = users[i];
+                var row = 4 + i;
+
+                worksheet.Cell(row, 1).Value = user.ApplicationNo ?? "";
+                worksheet.Cell(row, 2).Value = $"{user.FirstName} {user.LastName}".Trim();
+                worksheet.Cell(row, 3).Value = user.Email;
+                // Text, so a leading zero or long number isn't turned into a number by Excel
+                worksheet.Cell(row, 4).SetValue(user.PhoneNumber ?? "");
+                worksheet.Cell(row, 5).Value = user.District ?? "";
+                worksheet.Cell(row, 6).Value = user.CreatedAt;
+                worksheet.Cell(row, 6).Style.DateFormat.Format = "dd-MMM-yyyy HH:mm";
+            }
+
+            worksheet.Columns().AdjustToContents();
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);

@@ -2939,6 +2939,18 @@
         }
       }
     },
+    "/api/User/download": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/User/{id}": {
       "get": {
         "tags": [
@@ -3024,6 +3036,29 @@
       }
     },
     "/api/User/{id}/reset-password": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/User/{id}/reset-device": {
       "post": {
         "tags": [
           "User"
@@ -3519,6 +3554,12 @@
           "password": {
             "type": "string",
             "nullable": true
+          },
+          "deviceId": {
+            "maxLength": 128,
+            "minLength": 8,
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4004,6 +4045,26 @@
             "additionalProperties": {
               "type": "string"
             },
+            "nullable": true
+          },
+          "paymentUploadedFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "paymentUploadedTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "joinedFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "joinedTo": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "pageNumber": {

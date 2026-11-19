@@ -10,6 +10,8 @@ namespace LearningBackendAPI.Services
         Task<UserDto> UpdateUserAsync(string id, UpdateUserRequest request, bool allowCourseEnrollment = false, string? adminUserId = null);
         /// <summary>Sets a new random temporary password and returns it (the stored password is a hash and can't be shown).</summary>
         Task<string> ResetPasswordAsync(string id);
+        Task ResetDeviceAsync(string id);
+        Task<(byte[] Content, string FileName)> ExportUsersAsync();
         Task<UserDto> UpdateProfileImageAsync(string id, IFormFile file);
         Task<bool> DeleteUserAsync(string id);
     }

@@ -1846,6 +1846,22 @@
   },
   {
     "ContainingType": "LearningBackendAPI.Controllers.UserController",
+    "Method": "ResetDevice",
+    "RelativePath": "api/User/{id}/reset-device",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.UserController",
     "Method": "ResetPassword",
     "RelativePath": "api/User/{id}/reset-password",
     "HttpMethod": "POST",
@@ -1858,6 +1874,16 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LearningBackendAPI.Controllers.UserController",
+    "Method": "DownloadUsers",
+    "RelativePath": "api/User/download",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

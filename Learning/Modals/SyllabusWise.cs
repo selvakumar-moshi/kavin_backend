@@ -76,6 +76,10 @@ namespace LearningBackendAPI.Models
         [BsonElement("paymentScreenshotKey")]
         public string? PaymentScreenshotKey { get; set; }
 
+        // When the student uploaded the screenshot (the latest upload, if it was re-submitted)
+        [BsonElement("paymentUploadedAt")]
+        public DateTime? PaymentUploadedAt { get; set; }
+
         [BsonElement("paymentStatus")]
         public string PaymentStatus { get; set; } = string.Empty;
 
