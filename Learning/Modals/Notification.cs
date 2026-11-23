@@ -42,6 +42,12 @@ namespace LearningBackendAPI.Models
         [JsonIgnore]
         public string? AttachmentKey { get; set; }
 
+        // Flash Notifications only: "Paid" (only students who bought the course / batch) or "Free" (everyone). It is a shortcut for
+        // the audience: Paid sets audienceType to Batch (batchId given) or Course, Free sets it to All. Null on Job Notifications
+        // and on notifications saved before it existed.
+        [BsonElement("courseType")]
+        public string? CourseType { get; set; }
+
         // Who the notification is for: All (default, also for notifications saved before audiences existed), Course, Batch,
         // Users (specific students) or SyllabusPaid (students with a verified syllabusWise payment). It filters the in-app
         // list for students and is the audience of the push.

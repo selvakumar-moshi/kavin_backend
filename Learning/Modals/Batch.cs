@@ -13,6 +13,9 @@ namespace LearningBackendAPI.Models
         [BsonElement("title")]
         public string Title { get; set; }
 
+        [BsonElement("description")]
+        public string? Description { get; set; }
+
         [BsonElement("courseId")]
         public string CourseId { get; set; }
 

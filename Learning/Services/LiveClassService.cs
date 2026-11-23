@@ -8,39 +8,24 @@ namespace LearningBackendAPI.Services
 {
     public class LiveClassService : ILiveClassService
     {
-        private static readonly string[] TimeFormats = { "HH:mm", "H:mm", "HH:mm:ss", "h:mm tt", "hh:mm tt", "h:mmtt", "hh:mmtt" };
-
         private readonly ILiveClassRepository _repository;
+        private readonly ICourseRepository _courseRepository;
+        private readonly IBatchRepository _batchRepository;
+        private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly TimeZoneInfo _timeZone;
 
-        public LiveClassService(ILiveClassRepository repository, IConfiguration configuration)
+        public LiveClassService(
+            ILiveClassRepository repository,
+            ICourseRepository courseRepository,
+            IBatchRepository batchRepository,
+            IEnrollmentRepository enrollmentRepository,
+            IConfiguration configuration)
         {
             _repository = repository;
-            _timeZone = ResolveTimeZone(configuration["LiveClass:TimeZone"]);
-        }
-
-        // "Local time" is the institute's time zone, not the server's (servers usually run in UTC).
-        // Configure LiveClass:TimeZone (Windows or IANA id); defaults to India.
-        private static TimeZoneInfo ResolveTimeZone(string? configured)
-        {
-            foreach (var id in new[] { configured, "India Standard Time", "Asia/Kolkata" })
-            {
-                if (string.IsNullOrWhiteSpace(id))
-                {
-                    continue;
-                }
-                try
-                {
-                    return TimeZoneInfo.FindSystemTimeZoneById(id);
-                }
-                catch (TimeZoneNotFoundException)
-                {
-                }
-                catch (InvalidTimeZoneException)
-                {
-                }
-            }
-            return TimeZoneInfo.Local;
+            _courseRepository = courseRepository;
+            _batchRepository = batchRepository;
+            _enrollmentRepository = enrollmentRepository;
+            _timeZone = ScheduleHelper.ResolveTimeZone(configuration["LiveClass:TimeZone"]);
         }
 
         private DateTime LocalNow() => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timeZone);
@@ -52,15 +37,20 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException("Title is required");
             }
 
-            var date = ParseDate(request.Date);
-            var start = ParseTime(request.StartTime, "Start time");
-            var end = ParseTime(request.EndTime, "End time");
-            EnsureEndAfterStart(start, end);
+            var date = ScheduleHelper.ParseDate(request.Date);
+            var start = ScheduleHelper.ParseTime(request.StartTime, "Start time");
+            var end = ScheduleHelper.ParseTime(request.EndTime, "End time");
+            ScheduleHelper.EnsureEndAfterStart(start, end);
+
+            var type = string.IsNullOrWhiteSpace(request.LiveClassesType)
+                ? Constants.MaterialAccess.Paid
+                : Constants.MaterialAccess.Normalize(request.LiveClassesType);
 
             var liveClass = new LiveClass
             {
                 Title = request.Title.Trim(),
                 Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
+                LiveClassesType = type,
                 YouTubeLink = ParseLink(request.YouTubeLink, "YouTube link"),
                 GoogleMeetLink = ParseLink(request.GoogleMeetLink, "Google Meet link"),
                 Date = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
@@ -68,13 +58,16 @@ namespace LearningBackendAPI.Services
                 EndTime = end.ToString(@"hh\:mm"),
                 CreatedAt = DateTime.UtcNow
             };
+
+            await ApplyCourseAndBatchAsync(liveClass, request.CourseId, request.BatchId);
+
             // Starts as Not Started unless it was scheduled for a time that is already here or past
             liveClass.Status = Resolve(liveClass);
 
             return await _repository.CreateAsync(liveClass);
         }
 
-        public async Task<List<LiveClass>> GetAllAsync(bool isAdmin)
+        public async Task<List<LiveClass>> GetAllAsync(bool isAdmin, string userId)
         {
             var all = await _repository.GetAllAsync();
             foreach (var liveClass in all)
@@ -82,22 +75,33 @@ namespace LearningBackendAPI.Services
                 liveClass.Status = Resolve(liveClass);
             }
 
-            return all
-                .Where(l => isAdmin || l.Status != Constants.LiveClassStatuses.Expired)
+            var visible = all.Where(l => isAdmin || l.Status != Constants.LiveClassStatuses.Expired).ToList();
+            if (!isAdmin)
+            {
+                var enrollments = await GetVerifiedEnrollmentsAsync(userId);
+                visible = visible.Where(l => CanSee(l, enrollments)).ToList();
+            }
+
+            return visible
                 .OrderBy(l => l.Date, StringComparer.Ordinal)
                 .ThenBy(l => l.StartTime, StringComparer.Ordinal)
                 .ToList();
         }
 
-        public async Task<LiveClass> GetByIdAsync(string id, bool isAdmin)
+        public async Task<LiveClass> GetByIdAsync(string id, bool isAdmin, string userId)
         {
             var liveClass = await _repository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException("Live class not found");
             liveClass.Status = Resolve(liveClass);
 
-            if (!isAdmin && liveClass.Status == Constants.LiveClassStatuses.Expired)
+            if (!isAdmin)
             {
-                throw new KeyNotFoundException("Live class not found");
+                // Same "not found" for expired and for a Paid class the student isn't enrolled in, so ids can't be probed
+                if (liveClass.Status == Constants.LiveClassStatuses.Expired ||
+                    !CanSee(liveClass, await GetVerifiedEnrollmentsAsync(userId)))
+                {
+                    throw new KeyNotFoundException("Live class not found");
+                }
             }
             return liveClass;
         }
@@ -129,22 +133,32 @@ namespace LearningBackendAPI.Services
             }
             if (!string.IsNullOrWhiteSpace(request.Date))
             {
-                existing.Date = ParseDate(request.Date).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                existing.Date = ScheduleHelper.ParseDate(request.Date).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             }
             if (!string.IsNullOrWhiteSpace(request.StartTime))
             {
-                existing.StartTime = ParseTime(request.StartTime, "Start time").ToString(@"hh\:mm");
+                existing.StartTime = ScheduleHelper.ParseTime(request.StartTime, "Start time").ToString(@"hh\:mm");
             }
             if (!string.IsNullOrWhiteSpace(request.EndTime))
             {
-                existing.EndTime = ParseTime(request.EndTime, "End time").ToString(@"hh\:mm");
+                existing.EndTime = ScheduleHelper.ParseTime(request.EndTime, "End time").ToString(@"hh\:mm");
             }
-            EnsureEndAfterStart(
+            ScheduleHelper.EnsureEndAfterStart(
                 TimeSpan.Parse(existing.StartTime, CultureInfo.InvariantCulture),
                 TimeSpan.Parse(existing.EndTime, CultureInfo.InvariantCulture));
 
+            if (!string.IsNullOrWhiteSpace(request.LiveClassesType))
+            {
+                existing.LiveClassesType = Constants.MaterialAccess.Normalize(request.LiveClassesType);
+            }
+            // A class saved before liveClassesType existed is Free; make that explicit before the rules below run
+            existing.LiveClassesType ??= Constants.MaterialAccess.Free;
+
+            await ApplyCourseAndBatchAsync(existing, request.CourseId, request.BatchId);
+
             // Rescheduling brings an Expired class back to Not Started / Online automatically
             existing.Status = Resolve(existing);
+            existing.UpdatedAt = DateTime.UtcNow;
             await _repository.UpdateAsync(id, existing);
             return existing;
         }
@@ -153,6 +167,90 @@ namespace LearningBackendAPI.Services
         {
             _ = await _repository.GetByIdAsync(id) ?? throw new KeyNotFoundException("Live class not found");
             return await _repository.DeleteAsync(id);
+        }
+
+        // Applies the course/batch that were sent (null = keep, "" = clear) and then checks the final combination:
+        // a batch must belong to the course, and a Paid class needs both (they decide who may see it).
+        private async Task ApplyCourseAndBatchAsync(LiveClass liveClass, string? courseId, string? batchId)
+        {
+            if (courseId != null)
+            {
+                if (string.IsNullOrWhiteSpace(courseId))
+                {
+                    liveClass.CourseId = null;
+                    liveClass.CourseName = null;
+                    // A batch can't outlive its course
+                    liveClass.BatchId = null;
+                    liveClass.BatchTitle = null;
+                }
+                else if (courseId != liveClass.CourseId)
+                {
+                    var course = await _courseRepository.GetByIdAsync(courseId)
+                        ?? throw new InvalidOperationException(Constants.Messages.CourseNotFound);
+                    liveClass.CourseId = course.Id;
+                    liveClass.CourseName = course.CourseName;
+                }
+            }
+
+            if (batchId != null)
+            {
+                if (string.IsNullOrWhiteSpace(batchId))
+                {
+                    liveClass.BatchId = null;
+                    liveClass.BatchTitle = null;
+                }
+                else
+                {
+                    var batch = await _batchRepository.GetByIdAsync(batchId)
+                        ?? throw new InvalidOperationException(Constants.Messages.BatchNotFound);
+                    liveClass.BatchId = batch.Id;
+                    liveClass.BatchTitle = batch.Title;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(liveClass.BatchId))
+            {
+                if (string.IsNullOrWhiteSpace(liveClass.CourseId))
+                {
+                    throw new InvalidOperationException("Course is required when a batch is selected");
+                }
+                var batch = await _batchRepository.GetByIdAsync(liveClass.BatchId)
+                    ?? throw new InvalidOperationException(Constants.Messages.BatchNotFound);
+                if (batch.CourseId != liveClass.CourseId)
+                {
+                    throw new InvalidOperationException(Constants.Messages.BatchCourseMismatch);
+                }
+            }
+
+            if (liveClass.LiveClassesType == Constants.MaterialAccess.Paid)
+            {
+                if (string.IsNullOrWhiteSpace(liveClass.CourseId))
+                {
+                    throw new InvalidOperationException("Course is required for a Paid live class");
+                }
+                if (string.IsNullOrWhiteSpace(liveClass.BatchId))
+                {
+                    throw new InvalidOperationException("Batch is required for a Paid live class");
+                }
+            }
+        }
+
+        private async Task<List<Enrollment>> GetVerifiedEnrollmentsAsync(string userId)
+        {
+            var enrollments = await _enrollmentRepository.GetByUserIdAsync(userId);
+            return enrollments.Where(e => e.Status == Constants.EnrollmentStatuses.Verified).ToList();
+        }
+
+        // Free (or saved before the type existed) = everyone; Paid = a verified enrollment in the class's course and batch
+        private static bool CanSee(LiveClass liveClass, List<Enrollment> verifiedEnrollments)
+        {
+            if (liveClass.LiveClassesType != Constants.MaterialAccess.Paid)
+            {
+                return true;
+            }
+            return verifiedEnrollments.Any(e =>
+                e.CourseId == liveClass.CourseId &&
+                (string.IsNullOrWhiteSpace(liveClass.BatchId) || liveClass.BatchId == e.BatchId));
         }
 
         // Not Started before startTime, Online from startTime until endTime, Expired once endTime is reached
@@ -183,46 +281,6 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException($"{label} must be a valid link starting with http:// or https://");
             }
             return text;
-        }
-
-        private static DateTime ParseDate(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new InvalidOperationException("Date is required");
-            }
-            var text = value.Trim();
-            // An ISO date-time ("2026-11-20T00:00:00Z"): keep the calendar day as written, no time zone shifting
-            if (text.Length >= 10 && DateTime.TryParseExact(text[..10], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var iso))
-            {
-                return iso;
-            }
-            if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
-            {
-                return parsed.Date;
-            }
-            throw new InvalidOperationException("Date must look like 2026-11-20");
-        }
-
-        private static TimeSpan ParseTime(string? value, string label)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new InvalidOperationException($"{label} is required");
-            }
-            if (DateTime.TryParseExact(value.Trim().ToUpperInvariant(), TimeFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
-            {
-                return parsed.TimeOfDay;
-            }
-            throw new InvalidOperationException($"{label} must look like 14:30 or 2:30 PM");
-        }
-
-        private static void EnsureEndAfterStart(TimeSpan start, TimeSpan end)
-        {
-            if (end <= start)
-            {
-                throw new InvalidOperationException("End time must be after the start time");
-            }
         }
     }
 }

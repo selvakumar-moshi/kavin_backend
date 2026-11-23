@@ -909,6 +909,9 @@
                     "type": "string",
                     "format": "binary"
                   },
+                  "CourseType": {
+                    "type": "string"
+                  },
                   "AudienceType": {
                     "type": "string"
                   },
@@ -953,6 +956,9 @@
                   "style": "form"
                 },
                 "File": {
+                  "style": "form"
+                },
+                "CourseType": {
                   "style": "form"
                 },
                 "AudienceType": {
@@ -1033,6 +1039,9 @@
                   "RemoveFile": {
                     "type": "boolean"
                   },
+                  "CourseType": {
+                    "type": "string"
+                  },
                   "AudienceType": {
                     "type": "string"
                   },
@@ -1080,6 +1089,9 @@
                   "style": "form"
                 },
                 "RemoveFile": {
+                  "style": "form"
+                },
+                "CourseType": {
                   "style": "form"
                 },
                 "AudienceType": {
@@ -3308,6 +3320,10 @@
             "type": "string",
             "nullable": true
           },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "courseId": {
             "type": "string",
             "nullable": true
@@ -3366,6 +3382,10 @@
         "type": "object",
         "properties": {
           "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
             "type": "string",
             "nullable": true
           },
@@ -3514,6 +3534,18 @@
             "nullable": true
           },
           "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "liveClassesType": {
+            "type": "string",
+            "nullable": true
+          },
+          "courseId": {
+            "type": "string",
+            "nullable": true
+          },
+          "batchId": {
             "type": "string",
             "nullable": true
           },
@@ -3688,9 +3720,20 @@
       "QuizPublishRequest": {
         "type": "object",
         "properties": {
-          "expiresAt": {
+          "startDate": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "expireAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           },
           "shuffleQuestions": {
             "type": "boolean",
@@ -3702,6 +3745,10 @@
       "QuizQuestionInput": {
         "type": "object",
         "properties": {
+          "passageQuiz": {
+            "type": "string",
+            "nullable": true
+          },
           "questionText": {
             "type": "string",
             "nullable": true

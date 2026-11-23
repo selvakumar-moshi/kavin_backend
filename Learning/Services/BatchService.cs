@@ -47,6 +47,7 @@ namespace LearningBackendAPI.Services
             var batch = new Batch
             {
                 Title = request.Title.Trim(),
+                Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
                 CourseId = course.Id,
                 CourseName = course.CourseName,
                 BatchFrom = request.BatchFrom.Value.Date,
@@ -70,6 +71,11 @@ namespace LearningBackendAPI.Services
             if (!string.IsNullOrWhiteSpace(request.Title))
             {
                 batch.Title = request.Title.Trim();
+            }
+
+            if (request.Description != null)
+            {
+                batch.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
             }
 
             if (!string.IsNullOrWhiteSpace(request.CourseId))

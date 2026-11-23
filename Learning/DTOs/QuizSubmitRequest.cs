@@ -31,6 +31,15 @@ namespace LearningBackendAPI.DTOs
         public int? TotalParticipants { get; set; }
         public List<RankListEntryDto>? Leaderboard { get; set; }
         public string? LeaderboardUnavailableReason { get; set; }
+        // Regular (non-passage) questions only
+        public List<QuizResultQuestionDto> Questions { get; set; } = new();
+        // Passage blocks: each passage once, with all its questions together
+        public List<QuizResultPassageDto> PassageQuizzes { get; set; } = new();
+    }
+
+    public class QuizResultPassageDto
+    {
+        public string PassageContent { get; set; } = "";
         public List<QuizResultQuestionDto> Questions { get; set; } = new();
     }
 

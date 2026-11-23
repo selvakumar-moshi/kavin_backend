@@ -6,6 +6,11 @@ namespace LearningBackendAPI.DTOs
     {
         public string? Title { get; set; }
         public string? Description { get; set; }
+        // "Paid" (only students enrolled in this course + batch see it) or "Free" (every student). Defaults to Paid on create.
+        public string? LiveClassesType { get; set; }
+        // Required for Paid; optional for Free. On update, leave out to keep, send "" to clear (Free only).
+        public string? CourseId { get; set; }
+        public string? BatchId { get; set; }
         // Optional http(s) links. On update, leave out to keep, send "" to clear.
         public string? YouTubeLink { get; set; }
         public string? GoogleMeetLink { get; set; }

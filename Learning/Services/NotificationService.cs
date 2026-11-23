@@ -15,13 +15,19 @@ namespace LearningBackendAPI.Services
         private readonly IFileStorageService _fileStorageService;
         private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly ISyllabusWiseRepository _syllabusWiseRepository;
+        private readonly ICourseRepository _courseRepository;
+        private readonly IBatchRepository _batchRepository;
 
         public NotificationService(
             INotificationRepository notificationRepository,
             IFileStorageService fileStorageService,
             IEnrollmentRepository enrollmentRepository,
-            ISyllabusWiseRepository syllabusWiseRepository)
+            ISyllabusWiseRepository syllabusWiseRepository,
+            ICourseRepository courseRepository,
+            IBatchRepository batchRepository)
         {
+            _courseRepository = courseRepository;
+            _batchRepository = batchRepository;
             _notificationRepository = notificationRepository;
             _fileStorageService = fileStorageService;
             _enrollmentRepository = enrollmentRepository;
@@ -53,9 +59,58 @@ namespace LearningBackendAPI.Services
 
             // Keep only what the chosen audience uses
             notification.AudienceType = type;
-            notification.CourseId = type == Constants.NotificationAudiences.Course ? course : null;
+            // A Batch audience keeps the course too (Paid Flash notifications show which course the batch is in); only the batch decides who sees it
+            notification.CourseId = type is Constants.NotificationAudiences.Course or Constants.NotificationAudiences.Batch ? course : null;
             notification.BatchId = type == Constants.NotificationAudiences.Batch ? batch : null;
             notification.UserIds = type == Constants.NotificationAudiences.Users ? users : null;
+        }
+
+        // Flash Notifications: turns courseType into the audience. Paid = students who bought the course (or the batch, if one is
+        // given) -> Course / Batch audience; Free = everyone -> All. Returns the audience fields for ApplyAudience, so visibility and
+        // the push recipients follow the existing audience logic. An explicit audienceType that contradicts courseType is rejected.
+        private async Task<(string CourseType, string AudienceType, string? CourseId, string? BatchId)> ResolveCourseTypeAsync(
+            string courseType, string? audienceType, string? courseId, string? batchId)
+        {
+            var normalized = Constants.MaterialAccess.All.FirstOrDefault(a => string.Equals(a, courseType.Trim(), StringComparison.OrdinalIgnoreCase))
+                ?? throw new InvalidOperationException("courseType must be Paid or Free");
+            var audience = string.IsNullOrWhiteSpace(audienceType)
+                ? null
+                : Constants.NotificationAudiences.Normalize(audienceType)
+                    ?? throw new InvalidOperationException("audienceType must be All, Course, Batch, Users or SyllabusPaid");
+
+            if (normalized == Constants.MaterialAccess.Free)
+            {
+                if (audience != null && audience != Constants.NotificationAudiences.All)
+                {
+                    throw new InvalidOperationException("A Free notification goes to everyone - leave audienceType out or set it to All");
+                }
+                return (normalized, Constants.NotificationAudiences.All, null, null);
+            }
+
+            if (audience != null && audience != Constants.NotificationAudiences.Course && audience != Constants.NotificationAudiences.Batch)
+            {
+                throw new InvalidOperationException("A Paid notification goes to the students of a course or batch - leave audienceType out or set it to Course or Batch");
+            }
+            if (string.IsNullOrWhiteSpace(courseId))
+            {
+                throw new InvalidOperationException("courseId is required for a Paid notification");
+            }
+
+            var course = await _courseRepository.GetByIdAsync(courseId.Trim())
+                ?? throw new InvalidOperationException(Constants.Messages.CourseNotFound);
+
+            if (string.IsNullOrWhiteSpace(batchId))
+            {
+                return (normalized, Constants.NotificationAudiences.Course, course.Id, null);
+            }
+
+            var batch = await _batchRepository.GetByIdAsync(batchId.Trim())
+                ?? throw new InvalidOperationException(Constants.Messages.BatchNotFound);
+            if (batch.CourseId != course.Id)
+            {
+                throw new InvalidOperationException(Constants.Messages.BatchCourseMismatch);
+            }
+            return (normalized, Constants.NotificationAudiences.Batch, course.Id, batch.Id);
         }
 
         // Treat a time without an offset as UTC, so the stored value doesn't depend on the server's time zone
@@ -101,7 +156,18 @@ namespace LearningBackendAPI.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            ApplyAudience(notification, request.AudienceType, request.CourseId, request.BatchId, request.UserIds);
+            // courseType only applies to Flash Notifications; a Job Notification ignores it
+            var audienceType = request.AudienceType;
+            var courseId = request.CourseId;
+            var batchId = request.BatchId;
+            if (type == Constants.NotificationTypes.Flash && !string.IsNullOrWhiteSpace(request.CourseType))
+            {
+                var resolved = await ResolveCourseTypeAsync(request.CourseType, request.AudienceType, request.CourseId, request.BatchId);
+                notification.CourseType = resolved.CourseType;
+                (audienceType, courseId, batchId) = (resolved.AudienceType, resolved.CourseId, resolved.BatchId);
+            }
+
+            ApplyAudience(notification, audienceType, courseId, batchId, request.UserIds);
             if (request.SendPush == true)
             {
                 QueuePush(notification, request.PushScheduledAt);
@@ -175,7 +241,34 @@ namespace LearningBackendAPI.Services
             EnsureValidDateRange(notification.StartDate, notification.EndDate);
             ValidateAttachment(request.File);
 
-            ApplyAudience(notification, request.AudienceType, request.CourseId, request.BatchId, request.UserIds);
+            // courseType only applies to Flash Notifications. A Job Notification drops it and keeps whatever audience it has.
+            var audienceType = request.AudienceType;
+            var courseId = request.CourseId;
+            var batchId = request.BatchId;
+            if (notification.NotificationType != Constants.NotificationTypes.Flash)
+            {
+                notification.CourseType = null;
+            }
+            else
+            {
+                // Re-resolve when courseType is sent, or when a Paid notification's course / batch / audience is being changed
+                var changingPaid = notification.CourseType == Constants.MaterialAccess.Paid &&
+                    (!string.IsNullOrWhiteSpace(request.CourseId) || !string.IsNullOrWhiteSpace(request.BatchId) || !string.IsNullOrWhiteSpace(request.AudienceType));
+                if (!string.IsNullOrWhiteSpace(request.CourseType) || changingPaid)
+                {
+                    var wanted = string.IsNullOrWhiteSpace(request.CourseType) ? notification.CourseType! : request.CourseType;
+                    // Fall back to what is saved for the fields that weren't sent
+                    var resolved = await ResolveCourseTypeAsync(
+                        wanted,
+                        request.AudienceType,
+                        string.IsNullOrWhiteSpace(request.CourseId) ? notification.CourseId : request.CourseId,
+                        string.IsNullOrWhiteSpace(request.BatchId) ? notification.BatchId : request.BatchId);
+                    notification.CourseType = resolved.CourseType;
+                    (audienceType, courseId, batchId) = (resolved.AudienceType, resolved.CourseId, resolved.BatchId);
+                }
+            }
+
+            ApplyAudience(notification, audienceType, courseId, batchId, request.UserIds);
 
             // Push: only one that hasn't gone out can be changed here; a sent one is resent via POST {id}/push
             var pushPending = notification.PushStatus is Constants.PushStatuses.None or Constants.PushStatuses.Cancelled or Constants.PushStatuses.Scheduled;

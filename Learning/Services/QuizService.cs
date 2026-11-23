@@ -17,6 +17,8 @@ namespace LearningBackendAPI.Services
         private readonly IBatchRepository _batchRepository;
         private readonly IFolderService _folderService;
         private readonly ISyllabusWiseService _syllabusWiseService;
+        // The institute's time zone (LiveClass:TimeZone), the one quiz date / start / end are entered in
+        private readonly TimeZoneInfo _scheduleTimeZone;
 
         public QuizService(
             IQuizRepository quizRepository,
@@ -28,8 +30,10 @@ namespace LearningBackendAPI.Services
             IExcelExportService excelExportService,
             IBatchRepository batchRepository,
             IFolderService folderService,
-            ISyllabusWiseService syllabusWiseService)
+            ISyllabusWiseService syllabusWiseService,
+            IConfiguration configuration)
         {
+            _scheduleTimeZone = ScheduleHelper.ResolveTimeZone(configuration["LiveClass:TimeZone"]);
             _syllabusWiseService = syllabusWiseService;
             _folderService = folderService;
             _batchRepository = batchRepository;
@@ -410,6 +414,7 @@ namespace LearningBackendAPI.Services
                 var copy = new QuizQuestionItem
                 {
                     QuestionNumber = q.QuestionNumber,
+                    PassageQuiz = q.PassageQuiz,
                     QuestionText = q.QuestionText,
                     OptionA = q.OptionA,
                     OptionB = q.OptionB,
@@ -580,6 +585,7 @@ namespace LearningBackendAPI.Services
                 // republish (with a fresh expiry) to make the updated version visible again.
                 quiz.Status = Constants.QuizStatuses.Draft;
                 quiz.PublishedAt = null;
+                quiz.StartsAt = null;
                 quiz.ExpiresAt = null;
             }
 
@@ -633,6 +639,7 @@ namespace LearningBackendAPI.Services
                 var item = new QuizQuestionItem
                 {
                     QuestionNumber = index + 1,
+                    PassageQuiz = string.IsNullOrWhiteSpace(q.PassageQuiz) ? null : q.PassageQuiz.Trim(),
                     QuestionText = (q.QuestionText ?? "").Trim(),
                     OptionA = (q.OptionA ?? "").Trim(),
                     OptionB = (q.OptionB ?? "").Trim(),
@@ -696,8 +703,35 @@ namespace LearningBackendAPI.Services
             return (url, key);
         }
 
-        public async Task<Quiz> PublishQuizAsync(string id, DateTime expiresAt, bool shuffleQuestions = true)
+        // A date-time with a Z or an offset is taken as written; one without is the institute's local time (LiveClass:TimeZone)
+        private DateTime ToUtcInstant(DateTime value)
+            => value.Kind == DateTimeKind.Unspecified
+                ? TimeZoneInfo.ConvertTimeToUtc(value, _scheduleTimeZone)
+                : value.ToUniversalTime();
+
+        // Availability window (all optional):
+        //  - nothing: live right away, never expires
+        //  - expireAt only: live right away until expireAt
+        //  - startDate and/or endDate: opens at startDate (or at once) and closes at endDate (or never); expireAt can't be combined
+        public async Task<Quiz> PublishQuizAsync(string id, DateTime? startDate, DateTime? endDate, DateTime? expireAt, bool shuffleQuestions = true)
         {
+            if (expireAt.HasValue && (startDate.HasValue || endDate.HasValue))
+            {
+                throw new InvalidOperationException("Send either expireAt, or startDate / endDate - not both");
+            }
+
+            DateTime? startsAt = startDate.HasValue ? ToUtcInstant(startDate.Value) : null;
+            DateTime? expiresAt = endDate.HasValue ? ToUtcInstant(endDate.Value) : expireAt.HasValue ? ToUtcInstant(expireAt.Value) : null;
+
+            if (startsAt.HasValue && expiresAt.HasValue && expiresAt <= startsAt)
+            {
+                throw new InvalidOperationException("endDate must be after startDate");
+            }
+            if (expiresAt.HasValue && expiresAt <= DateTime.UtcNow)
+            {
+                throw new InvalidOperationException("The quiz would already be expired - pick an end / expiry time in the future");
+            }
+
             var quiz = await _quizRepository.GetByIdAsync(id);
             if (quiz == null)
             {
@@ -730,6 +764,7 @@ namespace LearningBackendAPI.Services
 
             quiz.Status = Constants.QuizStatuses.Published;
             quiz.PublishedAt = DateTime.UtcNow;
+            quiz.StartsAt = startsAt;
             quiz.ExpiresAt = expiresAt;
             quiz.PublishVersion += 1;
             quiz.ShuffleQuestions = shuffleQuestions;
@@ -884,6 +919,11 @@ namespace LearningBackendAPI.Services
             if (quiz.IsExpired)
             {
                 throw new InvalidOperationException(Constants.Messages.QuizExpired);
+            }
+
+            if (quiz.IsNotStarted)
+            {
+                throw new InvalidOperationException(Constants.Messages.QuizNotStarted);
             }
 
             var attemptLimit = quiz.QuizAttempt ?? 1;
@@ -1307,13 +1347,35 @@ namespace LearningBackendAPI.Services
                 System.Text.Encoding.UTF8.GetBytes($"{quiz.Id}|{quiz.PublishVersion}|{userId}"));
             var random = new Random(BitConverter.ToInt32(hash, 0));
 
-            for (var i = questions.Count - 1; i > 0; i--)
+            // Questions sharing a passage form one block (in their authored order); every other question is a
+            // block of its own. Only the blocks are shuffled, so a passage's questions always stay together.
+            var blocks = new List<List<QuizQuestionItem>>();
+            var passageBlocks = new Dictionary<string, List<QuizQuestionItem>>();
+            foreach (var q in questions)
             {
-                var j = random.Next(i + 1);
-                (questions[i], questions[j]) = (questions[j], questions[i]);
+                if (string.IsNullOrWhiteSpace(q.PassageQuiz))
+                {
+                    blocks.Add(new List<QuizQuestionItem> { q });
+                    continue;
+                }
+
+                var key = q.PassageQuiz.Trim();
+                if (!passageBlocks.TryGetValue(key, out var block))
+                {
+                    block = new List<QuizQuestionItem>();
+                    passageBlocks[key] = block;
+                    blocks.Add(block);
+                }
+                block.Add(q);
             }
 
-            return questions;
+            for (var i = blocks.Count - 1; i > 0; i--)
+            {
+                var j = random.Next(i + 1);
+                (blocks[i], blocks[j]) = (blocks[j], blocks[i]);
+            }
+
+            return blocks.SelectMany(b => b).ToList();
         }
 
         // A previousYear, syllabusWise, school or currentAffairs quiz must be filed in a folder (and sub folder, if the folder has any); other types can't have one
@@ -1338,6 +1400,40 @@ namespace LearningBackendAPI.Services
         private static QuizStudentResponse ToStudentResponse(Quiz quiz, string userId, int attemptsUsed)
         {
             var attemptLimit = quiz.QuizAttempt ?? 1;
+
+            // Questions stay hidden until the quiz opens, so nobody can read them early
+            var ordered = (quiz.IsNotStarted ? new List<QuizQuestionItem>() : OrderForStudent(quiz, userId))
+                .Select((q, position) => (Item: q, Dto: new QuizStudentQuestionDto
+                {
+                    DisplayNumber = position + 1,
+                    QuestionNumber = q.QuestionNumber,
+                    QuestionText = q.QuestionText,
+                    QuestionImageUrl = q.QuestionImageUrl,
+                    OptionA = q.OptionA,
+                    OptionAImageUrl = q.OptionAImageUrl,
+                    OptionB = q.OptionB,
+                    OptionBImageUrl = q.OptionBImageUrl,
+                    OptionC = q.OptionC,
+                    OptionCImageUrl = q.OptionCImageUrl,
+                    OptionD = string.IsNullOrWhiteSpace(q.OptionD) ? null : q.OptionD,
+                    OptionDImageUrl = q.OptionDImageUrl,
+                    Mark = q.Mark
+                }))
+                .ToList();
+
+            // Passage questions are returned together under their passage; the rest stay in Questions.
+            // OrderForStudent already keeps a passage's questions adjacent, so each group is contiguous.
+            var passageBlocks = ordered
+                .Where(x => !string.IsNullOrWhiteSpace(x.Item.PassageQuiz))
+                .GroupBy(x => x.Item.PassageQuiz!.Trim())
+                .Select(g => new QuizStudentPassageDto
+                {
+                    PassageContent = g.Key,
+                    StartDisplayNumber = g.First().Dto.DisplayNumber,
+                    Questions = g.Select(x => x.Dto).ToList()
+                })
+                .ToList();
+
             return new QuizStudentResponse
             {
                 QuizAttempt = attemptLimit,
@@ -1358,24 +1454,13 @@ namespace LearningBackendAPI.Services
                 SubFolderName = quiz.SubFolderName,
                 PublishedAt = quiz.PublishedAt,
                 ExpiresAt = quiz.ExpiresAt,
+                StartsAt = quiz.StartsAt,
+                Status = quiz.ScheduleStatus,
+                IsNotStarted = quiz.IsNotStarted,
                 IsExpired = quiz.IsExpired,
                 TimeLeftSeconds = quiz.TimeLeftSeconds,
-                Questions = OrderForStudent(quiz, userId).Select((q, position) => new QuizStudentQuestionDto
-                {
-                    DisplayNumber = position + 1,
-                    QuestionNumber = q.QuestionNumber,
-                    QuestionText = q.QuestionText,
-                    QuestionImageUrl = q.QuestionImageUrl,
-                    OptionA = q.OptionA,
-                    OptionAImageUrl = q.OptionAImageUrl,
-                    OptionB = q.OptionB,
-                    OptionBImageUrl = q.OptionBImageUrl,
-                    OptionC = q.OptionC,
-                    OptionCImageUrl = q.OptionCImageUrl,
-                    OptionD = string.IsNullOrWhiteSpace(q.OptionD) ? null : q.OptionD,
-                    OptionDImageUrl = q.OptionDImageUrl,
-                    Mark = q.Mark
-                }).ToList()
+                Questions = ordered.Where(x => string.IsNullOrWhiteSpace(x.Item.PassageQuiz)).Select(x => x.Dto).ToList(),
+                PassageQuizzes = passageBlocks
             };
         }
 
@@ -1388,7 +1473,7 @@ namespace LearningBackendAPI.Services
                 .Select(q =>
                 {
                     answerByQuestion.TryGetValue(q.QuestionNumber, out var selected);
-                    return new QuizResultQuestionDto
+                    var dto = new QuizResultQuestionDto
                     {
                         QuestionNumber = q.QuestionNumber,
                         QuestionText = q.QuestionText,
@@ -1406,6 +1491,18 @@ namespace LearningBackendAPI.Services
                         CorrectOption = q.CorrectOption,
                         IsCorrect = selected != null && selected == q.CorrectOption
                     };
+                    return (Item: q, Dto: dto);
+                })
+                .ToList();
+
+            // Passage questions are returned together under their passage; the rest stay in Questions.
+            var passageBlocks = questions
+                .Where(x => !string.IsNullOrWhiteSpace(x.Item.PassageQuiz))
+                .GroupBy(x => x.Item.PassageQuiz!.Trim())
+                .Select(g => new QuizResultPassageDto
+                {
+                    PassageContent = g.Key,
+                    Questions = g.Select(x => x.Dto).ToList()
                 })
                 .ToList();
 
@@ -1423,7 +1520,8 @@ namespace LearningBackendAPI.Services
                 NegativeMarksDeducted = attempt.NegativeMarksDeducted,
                 Score = $"{attempt.ScoredMarks}/{attempt.TotalMarks}",
                 SubmittedAt = attempt.SubmittedAt,
-                Questions = questions
+                Questions = questions.Where(x => string.IsNullOrWhiteSpace(x.Item.PassageQuiz)).Select(x => x.Dto).ToList(),
+                PassageQuizzes = passageBlocks
             };
         }
     }

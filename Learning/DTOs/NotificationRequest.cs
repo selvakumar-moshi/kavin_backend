@@ -12,6 +12,10 @@ namespace LearningBackendAPI.DTOs
         // Optional attachment: a PDF, or a JPG / PNG / WEBP image, up to 10 MB
         public IFormFile? File { get; set; }
 
+        // Flash Notification only (ignored for Job Notifications): "Paid" = only students who bought courseId (and batchId, if sent);
+        // "Free" = everyone. Paid needs courseId. It decides the audience, so audienceType may be left out or must agree with it.
+        public string? CourseType { get; set; }
+
         // Audience: All (default), Course (courseId), Batch (batchId) , Users (userIds) or SyllabusPaid
         public string? AudienceType { get; set; }
         public string? CourseId { get; set; }
@@ -39,6 +43,8 @@ namespace LearningBackendAPI.DTOs
 
         // Audience and push settings; only a push that hasn't gone out yet can be changed - use
         // POST /api/Notification/{id}/push to send again
+        // Flash Notification only: "Paid" or "Free" (see create). Ignored for Job Notifications.
+        public string? CourseType { get; set; }
         public string? AudienceType { get; set; }
         public string? CourseId { get; set; }
         public string? BatchId { get; set; }

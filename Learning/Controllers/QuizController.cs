@@ -25,6 +25,43 @@ namespace LearningBackendAPI.Controllers
         }
 
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        private static readonly System.Text.Json.JsonSerializerOptions PassageJsonOptions = new(System.Text.Json.JsonSerializerDefaults.Web);
+
+        // The admin quiz as stored, except "questions" is rearranged: a regular question stays as it is, and the
+        // questions of one passage are gathered into a single entry { passageQuiz, questions[] } placed where the
+        // passage's first question was. Authored order is kept; the entry is told apart by its "questions" array.
+        private static System.Text.Json.Nodes.JsonNode? WithPassageGroups(Models.Quiz quiz)
+        {
+            var node = System.Text.Json.JsonSerializer.SerializeToNode(quiz, PassageJsonOptions);
+            if (node is not System.Text.Json.Nodes.JsonObject root)
+            {
+                return node;
+            }
+
+            var entries = new List<object>();
+            var groups = new Dictionary<string, List<Models.QuizQuestionItem>>();
+            foreach (var q in quiz.Questions.OrderBy(q => q.QuestionNumber))
+            {
+                if (string.IsNullOrWhiteSpace(q.PassageQuiz))
+                {
+                    entries.Add(q);
+                    continue;
+                }
+
+                var key = q.PassageQuiz.Trim();
+                if (!groups.TryGetValue(key, out var members))
+                {
+                    members = new List<Models.QuizQuestionItem>();
+                    groups[key] = members;
+                    entries.Add(new { passageQuiz = key, questions = members });
+                }
+                members.Add(q);
+            }
+
+            root["questions"] = System.Text.Json.JsonSerializer.SerializeToNode(entries, PassageJsonOptions);
+            return root;
+        }
+
         private static QuizClassification? ToClassificationFilter(QuizSearchRequest? request)
         {
             if (request == null)
@@ -146,7 +183,10 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Publish a draft quiz, making it visible to students until the given expiry date/time (Admin only)
+        /// Publish a draft quiz (Admin only). Body, every field optional: { startDate, endDate, expireAt, shuffleQuestions? }.
+        /// expireAt alone = live now until then. startDate / endDate = live only in that window (before the start students see
+        /// the quiz but can't open the questions or submit). Nothing = live now with no end. expireAt can't be combined with
+        /// startDate / endDate. Times without a Z / offset are the institute's local time.
         /// </summary>
         [HttpPost("{id}/publish")]
         [Authorize(Roles = Constants.Roles.Admin)]
@@ -154,7 +194,7 @@ namespace LearningBackendAPI.Controllers
         {
             try
             {
-                var quiz = await _quizService.PublishQuizAsync(id, request?.ExpiresAt ?? default, request?.ShuffleQuestions ?? true);
+                var quiz = await _quizService.PublishQuizAsync(id, request?.StartDate, request?.EndDate, request?.ExpireAt, request?.ShuffleQuestions ?? true);
                 return Ok(_responseHelper.Success(quiz, "Quiz published successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -242,7 +282,7 @@ namespace LearningBackendAPI.Controllers
                 if (IsAdmin)
                 {
                     var quiz = await _quizService.GetQuizByIdForAdminAsync(id);
-                    return Ok(_responseHelper.Success(quiz, "Quiz retrieved successfully"));
+                    return Ok(_responseHelper.Success(WithPassageGroups(quiz), "Quiz retrieved successfully"));
                 }
 
                 var studentQuiz = await _quizService.GetQuizByIdForStudentAsync(id, CurrentUserId);

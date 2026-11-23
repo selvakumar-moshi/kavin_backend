@@ -9,6 +9,12 @@ namespace LearningBackendAPI.Models
         [BsonElement("questionNumber")]
         public int QuestionNumber { get; set; }
 
+        // Shared passage this question is based on (null = standalone question). Questions carrying the
+        // same passage text are shown under one passage; each is still its own question and is counted
+        // and marked individually.
+        [BsonElement("passageQuiz")]
+        public string? PassageQuiz { get; set; }
+
         [BsonElement("questionText")]
         public string QuestionText { get; set; }
 
@@ -158,6 +164,11 @@ namespace LearningBackendAPI.Models
         [BsonElement("publishedAt")]
         public DateTime? PublishedAt { get; set; }
 
+        // Availability window, set at publish time, both UTC instants and both optional:
+        // StartsAt null = available as soon as it is published; ExpiresAt null = never expires.
+        [BsonElement("startsAt")]
+        public DateTime? StartsAt { get; set; }
+
         [BsonElement("expiresAt")]
         public DateTime? ExpiresAt { get; set; }
 
@@ -169,6 +180,13 @@ namespace LearningBackendAPI.Models
 
         [BsonElement("updatedAt")]
         public DateTime? UpdatedAt { get; set; }
+
+        [BsonIgnore]
+        public bool IsNotStarted => StartsAt.HasValue && DateTime.UtcNow < StartsAt.Value;
+
+        // Not Started | Online | Expired for a published quiz (null for a draft). Worked out on every read, like live classes.
+        [BsonIgnore]
+        public string? ScheduleStatus => Status != "Published" ? null : IsExpired ? "Expired" : IsNotStarted ? "Not Started" : "Online";
 
         [BsonIgnore]
         public bool IsExpired => ExpiresAt.HasValue && DateTime.UtcNow > ExpiresAt.Value;

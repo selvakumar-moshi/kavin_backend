@@ -17,6 +17,11 @@ namespace LearningBackendAPI.DTOs
         public string? SubFolderPath { get; set; }
         public DateTime? PublishedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
+        // When the quiz opens (null = open since it was published)
+        public DateTime? StartsAt { get; set; }
+        // Not Started | Online | Expired. While Not Started the questions are withheld and submitting is refused.
+        public string? Status { get; set; }
+        public bool IsNotStarted { get; set; }
         public bool IsExpired { get; set; }
         // Attempts the admin allows each student, how many this student has used, and how many are left
         public int QuizAttempt { get; set; }
@@ -27,6 +32,17 @@ namespace LearningBackendAPI.DTOs
         // NegativeMark is deducted once for every this-many wrong answers
         public int WrongAnswersPerDeduction { get; set; } = 1;
         public int? TimeLeftSeconds { get; set; }
+        // Regular (non-passage) questions only
+        public List<QuizStudentQuestionDto> Questions { get; set; } = new();
+        // Passage blocks: each passage once, with all its questions together
+        public List<QuizStudentPassageDto> PassageQuizzes { get; set; } = new();
+    }
+
+    public class QuizStudentPassageDto
+    {
+        public string PassageContent { get; set; } = "";
+        // Position of the block's first question in this student's order (the block fills StartDisplayNumber ... + Questions.Count - 1)
+        public int StartDisplayNumber { get; set; }
         public List<QuizStudentQuestionDto> Questions { get; set; } = new();
     }
 

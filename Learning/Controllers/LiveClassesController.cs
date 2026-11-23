@@ -25,21 +25,26 @@ namespace LearningBackendAPI.Controllers
         }
 
         private bool IsAdmin => User.FindFirstValue(ClaimTypes.Role) == Constants.Roles.Admin;
+        private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        /// <summary>Body: { title, description?, date, startTime, endTime } (Admin only). Status starts as "Not Started".</summary>
+        /// <summary>
+        /// Body: { title, description?, liveClassesType ("Paid" | "Free"), courseId, batchId, date, startTime, endTime } (Admin only).
+        /// Paid needs courseId and batchId and is only visible to students enrolled (verified) in that batch; Free is visible to everyone.
+        /// Status starts as "Not Started".
+        /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
         public Task<IActionResult> Create([FromBody] LiveClassRequest request) => HandleAsync(async () =>
             Ok(_responseHelper.Success(await _service.CreateAsync(request), "Live class created successfully")));
 
-        /// <summary>Admin sees every live class; students don't get the Expired ones.</summary>
+        /// <summary>Admin sees every live class; students don't get the Expired ones, nor Paid ones for a batch they aren't enrolled in.</summary>
         [HttpGet]
         public Task<IActionResult> GetAll() => HandleAsync(async () =>
-            Ok(_responseHelper.Success(await _service.GetAllAsync(IsAdmin), "Live classes retrieved successfully")));
+            Ok(_responseHelper.Success(await _service.GetAllAsync(IsAdmin, CurrentUserId), "Live classes retrieved successfully")));
 
         [HttpGet("{id}")]
         public Task<IActionResult> GetById(string id) => HandleAsync(async () =>
-            Ok(_responseHelper.Success(await _service.GetByIdAsync(id, IsAdmin), "Live class retrieved successfully")));
+            Ok(_responseHelper.Success(await _service.GetByIdAsync(id, IsAdmin, CurrentUserId), "Live class retrieved successfully")));
 
         /// <summary>Only the fields that are sent change (Admin only).</summary>
         [HttpPut("{id}")]

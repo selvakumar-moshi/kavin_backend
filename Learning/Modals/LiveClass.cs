@@ -16,6 +16,23 @@ namespace LearningBackendAPI.Models
         [BsonElement("description")]
         public string? Description { get; set; }
 
+        // Paid = only students with a verified enrollment in this course/batch can see it; Free = every student.
+        // Live classes saved before this field existed have none and are treated as Free.
+        [BsonElement("liveClassesType")]
+        public string? LiveClassesType { get; set; }
+
+        [BsonElement("courseId")]
+        public string? CourseId { get; set; }
+
+        [BsonElement("courseName")]
+        public string? CourseName { get; set; }
+
+        [BsonElement("batchId")]
+        public string? BatchId { get; set; }
+
+        [BsonElement("batchTitle")]
+        public string? BatchTitle { get; set; }
+
         [BsonElement("youTubeLink")]
         public string? YouTubeLink { get; set; }
 

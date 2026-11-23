@@ -30,6 +30,7 @@
             public const string NoCourseAccess = "You do not have access to this course's content until your payment is verified";
             public const string QuizNotFound = "Quiz not found";
             public const string QuizNotPublished = "This quiz is not currently published";
+            public const string QuizNotStarted = "This quiz has not started yet";
             public const string QuizExpired = "This quiz has expired and is no longer accepting submissions";
             public const string QuizAlreadyAttempted = "You have already submitted this quiz";
             public const string QuizAttemptsExhausted = "You have used all your attempts for this quiz";

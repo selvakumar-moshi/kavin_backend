@@ -3,6 +3,7 @@ namespace LearningBackendAPI.DTOs
     public class BatchCreateRequest
     {
         public string? Title { get; set; }
+        public string? Description { get; set; }
         public string? CourseId { get; set; }
         public DateTime? BatchFrom { get; set; }
         public DateTime? BatchTo { get; set; }
@@ -13,6 +14,8 @@ namespace LearningBackendAPI.DTOs
     public class BatchUpdateRequest
     {
         public string? Title { get; set; }
+        // Leave out to keep it; send "" to clear it
+        public string? Description { get; set; }
         public string? CourseId { get; set; }
         public DateTime? BatchFrom { get; set; }
         public DateTime? BatchTo { get; set; }

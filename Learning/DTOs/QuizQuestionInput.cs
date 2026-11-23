@@ -4,6 +4,8 @@ namespace LearningBackendAPI.DTOs
     // The text fields are nullable so a question given as an image alone isn't rejected as "field is required".
     public class QuizQuestionInput
     {
+        // Optional passage this question belongs to. Repeat the same passage text on every question based on it.
+        public string? PassageQuiz { get; set; }
         public string? QuestionText { get; set; }
         public IFormFile? QuestionImage { get; set; }
         public string? OptionA { get; set; }
