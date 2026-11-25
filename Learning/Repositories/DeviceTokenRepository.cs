@@ -43,6 +43,16 @@ namespace LearningBackendAPI.Repositories
             }
         }
 
+        public async Task<(List<DeviceToken> Items, long Total)> GetDevicesAsync(string? userId, int limit)
+        {
+            var filter = string.IsNullOrWhiteSpace(userId)
+                ? Builders<DeviceToken>.Filter.Empty
+                : Builders<DeviceToken>.Filter.Eq(t => t.UserId, userId);
+            var total = await _tokens.CountDocumentsAsync(filter);
+            var items = await _tokens.Find(filter).SortByDescending(t => t.LastSeenAt).Limit(limit).ToListAsync();
+            return (items, total);
+        }
+
         public async Task<List<string>> GetTokensAsync(IEnumerable<string>? userIds)
         {
             var filter = userIds == null

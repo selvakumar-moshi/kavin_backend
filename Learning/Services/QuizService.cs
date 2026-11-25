@@ -979,12 +979,13 @@ namespace LearningBackendAPI.Services
                     (string.IsNullOrWhiteSpace(quiz.BatchId) || quiz.BatchId == e.BatchId));
             }
 
-            // Negative marking: NegativeMark is deducted once per complete group of WrongAnswersPerDeduction wrong answers
-            // (only answered-but-wrong questions count). 40 wrong, 0.5 per 3 => floor(40/3) = 13 groups x 0.5 = 6.5 off.
-            // With the default group size of 1 it is simply wrong x NegativeMark.
+            // Negative marking: NegativeMark is deducted for every WrongAnswersPerDeduction wrong answers, pro rata
+            // (only answered-but-wrong questions count). 8 wrong, 1 per 5 => 8 x 1 / 5 = 1.6 off (not floor(8/5) = 1).
+            // With the default group size of 1 it is simply wrong x NegativeMark. Rounded to 2 decimals so repeating
+            // fractions (e.g. 1 wrong, 1 per 3 => 0.33) stay clean; the score keeps its decimals so ranking can tell 18.5 from 18.4.
             var negativeMark = quiz.NegativeMark ?? 0m;
             var groupSize = Math.Max(1, quiz.WrongAnswersPerDeduction ?? 1);
-            var negativeDeducted = (incorrectAnswered / groupSize) * negativeMark;
+            var negativeDeducted = Math.Round(incorrectAnswered * negativeMark / groupSize, 2, MidpointRounding.AwayFromZero);
             scoredMarks -= negativeDeducted;
 
             var totalQuestions = quiz.Questions.Count;

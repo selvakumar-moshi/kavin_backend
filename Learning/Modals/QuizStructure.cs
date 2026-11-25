@@ -10,6 +10,13 @@ namespace LearningBackendAPI.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; } = string.Empty;
 
+        // Optional picture for the mobile app (uploaded to S3); ImageKey is only for replacing / deleting it
+        [BsonElement("imageUrl")]
+        public string? ImageUrl { get; set; }
+
+        [BsonElement("imageKey")]
+        public string? ImageKey { get; set; }
+
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; }
     }

@@ -11,5 +11,7 @@ namespace LearningBackendAPI.Repositories
         Task RemoveTokensAsync(IEnumerable<string> tokens);
         /// <summary>Tokens of the given users; every token when userIds is null.</summary>
         Task<List<string>> GetTokensAsync(IEnumerable<string>? userIds);
+        /// <summary>Registered devices, most recently seen first; one user's when userId is given, otherwise everyone's. Also returns the total matching.</summary>
+        Task<(List<Models.DeviceToken> Items, long Total)> GetDevicesAsync(string? userId, int limit);
     }
 }

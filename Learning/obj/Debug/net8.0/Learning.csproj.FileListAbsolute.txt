@@ -122,3 +122,12 @@ C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\Learning.deps.json
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\Learning.runtimeconfig.json
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\Learning.dll
 C:\Users\selvakumar.gunasekar\AppData\Local\Temp\qbuild\Learning.pdb
+D:\Software\data\Selva_Coac\kavin_backend\Learning\bin\Debug\net8.0\Learning.runtimeconfig.dev.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\7f6d183e-c330-423d-9830-ea3f2d571263\scratchpad\out\appsettings.Development.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\7f6d183e-c330-423d-9830-ea3f2d571263\scratchpad\out\appsettings.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\7f6d183e-c330-423d-9830-ea3f2d571263\scratchpad\out\Learning.exe
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\7f6d183e-c330-423d-9830-ea3f2d571263\scratchpad\out\Learning.deps.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\7f6d183e-c330-423d-9830-ea3f2d571263\scratchpad\out\Learning.runtimeconfig.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\7f6d183e-c330-423d-9830-ea3f2d571263\scratchpad\out\Learning.runtimeconfig.dev.json
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\7f6d183e-c330-423d-9830-ea3f2d571263\scratchpad\out\Learning.dll
+C:\Users\selvakumar.gunasekar\AppData\Local\Temp\claude\541f7821aba39a56\7f6d183e-c330-423d-9830-ea3f2d571263\scratchpad\out\Learning.pdb

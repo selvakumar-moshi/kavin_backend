@@ -371,6 +371,37 @@
         }
       }
     },
+    "/api/Device/test-push": {
+      "post": {
+        "tags": [
+          "Device"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestPushRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestPushRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestPushRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Device/token": {
       "post": {
         "tags": [
@@ -395,6 +426,35 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success"
@@ -650,19 +710,38 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/FolderRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FolderRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/FolderRequest"
+                "type": "object",
+                "properties": {
+                  "Name": {
+                    "type": "string"
+                  },
+                  "SubFolders": {
+                    "type": "string"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "RemoveImage": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "encoding": {
+                "Name": {
+                  "style": "form"
+                },
+                "SubFolders": {
+                  "style": "form"
+                },
+                "File": {
+                  "style": "form"
+                },
+                "RemoveImage": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -692,19 +771,38 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/FolderRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FolderRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/FolderRequest"
+                "type": "object",
+                "properties": {
+                  "Name": {
+                    "type": "string"
+                  },
+                  "SubFolders": {
+                    "type": "string"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "RemoveImage": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "encoding": {
+                "Name": {
+                  "style": "form"
+                },
+                "SubFolders": {
+                  "style": "form"
+                },
+                "File": {
+                  "style": "form"
+                },
+                "RemoveImage": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -2291,19 +2389,44 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SubFolderRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubFolderRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubFolderRequest"
+                "type": "object",
+                "properties": {
+                  "FolderId": {
+                    "type": "string"
+                  },
+                  "Name": {
+                    "type": "string"
+                  },
+                  "SubFolders": {
+                    "type": "string"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "RemoveImage": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "encoding": {
+                "FolderId": {
+                  "style": "form"
+                },
+                "Name": {
+                  "style": "form"
+                },
+                "SubFolders": {
+                  "style": "form"
+                },
+                "File": {
+                  "style": "form"
+                },
+                "RemoveImage": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -2333,19 +2456,44 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SubFolderRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubFolderRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubFolderRequest"
+                "type": "object",
+                "properties": {
+                  "FolderId": {
+                    "type": "string"
+                  },
+                  "Name": {
+                    "type": "string"
+                  },
+                  "SubFolders": {
+                    "type": "string"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "RemoveImage": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "encoding": {
+                "FolderId": {
+                  "style": "form"
+                },
+                "Name": {
+                  "style": "form"
+                },
+                "SubFolders": {
+                  "style": "form"
+                },
+                "File": {
+                  "style": "form"
+                },
+                "RemoveImage": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -3509,23 +3657,6 @@
         },
         "additionalProperties": false
       },
-      "FolderRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "subFolders": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SubFolderNodeRequest"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "LiveClassRequest": {
         "type": "object",
         "properties": {
@@ -3936,44 +4067,6 @@
         },
         "additionalProperties": false
       },
-      "SubFolderNodeRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "subFolders": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SubFolderNodeRequest"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "SubFolderRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "folderId": {
-            "type": "string",
-            "nullable": true
-          },
-          "subFolders": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SubFolderNodeRequest"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "SyllabusMaterialSearchRequest": {
         "type": "object",
         "properties": {
@@ -4027,6 +4120,24 @@
             "nullable": true
           },
           "folderId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TestPushRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "body": {
             "type": "string",
             "nullable": true
           }

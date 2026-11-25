@@ -12,13 +12,19 @@ namespace LearningBackendAPI.Services
         private readonly IQuizRepository _quizRepository;
         private readonly ISyllabusMaterialRepository _materialRepository;
         private readonly ISyllabusWiseRepository _syllabusWiseRepository;
+        private readonly IFileStorageService _fileStorageService;
+
+        private const string ImageFolder = "folder-images";
+        private const long MaxImageSizeInBytes = 5 * 1024 * 1024; // 5 MB
 
         public FolderService(
             IQuizStructureRepository repository,
             IQuizRepository quizRepository,
             ISyllabusMaterialRepository materialRepository,
-            ISyllabusWiseRepository syllabusWiseRepository)
+            ISyllabusWiseRepository syllabusWiseRepository,
+            IFileStorageService fileStorageService)
         {
+            _fileStorageService = fileStorageService;
             _repository = repository;
             _quizRepository = quizRepository;
             _materialRepository = materialRepository;
@@ -40,6 +46,85 @@ namespace LearningBackendAPI.Services
             }
         }
 
+        // ---------- Pictures ----------
+
+        private static void ValidateImage(IFormFile? file)
+        {
+            if (file == null) return;
+            if (file.Length == 0)
+            {
+                throw new InvalidOperationException("The picture is empty");
+            }
+            if (file.Length > MaxImageSizeInBytes)
+            {
+                throw new InvalidOperationException("The picture can't be larger than 5 MB");
+            }
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (extension is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+            {
+                throw new InvalidOperationException("Only JPG, PNG, or WEBP images are allowed");
+            }
+        }
+
+        // The picture keeps its own file name in the URL (folder-images/screenshot.png). Two folders can't share one S3 object
+        // (replacing or deleting one picture would break the other), so a name another folder already uses gets -1, -2, ... added.
+        private async Task SetImageAsync(QuizStructureItem item, IFormFile file)
+        {
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var invalid = Path.GetInvalidFileNameChars();
+            var baseName = new string(Path.GetFileNameWithoutExtension(file.FileName)
+                .Select(c => invalid.Contains(c) || c == ' ' ? '_' : c).ToArray());
+            if (string.IsNullOrWhiteSpace(baseName))
+            {
+                baseName = "image";
+            }
+
+            var usedKeys = (await _repository.GetAllAsync<QuizFolder>()).Where(f => f.Id != item.Id).Select(f => f.ImageKey)
+                .Concat((await _repository.GetAllAsync<QuizSubFolder>()).Where(f => f.Id != item.Id).Select(f => f.ImageKey))
+                .Where(k => k != null)
+                .ToHashSet();
+
+            var fileName = $"{baseName}{extension}";
+            for (var i = 1; usedKeys.Contains($"{ImageFolder}/{fileName}"); i++)
+            {
+                fileName = $"{baseName}-{i}{extension}";
+            }
+
+            var (url, key) = await _fileStorageService.UploadImageAsync(file, ImageFolder, fileName);
+            // Same name as this item's current picture: the upload already replaced it, so don't delete it
+            if (key != item.ImageKey)
+            {
+                await DeleteImageAsync(item.ImageKey);
+            }
+            item.ImageUrl = url;
+            item.ImageKey = key;
+        }
+
+        // A picture that can't be deleted from S3 must not block the folder change - it is only an orphan file
+        private async Task DeleteImageAsync(string? key)
+        {
+            if (string.IsNullOrWhiteSpace(key)) return;
+            try { await _fileStorageService.DeleteAsync(key); } catch { }
+        }
+
+        // Applies file / removeImage from an update request; true when the item changed
+        private async Task<bool> ApplyImageChangeAsync(QuizStructureItem item, FolderRequestBase request)
+        {
+            if (request.File != null)
+            {
+                await SetImageAsync(item, request.File);
+                return true;
+            }
+            if (request.RemoveImage == true && item.ImageKey != null)
+            {
+                await DeleteImageAsync(item.ImageKey);
+                item.ImageUrl = null;
+                item.ImageKey = null;
+                return true;
+            }
+            return false;
+        }
+
         // ---------- Folders ----------
 
         public async Task<List<FolderResponse>> GetFoldersAsync()
@@ -59,12 +144,16 @@ namespace LearningBackendAPI.Services
             }
             // Check the whole tree first so a bad branch doesn't leave a half-created folder behind
             ValidateTree(request.SubFolders, name, 2);
+            ValidateImage(request.File);
 
-            var folder = await _repository.CreateAsync(new QuizFolder { Name = name });
+            var newFolder = new QuizFolder { Name = name };
+            if (request.File != null) await SetImageAsync(newFolder, request.File);
+            var folder = await _repository.CreateAsync(newFolder);
             return new FolderResponse
             {
                 Id = folder.Id,
                 Name = folder.Name,
+                ImageUrl = folder.ImageUrl,
                 SubFolders = await CreateTreeAsync(folder.Id, request.SubFolders)
             };
         }
@@ -72,6 +161,7 @@ namespace LearningBackendAPI.Services
         public async Task<FolderResponse> UpdateFolderAsync(string id, FolderRequest request)
         {
             var folder = await FindAsync<QuizFolder>(id, "Folder");
+            ValidateImage(request.File);
 
             if (!string.IsNullOrWhiteSpace(request.Name) && request.Name.Trim() != folder.Name)
             {
@@ -92,6 +182,11 @@ namespace LearningBackendAPI.Services
                 }
             }
 
+            if (await ApplyImageChangeAsync(folder, request))
+            {
+                await _repository.UpdateAsync(folder);
+            }
+
             if (request.SubFolders is { Count: > 0 })
             {
                 await AddTreeAsync(folder.Id, folder.Name, request.SubFolders, 2);
@@ -109,6 +204,7 @@ namespace LearningBackendAPI.Services
             await EnsureNotUsedByQuizzesAsync(q => q.FolderId == id, $"Folder '{folder.Name}'", "can't be deleted");
             await EnsureNotUsedBySyllabusAsync(id, $"Folder '{folder.Name}'");
             await _repository.DeleteAsync<QuizFolder>(id);
+            await DeleteImageAsync(folder.ImageKey);
         }
 
         // ---------- Sub folders ----------
@@ -153,8 +249,11 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException($"'{parentName}' already has a sub folder named '{name}'");
             }
             ValidateTree(request.SubFolders, name, Depth(parentId, all) + 3);
+            ValidateImage(request.File);
 
-            var subFolder = await _repository.CreateAsync(new QuizSubFolder { Name = name, FolderId = parentId });
+            var newSubFolder = new QuizSubFolder { Name = name, FolderId = parentId };
+            if (request.File != null) await SetImageAsync(newSubFolder, request.File);
+            var subFolder = await _repository.CreateAsync(newSubFolder);
             var response = ToResponse(subFolder);
             response.SubFolders = await CreateTreeAsync(subFolder.Id, request.SubFolders);
             return response;
@@ -163,6 +262,7 @@ namespace LearningBackendAPI.Services
         public async Task<SubFolderResponse> UpdateSubFolderAsync(string id, SubFolderRequest request)
         {
             var subFolder = await FindAsync<QuizSubFolder>(id, "Sub folder");
+            ValidateImage(request.File);
 
             if (!string.IsNullOrWhiteSpace(request.Name) && request.Name.Trim() != subFolder.Name)
             {
@@ -180,6 +280,11 @@ namespace LearningBackendAPI.Services
                     quiz.SubFolderName = name;
                     await _quizRepository.UpdateAsync(quiz.Id, quiz);
                 }
+            }
+
+            if (await ApplyImageChangeAsync(subFolder, request))
+            {
+                await _repository.UpdateAsync(subFolder);
             }
 
             if (request.SubFolders is { Count: > 0 })
@@ -200,6 +305,7 @@ namespace LearningBackendAPI.Services
             await EnsureNotUsedByQuizzesAsync(q => q.SubFolderId == id, $"Sub folder '{subFolder.Name}'", "can't be deleted");
             await EnsureNotUsedBySyllabusAsync(id, $"Sub folder '{subFolder.Name}'");
             await _repository.DeleteAsync<QuizSubFolder>(id);
+            await DeleteImageAsync(subFolder.ImageKey);
         }
 
         // ---------- Quiz validation ----------
@@ -446,6 +552,7 @@ namespace LearningBackendAPI.Services
         {
             Id = folder.Id,
             Name = folder.Name,
+            ImageUrl = folder.ImageUrl,
             SubFolders = all.Where(s => s.FolderId == folder.Id).Select(s => ToResponse(s, all)).ToList()
         };
 
@@ -460,6 +567,7 @@ namespace LearningBackendAPI.Services
         {
             Id = subFolder.Id,
             Name = subFolder.Name,
+            ImageUrl = subFolder.ImageUrl,
             FolderId = subFolder.FolderId
         };
 

@@ -27,7 +27,8 @@
         "runtime": {
           "lib/net8.0/AWSSDK.Core.dll": {
             "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.0.102.1"
+            "fileVersion": "4.0.102.1",
+            "localPath": "AWSSDK.Core.dll"
           }
         }
       },
@@ -38,7 +39,8 @@
         "runtime": {
           "lib/net8.0/AWSSDK.S3.dll": {
             "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.0.102.4"
+            "fileVersion": "4.0.102.4",
+            "localPath": "AWSSDK.S3.dll"
           }
         }
       },
@@ -49,7 +51,8 @@
         "runtime": {
           "lib/netcoreapp3.1/AWSSDK.SecurityToken.dll": {
             "assemblyVersion": "3.3.0.0",
-            "fileVersion": "3.7.100.14"
+            "fileVersion": "3.7.100.14",
+            "localPath": "AWSSDK.SecurityToken.dll"
           }
         }
       },
@@ -57,7 +60,8 @@
         "runtime": {
           "lib/net6.0/BCrypt.Net-Next.dll": {
             "assemblyVersion": "4.0.3.0",
-            "fileVersion": "4.0.3.0"
+            "fileVersion": "4.0.3.0",
+            "localPath": "BCrypt.Net-Next.dll"
           }
         }
       },
@@ -72,7 +76,8 @@
         "runtime": {
           "lib/netstandard2.1/ClosedXML.dll": {
             "assemblyVersion": "0.105.1.0",
-            "fileVersion": "0.105.1.0"
+            "fileVersion": "0.105.1.0",
+            "localPath": "ClosedXML.dll"
           }
         }
       },
@@ -80,7 +85,8 @@
         "runtime": {
           "lib/netstandard2.1/ClosedXML.Parser.dll": {
             "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
+            "fileVersion": "1.0.0.0",
+            "localPath": "ClosedXML.Parser.dll"
           }
         }
       },
@@ -88,7 +94,8 @@
         "runtime": {
           "lib/net5.0/DnsClient.dll": {
             "assemblyVersion": "1.6.1.0",
-            "fileVersion": "1.6.1.0"
+            "fileVersion": "1.6.1.0",
+            "localPath": "DnsClient.dll"
           }
         }
       },
@@ -99,7 +106,8 @@
         "runtime": {
           "lib/net8.0/DocumentFormat.OpenXml.dll": {
             "assemblyVersion": "3.1.1.0",
-            "fileVersion": "3.1.1.0"
+            "fileVersion": "3.1.1.0",
+            "localPath": "DocumentFormat.OpenXml.dll"
           }
         }
       },
@@ -110,7 +118,8 @@
         "runtime": {
           "lib/net8.0/DocumentFormat.OpenXml.Framework.dll": {
             "assemblyVersion": "3.1.1.0",
-            "fileVersion": "3.1.1.0"
+            "fileVersion": "3.1.1.0",
+            "localPath": "DocumentFormat.OpenXml.Framework.dll"
           }
         }
       },
@@ -118,7 +127,8 @@
         "runtime": {
           "lib/netstandard2.0/ExcelNumberFormat.dll": {
             "assemblyVersion": "1.1.0.0",
-            "fileVersion": "1.1.0.0"
+            "fileVersion": "1.1.0.0",
+            "localPath": "ExcelNumberFormat.dll"
           }
         }
       },
@@ -130,7 +140,8 @@
         "runtime": {
           "lib/net6.0/FirebaseAdmin.dll": {
             "assemblyVersion": "3.7.0.0",
-            "fileVersion": "3.7.0.0"
+            "fileVersion": "3.7.0.0",
+            "localPath": "FirebaseAdmin.dll"
           }
         }
       },
@@ -138,7 +149,8 @@
         "runtime": {
           "lib/net7.0/FluentValidation.dll": {
             "assemblyVersion": "11.0.0.0",
-            "fileVersion": "11.8.0.0"
+            "fileVersion": "11.8.0.0",
+            "localPath": "FluentValidation.dll"
           }
         }
       },
@@ -150,7 +162,8 @@
         "runtime": {
           "lib/netstandard2.0/Google.Api.Gax.dll": {
             "assemblyVersion": "4.13.1.0",
-            "fileVersion": "4.13.1.0"
+            "fileVersion": "4.13.1.0",
+            "localPath": "Google.Api.Gax.dll"
           }
         }
       },
@@ -162,7 +175,8 @@
         "runtime": {
           "lib/netstandard2.0/Google.Api.Gax.Rest.dll": {
             "assemblyVersion": "4.13.1.0",
-            "fileVersion": "4.13.1.0"
+            "fileVersion": "4.13.1.0",
+            "localPath": "Google.Api.Gax.Rest.dll"
           }
         }
       },
@@ -173,7 +187,8 @@
         "runtime": {
           "lib/net6.0/Google.Apis.dll": {
             "assemblyVersion": "1.73.0.0",
-            "fileVersion": "1.73.0.0"
+            "fileVersion": "1.73.0.0",
+            "localPath": "Google.Apis.dll"
           }
         }
       },
@@ -186,7 +201,8 @@
         "runtime": {
           "lib/net6.0/Google.Apis.Auth.dll": {
             "assemblyVersion": "1.73.0.0",
-            "fileVersion": "1.73.0.0"
+            "fileVersion": "1.73.0.0",
+            "localPath": "Google.Apis.Auth.dll"
           }
         }
       },
@@ -197,7 +213,8 @@
         "runtime": {
           "lib/net6.0/Google.Apis.Core.dll": {
             "assemblyVersion": "1.73.0.0",
-            "fileVersion": "1.73.0.0"
+            "fileVersion": "1.73.0.0",
+            "localPath": "Google.Apis.Core.dll"
           }
         }
       },
@@ -208,7 +225,8 @@
         "runtime": {
           "lib/net8.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll": {
             "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.23.53112"
+            "fileVersion": "8.0.23.53112",
+            "localPath": "Microsoft.AspNetCore.Authentication.JwtBearer.dll"
           }
         }
       },
@@ -219,7 +237,8 @@
         "runtime": {
           "lib/net8.0/Microsoft.AspNetCore.OpenApi.dll": {
             "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.23.53112"
+            "fileVersion": "8.0.23.53112",
+            "localPath": "Microsoft.AspNetCore.OpenApi.dll"
           }
         }
       },
@@ -227,7 +246,8 @@
         "runtime": {
           "lib/netstandard2.1/Microsoft.Bcl.AsyncInterfaces.dll": {
             "assemblyVersion": "6.0.0.0",
-            "fileVersion": "6.0.21.52210"
+            "fileVersion": "6.0.21.52210",
+            "localPath": "Microsoft.Bcl.AsyncInterfaces.dll"
           }
         }
       },
@@ -235,7 +255,8 @@
         "runtime": {
           "lib/net8.0/Microsoft.IdentityModel.Abstractions.dll": {
             "assemblyVersion": "7.0.3.0",
-            "fileVersion": "7.0.3.41017"
+            "fileVersion": "7.0.3.41017",
+            "localPath": "Microsoft.IdentityModel.Abstractions.dll"
           }
         }
       },
@@ -246,7 +267,8 @@
         "runtime": {
           "lib/net8.0/Microsoft.IdentityModel.JsonWebTokens.dll": {
             "assemblyVersion": "7.0.3.0",
-            "fileVersion": "7.0.3.41017"
+            "fileVersion": "7.0.3.41017",
+            "localPath": "Microsoft.IdentityModel.JsonWebTokens.dll"
           }
         }
       },
@@ -257,7 +279,8 @@
         "runtime": {
           "lib/net8.0/Microsoft.IdentityModel.Logging.dll": {
             "assemblyVersion": "7.0.3.0",
-            "fileVersion": "7.0.3.41017"
+            "fileVersion": "7.0.3.41017",
+            "localPath": "Microsoft.IdentityModel.Logging.dll"
           }
         }
       },
@@ -269,7 +292,8 @@
         "runtime": {
           "lib/net8.0/Microsoft.IdentityModel.Protocols.dll": {
             "assemblyVersion": "7.0.3.0",
-            "fileVersion": "7.0.3.41017"
+            "fileVersion": "7.0.3.41017",
+            "localPath": "Microsoft.IdentityModel.Protocols.dll"
           }
         }
       },
@@ -281,7 +305,8 @@
         "runtime": {
           "lib/net8.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll": {
             "assemblyVersion": "7.0.3.0",
-            "fileVersion": "7.0.3.41017"
+            "fileVersion": "7.0.3.41017",
+            "localPath": "Microsoft.IdentityModel.Protocols.OpenIdConnect.dll"
           }
         }
       },
@@ -292,7 +317,8 @@
         "runtime": {
           "lib/net8.0/Microsoft.IdentityModel.Tokens.dll": {
             "assemblyVersion": "7.0.3.0",
-            "fileVersion": "7.0.3.41017"
+            "fileVersion": "7.0.3.41017",
+            "localPath": "Microsoft.IdentityModel.Tokens.dll"
           }
         }
       },
@@ -300,7 +326,8 @@
         "runtime": {
           "lib/netstandard2.0/Microsoft.OpenApi.dll": {
             "assemblyVersion": "1.4.3.0",
-            "fileVersion": "1.4.3.0"
+            "fileVersion": "1.4.3.0",
+            "localPath": "Microsoft.OpenApi.dll"
           }
         }
       },
@@ -308,7 +335,8 @@
         "runtime": {
           "lib/netstandard2.1/MongoDB.Bson.dll": {
             "assemblyVersion": "2.22.0.0",
-            "fileVersion": "2.22.0.0"
+            "fileVersion": "2.22.0.0",
+            "localPath": "MongoDB.Bson.dll"
           }
         }
       },
@@ -321,7 +349,8 @@
         "runtime": {
           "lib/netstandard2.1/MongoDB.Driver.dll": {
             "assemblyVersion": "2.22.0.0",
-            "fileVersion": "2.22.0.0"
+            "fileVersion": "2.22.0.0",
+            "localPath": "MongoDB.Driver.dll"
           }
         }
       },
@@ -338,7 +367,8 @@
         "runtime": {
           "lib/netstandard2.1/MongoDB.Driver.Core.dll": {
             "assemblyVersion": "2.22.0.0",
-            "fileVersion": "2.22.0.0"
+            "fileVersion": "2.22.0.0",
+            "localPath": "MongoDB.Driver.Core.dll"
           }
         }
       },
@@ -346,24 +376,28 @@
         "runtime": {
           "lib/netstandard2.1/MongoDB.Libmongocrypt.dll": {
             "assemblyVersion": "1.8.0.0",
-            "fileVersion": "1.8.0.0"
+            "fileVersion": "1.8.0.0",
+            "localPath": "MongoDB.Libmongocrypt.dll"
           }
         },
         "runtimeTargets": {
           "runtimes/linux/native/libmongocrypt.so": {
             "rid": "linux",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "0.0.0.0",
+            "localPath": "runtimes/linux/native/libmongocrypt.so"
           },
           "runtimes/osx/native/libmongocrypt.dylib": {
             "rid": "osx",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "0.0.0.0",
+            "localPath": "runtimes/osx/native/libmongocrypt.dylib"
           },
           "runtimes/win/native/mongocrypt.dll": {
             "rid": "win",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "0.0.0.0",
+            "localPath": "runtimes/win/native/mongocrypt.dll"
           }
         }
       },
@@ -371,7 +405,8 @@
         "runtime": {
           "lib/net6.0/Newtonsoft.Json.dll": {
             "assemblyVersion": "13.0.0.0",
-            "fileVersion": "13.0.4.30916"
+            "fileVersion": "13.0.4.30916",
+            "localPath": "Newtonsoft.Json.dll"
           }
         }
       },
@@ -379,7 +414,8 @@
         "runtime": {
           "lib/net8.0/RBush.dll": {
             "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.0.0.0"
+            "fileVersion": "4.0.0.0",
+            "localPath": "RBush.dll"
           }
         }
       },
@@ -387,7 +423,8 @@
         "runtime": {
           "lib/net5.0/SharpCompress.dll": {
             "assemblyVersion": "0.30.1.0",
-            "fileVersion": "0.30.1.0"
+            "fileVersion": "0.30.1.0",
+            "localPath": "SharpCompress.dll"
           }
         }
       },
@@ -395,7 +432,8 @@
         "runtime": {
           "lib/netcoreapp3.1/SixLabors.Fonts.dll": {
             "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
+            "fileVersion": "1.0.0.0",
+            "localPath": "SixLabors.Fonts.dll"
           }
         }
       },
@@ -403,7 +441,8 @@
         "runtime": {
           "lib/net5.0/Snappier.dll": {
             "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
+            "fileVersion": "1.0.0.0",
+            "localPath": "Snappier.dll"
           }
         }
       },
@@ -421,7 +460,8 @@
         "runtime": {
           "lib/net7.0/Swashbuckle.AspNetCore.Swagger.dll": {
             "assemblyVersion": "6.5.0.0",
-            "fileVersion": "6.5.0.0"
+            "fileVersion": "6.5.0.0",
+            "localPath": "Swashbuckle.AspNetCore.Swagger.dll"
           }
         }
       },
@@ -432,7 +472,8 @@
         "runtime": {
           "lib/net7.0/Swashbuckle.AspNetCore.SwaggerGen.dll": {
             "assemblyVersion": "6.5.0.0",
-            "fileVersion": "6.5.0.0"
+            "fileVersion": "6.5.0.0",
+            "localPath": "Swashbuckle.AspNetCore.SwaggerGen.dll"
           }
         }
       },
@@ -440,7 +481,8 @@
         "runtime": {
           "lib/net7.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {
             "assemblyVersion": "6.5.0.0",
-            "fileVersion": "6.5.0.0"
+            "fileVersion": "6.5.0.0",
+            "localPath": "Swashbuckle.AspNetCore.SwaggerUI.dll"
           }
         }
       },
@@ -448,7 +490,8 @@
         "runtime": {
           "lib/net7.0/System.CodeDom.dll": {
             "assemblyVersion": "7.0.0.0",
-            "fileVersion": "7.0.22.51805"
+            "fileVersion": "7.0.22.51805",
+            "localPath": "System.CodeDom.dll"
           }
         }
       },
@@ -460,7 +503,8 @@
         "runtime": {
           "lib/net8.0/System.IdentityModel.Tokens.Jwt.dll": {
             "assemblyVersion": "7.0.3.0",
-            "fileVersion": "7.0.3.41017"
+            "fileVersion": "7.0.3.41017",
+            "localPath": "System.IdentityModel.Tokens.Jwt.dll"
           }
         }
       },
@@ -468,7 +512,8 @@
         "runtime": {
           "lib/net8.0/System.IO.Packaging.dll": {
             "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.1024.46610"
+            "fileVersion": "8.0.1024.46610",
+            "localPath": "System.IO.Packaging.dll"
           }
         }
       },
@@ -479,7 +524,8 @@
         "runtime": {
           "lib/net7.0/System.Management.dll": {
             "assemblyVersion": "7.0.0.2",
-            "fileVersion": "7.0.723.27404"
+            "fileVersion": "7.0.723.27404",
+            "localPath": "System.Management.dll"
           }
         },
         "runtimeTargets": {
@@ -487,7 +533,8 @@
             "rid": "win",
             "assetType": "runtime",
             "assemblyVersion": "7.0.0.2",
-            "fileVersion": "7.0.723.27404"
+            "fileVersion": "7.0.723.27404",
+            "localPath": "runtimes/win/lib/net7.0/System.Management.dll"
           }
         }
       },
@@ -495,7 +542,8 @@
         "runtime": {
           "lib/net6.0/ZstdSharp.dll": {
             "assemblyVersion": "0.6.2.0",
-            "fileVersion": "0.6.2.0"
+            "fileVersion": "0.6.2.0",
+            "localPath": "ZstdSharp.dll"
           }
         }
       }

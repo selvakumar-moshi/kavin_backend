@@ -29,20 +29,23 @@ namespace LearningBackendAPI.Controllers
             Ok(_responseHelper.Success(await _folderService.GetSubFoldersAsync(folderId), "Sub folders retrieved successfully")));
 
         /// <summary>
-        /// Body: { folderId, name, subFolders? } - folderId is a folder or another sub folder; subFolders is an optional
-        /// nested branch created under the new sub folder in the same call.
+        /// Form data: folderId (a folder or another sub folder), name, subFolders? (JSON array string, a nested branch created
+        /// under the new sub folder in the same call), file? (optional picture, JPG/PNG/WEBP max 5 MB, returned as imageUrl).
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public Task<IActionResult> Create([FromBody] SubFolderRequest request) => HandleAsync(async () =>
-            Ok(_responseHelper.Success(await _folderService.CreateSubFolderAsync(request), "Sub folder created successfully")));
+        [Consumes("multipart/form-data")]
+        public Task<IActionResult> Create([FromForm] SubFolderFormRequest request) => HandleAsync(async () =>
+            Ok(_responseHelper.Success(await _folderService.CreateSubFolderAsync(request.ToRequest()), "Sub folder created successfully")));
 
-        /// <summary>Body: { name?, subFolders? }. name renames it (quizzes in it pick up the new name); subFolders is a nested
-        /// tree added under it - names that already exist are reused, new ones are created. Its parent can't be changed.</summary>
+        /// <summary>Form data: name?, subFolders?, file?, removeImage?. name renames it (quizzes in it pick up the new name); subFolders is a nested
+        /// tree added under it - names that already exist are reused, new ones are created. Its parent can't be changed.
+        /// file replaces the picture, removeImage=true removes it.</summary>
         [HttpPut("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public Task<IActionResult> Update(string id, [FromBody] SubFolderRequest request) => HandleAsync(async () =>
-            Ok(_responseHelper.Success(await _folderService.UpdateSubFolderAsync(id, request), "Sub folder updated successfully")));
+        [Consumes("multipart/form-data")]
+        public Task<IActionResult> Update(string id, [FromForm] SubFolderFormRequest request) => HandleAsync(async () =>
+            Ok(_responseHelper.Success(await _folderService.UpdateSubFolderAsync(id, request.ToRequest()), "Sub folder updated successfully")));
 
         [HttpDelete("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]

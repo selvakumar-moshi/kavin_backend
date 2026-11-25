@@ -29,20 +29,23 @@ namespace LearningBackendAPI.Controllers
             Ok(_responseHelper.Success(await _folderService.GetFoldersAsync(), "Folders retrieved successfully")));
 
         /// <summary>
-        /// Body: { name, subFolders? } - subFolders is an optional tree, each node { name, subFolders? } nested to any depth,
-        /// created together with the folder in one call.
+        /// Form data: name, subFolders? (JSON array string - each node a name or { name, subFolders? }, nested to any depth,
+        /// created with the folder in one call), file? (optional picture, JPG/PNG/WEBP max 5 MB, returned as imageUrl).
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public Task<IActionResult> Create([FromBody] FolderRequest request) => HandleAsync(async () =>
-            Ok(_responseHelper.Success(await _folderService.CreateFolderAsync(request), "Folder created successfully")));
+        [Consumes("multipart/form-data")]
+        public Task<IActionResult> Create([FromForm] FolderFormRequest request) => HandleAsync(async () =>
+            Ok(_responseHelper.Success(await _folderService.CreateFolderAsync(request.ToRequest()), "Folder created successfully")));
 
-        /// <summary>Body: { name?, subFolders? }. name renames it (quizzes in the folder pick up the new name); subFolders is a
-        /// nested tree added under it - names that already exist are reused, new ones are created.</summary>
+        /// <summary>Form data: name?, subFolders?, file?, removeImage?. name renames it (quizzes in the folder pick up the new name); subFolders is a
+        /// nested tree added under it - names that already exist are reused, new ones are created.
+        /// file replaces the picture, removeImage=true removes it.</summary>
         [HttpPut("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public Task<IActionResult> Update(string id, [FromBody] FolderRequest request) => HandleAsync(async () =>
-            Ok(_responseHelper.Success(await _folderService.UpdateFolderAsync(id, request), "Folder updated successfully")));
+        [Consumes("multipart/form-data")]
+        public Task<IActionResult> Update(string id, [FromForm] FolderFormRequest request) => HandleAsync(async () =>
+            Ok(_responseHelper.Success(await _folderService.UpdateFolderAsync(id, request.ToRequest()), "Folder updated successfully")));
 
         [HttpDelete("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
