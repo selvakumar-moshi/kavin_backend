@@ -10,22 +10,29 @@ namespace LearningBackendAPI.Repositories
         public DeviceTokenRepository(IMongoDatabase database)
         {
             _tokens = database.GetCollection<DeviceToken>("DeviceTokens");
-            // One document per token; the userId index serves per-user lookups and cleanup (creating an existing index is a no-op)
+            // One document per token (and, via UpsertAsync, per user); the userId index serves per-user lookups and cleanup (creating an existing index is a no-op)
             _tokens.Indexes.CreateOne(new CreateIndexModel<DeviceToken>(
                 Builders<DeviceToken>.IndexKeys.Ascending(t => t.Token), new CreateIndexOptions { Unique = true }));
             _tokens.Indexes.CreateOne(new CreateIndexModel<DeviceToken>(
                 Builders<DeviceToken>.IndexKeys.Ascending(t => t.UserId)));
         }
 
+        // One record per user: the user's record gets the new token (inserted only when the user has none yet).
         public async Task UpsertAsync(string userId, string token, string? platform)
         {
             var now = DateTime.UtcNow;
+
+            // The token index is unique, so free this token if it's still recorded for someone else (a shared phone),
+            // and drop the user's other records (older tokens, or duplicates from before this was one-per-user)
+            await _tokens.DeleteManyAsync(t => t.Token == token && t.UserId != userId);
+            await _tokens.DeleteManyAsync(t => t.UserId == userId && t.Token != token);
+
             var update = Builders<DeviceToken>.Update
-                .Set(t => t.UserId, userId)
+                .Set(t => t.Token, token)
                 .Set(t => t.Platform, platform)
                 .Set(t => t.LastSeenAt, now)
                 .SetOnInsert(t => t.CreatedAt, now);
-            await _tokens.UpdateOneAsync(t => t.Token == token, update, new UpdateOptions { IsUpsert = true });
+            await _tokens.UpdateOneAsync(t => t.UserId == userId, update, new UpdateOptions { IsUpsert = true });
         }
 
         public async Task RemoveAsync(string userId, string token)

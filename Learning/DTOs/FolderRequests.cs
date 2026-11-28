@@ -112,6 +112,24 @@ namespace LearningBackendAPI.DTOs
         public List<SubFolderResponse> SubFolders { get; set; } = new();
     }
 
+    // One level of a quiz's sub folder path, with the picture for that level
+    public class FolderNodeInfo
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
+    }
+
+    // Implemented by the quiz and the student quiz response so both get the folder pictures the same way
+    public interface IFolderTrail
+    {
+        string? FolderId { get; }
+        string? SubFolderId { get; }
+        string? FolderImageUrl { get; set; }
+        string? SubFolderImageUrl { get; set; }
+        List<FolderNodeInfo>? SubFolderPathNodes { get; set; }
+    }
+
     // A quiz's validated folder / sub folder choice (SubFolder is the leaf the quiz is filed under)
     public class FolderSelection
     {

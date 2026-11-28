@@ -68,7 +68,7 @@ namespace LearningBackendAPI.Models
     }
 
     [BsonIgnoreExtraElements]
-    public class Quiz
+    public class Quiz : LearningBackendAPI.DTOs.IFolderTrail
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
@@ -150,6 +150,17 @@ namespace LearningBackendAPI.Models
         // Computed on read (not stored): every sub folder from the folder's first level down to SubFolderName, joined by "/"
         [BsonIgnore]
         public string? SubFolderPath { get; set; }
+
+        // Computed on read (not stored): the pictures for the quiz's folder, its sub folder, and every level of SubFolderPath
+        [BsonIgnore]
+        public string? FolderImageUrl { get; set; }
+
+        [BsonIgnore]
+        public string? SubFolderImageUrl { get; set; }
+
+        // Same levels as SubFolderPath, first level down to the quiz's sub folder: [{ id, name, imageUrl }, ...]
+        [BsonIgnore]
+        public List<LearningBackendAPI.DTOs.FolderNodeInfo>? SubFolderPathNodes { get; set; }
 
         [BsonElement("quizToView")]
         public string QuizToView { get; set; }

@@ -31,5 +31,11 @@ namespace LearningBackendAPI.Services
         Task<Dictionary<string, string>> GetNodeNamesAsync(IEnumerable<string?> ids);
 
         Task<Dictionary<string, string>> GetSubFolderPathsAsync(IEnumerable<string?> subFolderIds);
+
+        /// <summary>For each sub folder id, its levels from the first sub folder under the folder down to itself, each with its picture.</summary>
+        Task<Dictionary<string, List<FolderNodeInfo>>> GetSubFolderChainsAsync(IEnumerable<string?> subFolderIds);
+
+        /// <summary>Picture URL by folder id; folders without a picture are left out.</summary>
+        Task<Dictionary<string, string>> GetFolderImagesAsync(IEnumerable<string?> folderIds);
     }
 }

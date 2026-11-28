@@ -34,6 +34,17 @@ namespace LearningBackendAPI.Models
         [BsonElement("telegramLink")]
         public string? TelegramLink { get; set; }
 
+        // Optional PDF for the mobile app (uploaded to S3); PdfKey is only for replacing / deleting it
+        [BsonElement("pdfUrl")]
+        public string? PdfUrl { get; set; }
+
+        [BsonElement("pdfName")]
+        public string? PdfName { get; set; }
+
+        [BsonElement("pdfKey")]
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string? PdfKey { get; set; }
+
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; }
 

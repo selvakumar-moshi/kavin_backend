@@ -106,19 +106,64 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/BatchCreateRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchCreateRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchCreateRequest"
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "CourseId": {
+                    "type": "string"
+                  },
+                  "BatchFrom": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "BatchTo": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "WhatsAppLink": {
+                    "type": "string"
+                  },
+                  "TelegramLink": {
+                    "type": "string"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "Title": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "CourseId": {
+                  "style": "form"
+                },
+                "BatchFrom": {
+                  "style": "form"
+                },
+                "BatchTo": {
+                  "style": "form"
+                },
+                "WhatsAppLink": {
+                  "style": "form"
+                },
+                "TelegramLink": {
+                  "style": "form"
+                },
+                "File": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -148,19 +193,70 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/BatchUpdateRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchUpdateRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchUpdateRequest"
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "CourseId": {
+                    "type": "string"
+                  },
+                  "BatchFrom": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "BatchTo": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "WhatsAppLink": {
+                    "type": "string"
+                  },
+                  "TelegramLink": {
+                    "type": "string"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "RemoveFile": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "encoding": {
+                "Title": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "CourseId": {
+                  "style": "form"
+                },
+                "BatchFrom": {
+                  "style": "form"
+                },
+                "BatchTo": {
+                  "style": "form"
+                },
+                "WhatsAppLink": {
+                  "style": "form"
+                },
+                "TelegramLink": {
+                  "style": "form"
+                },
+                "File": {
+                  "style": "form"
+                },
+                "RemoveFile": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -1025,12 +1121,19 @@
                       "type": "string"
                     }
                   },
-                  "SendPush": {
-                    "type": "boolean"
+                  "UserId": {
+                    "type": "string"
                   },
-                  "PushScheduledAt": {
+                  "PushStartDate": {
                     "type": "string",
                     "format": "date-time"
+                  },
+                  "PushEndDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "SendPush": {
+                    "type": "boolean"
                   }
                 }
               },
@@ -1071,10 +1174,16 @@
                 "UserIds": {
                   "style": "form"
                 },
-                "SendPush": {
+                "UserId": {
                   "style": "form"
                 },
-                "PushScheduledAt": {
+                "PushStartDate": {
+                  "style": "form"
+                },
+                "PushEndDate": {
+                  "style": "form"
+                },
+                "SendPush": {
                   "style": "form"
                 }
               }
@@ -1155,12 +1264,19 @@
                       "type": "string"
                     }
                   },
-                  "SendPush": {
-                    "type": "boolean"
+                  "UserId": {
+                    "type": "string"
                   },
-                  "PushScheduledAt": {
+                  "PushStartDate": {
                     "type": "string",
                     "format": "date-time"
+                  },
+                  "PushEndDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "SendPush": {
+                    "type": "boolean"
                   }
                 }
               },
@@ -1204,10 +1320,16 @@
                 "UserIds": {
                   "style": "form"
                 },
-                "SendPush": {
+                "UserId": {
                   "style": "form"
                 },
-                "PushScheduledAt": {
+                "PushStartDate": {
+                  "style": "form"
+                },
+                "PushEndDate": {
+                  "style": "form"
+                },
+                "SendPush": {
                   "style": "form"
                 }
               }
@@ -1230,6 +1352,28 @@
             "in": "path",
             "required": true,
             "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Notification/recipients": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "parameters": [
+          {
+            "name": "batchId",
+            "in": "query",
+            "style": "form",
             "schema": {
               "type": "string"
             }
@@ -3461,42 +3605,6 @@
   },
   "components": {
     "schemas": {
-      "BatchCreateRequest": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "courseId": {
-            "type": "string",
-            "nullable": true
-          },
-          "batchFrom": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "batchTo": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "whatsAppLink": {
-            "type": "string",
-            "nullable": true
-          },
-          "telegramLink": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "BatchSearchRequest": {
         "type": "object",
         "properties": {
@@ -3522,42 +3630,6 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
-      "BatchUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "courseId": {
-            "type": "string",
-            "nullable": true
-          },
-          "batchFrom": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "batchTo": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "whatsAppLink": {
-            "type": "string",
-            "nullable": true
-          },
-          "telegramLink": {
-            "type": "string",
-            "nullable": true
           }
         },
         "additionalProperties": false

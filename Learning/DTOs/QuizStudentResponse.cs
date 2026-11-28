@@ -1,6 +1,6 @@
 namespace LearningBackendAPI.DTOs
 {
-    public class QuizStudentResponse
+    public class QuizStudentResponse : IFolderTrail
     {
         public string Id { get; set; } = "";
         public string? CourseId { get; set; }
@@ -15,6 +15,10 @@ namespace LearningBackendAPI.DTOs
         public string? SubFolderName { get; set; }
         // Every sub folder from the folder's first level down to SubFolderName, e.g. "Sub 1/Sub 1_1/Sub 1_2"
         public string? SubFolderPath { get; set; }
+        // The pictures for the folder, the quiz's sub folder, and every level of SubFolderPath (first level down to the sub folder)
+        public string? FolderImageUrl { get; set; }
+        public string? SubFolderImageUrl { get; set; }
+        public List<FolderNodeInfo>? SubFolderPathNodes { get; set; }
         public DateTime? PublishedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
         // When the quiz opens (null = open since it was published)

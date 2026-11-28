@@ -435,6 +435,47 @@ namespace LearningBackendAPI.Services
             return paths;
         }
 
+        public async Task<Dictionary<string, List<FolderNodeInfo>>> GetSubFolderChainsAsync(IEnumerable<string?> subFolderIds)
+        {
+            var wanted = subFolderIds.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).Distinct().ToList();
+            var chains = new Dictionary<string, List<FolderNodeInfo>>();
+            if (wanted.Count == 0)
+            {
+                return chains;
+            }
+
+            var byId = (await _repository.GetAllAsync<QuizSubFolder>()).ToDictionary(s => s.Id);
+            foreach (var id in wanted)
+            {
+                var nodes = new List<FolderNodeInfo>();
+                var current = byId.GetValueOrDefault(id);
+                // Same walk as GetSubFolderPathsAsync: the chain ends at a folder (not in byId); the count guard stops a cycle
+                while (current != null && nodes.Count <= byId.Count)
+                {
+                    nodes.Add(new FolderNodeInfo { Id = current.Id, Name = current.Name, ImageUrl = current.ImageUrl });
+                    current = byId.GetValueOrDefault(current.FolderId);
+                }
+                if (nodes.Count > 0)
+                {
+                    nodes.Reverse();
+                    chains[id] = nodes;
+                }
+            }
+            return chains;
+        }
+
+        public async Task<Dictionary<string, string>> GetFolderImagesAsync(IEnumerable<string?> folderIds)
+        {
+            var wanted = folderIds.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id!).ToHashSet();
+            if (wanted.Count == 0)
+            {
+                return new Dictionary<string, string>();
+            }
+            return (await _repository.GetAllAsync<QuizFolder>())
+                .Where(f => wanted.Contains(f.Id) && !string.IsNullOrWhiteSpace(f.ImageUrl))
+                .ToDictionary(f => f.Id, f => f.ImageUrl!);
+        }
+
         // ---------- Helpers ----------
 
         private async Task<T> FindAsync<T>(string id, string label) where T : QuizStructureItem

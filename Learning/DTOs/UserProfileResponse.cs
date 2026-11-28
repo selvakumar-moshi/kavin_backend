@@ -46,6 +46,9 @@ namespace LearningBackendAPI.DTOs
         public string EnrollmentId { get; set; }
         public string? BatchId { get; set; }
         public string? BatchTitle { get; set; }
+        // The batch's PDF, if the admin attached one
+        public string? BatchPdfUrl { get; set; }
+        public string? BatchPdfName { get; set; }
         // What this batch was bought for (the course price on the day it was added)
         public decimal Amount { get; set; }
         public string? PaymentMethod { get; set; }

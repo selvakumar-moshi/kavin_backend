@@ -6,7 +6,8 @@ namespace LearningBackendAPI.Services
     public interface IExcelExportService
     {
         byte[] GenerateRankListExcel(string quizTitle, string? batchTitle, List<RankListEntryDto> rankList);
-        byte[] GenerateUserListExcel(List<User> users);
+        /// <summary>One row per enrollment of each student (a student with none gets one row with the enrollment columns empty).</summary>
+        byte[] GenerateUserListExcel(List<User> users, ILookup<string, Enrollment> enrollmentsByUser);
         byte[] GenerateCourseEnrollmentExcel(string courseName, List<CourseEnrollmentReportRow> rows);
     }
 }

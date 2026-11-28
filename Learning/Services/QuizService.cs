@@ -825,6 +825,7 @@ namespace LearningBackendAPI.Services
             {
                 quiz.SubFolderPath = PathOf(paths, quiz.SubFolderId);
             }
+            await FillFolderTrailAsync(page.Items);
             return page;
         }
 
@@ -836,7 +837,23 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.QuizNotFound);
             }
             quiz.SubFolderPath = PathOf(await _folderService.GetSubFolderPathsAsync(new[] { quiz.SubFolderId }), quiz.SubFolderId);
+            await FillFolderTrailAsync(new[] { quiz });
             return quiz;
+        }
+
+        // Fills the folder / sub folder pictures (and the picture of every level of the sub folder path)
+        private async Task FillFolderTrailAsync(IEnumerable<IFolderTrail> items)
+        {
+            var list = items.ToList();
+            var chains = await _folderService.GetSubFolderChainsAsync(list.Select(q => q.SubFolderId));
+            var folderImages = await _folderService.GetFolderImagesAsync(list.Select(q => q.FolderId));
+            foreach (var item in list)
+            {
+                item.FolderImageUrl = item.FolderId != null ? folderImages.GetValueOrDefault(item.FolderId) : null;
+                var chain = item.SubFolderId != null ? chains.GetValueOrDefault(item.SubFolderId) : null;
+                item.SubFolderPathNodes = chain;
+                item.SubFolderImageUrl = chain?.LastOrDefault()?.ImageUrl;
+            }
         }
 
         private static string? PathOf(Dictionary<string, string> paths, string? subFolderId)
@@ -876,6 +893,7 @@ namespace LearningBackendAPI.Services
             {
                 quiz.SubFolderPath = PathOf(paths, quiz.SubFolderId);
             }
+            await FillFolderTrailAsync(page.Items);
             return page;
         }
 
@@ -895,6 +913,7 @@ namespace LearningBackendAPI.Services
             var used = (int)await _quizAttemptRepository.CountByQuizUserAndVersionAsync(id, userId, quiz.PublishVersion);
             var response = ToStudentResponse(quiz, userId, used);
             response.SubFolderPath = PathOf(await _folderService.GetSubFolderPathsAsync(new[] { quiz.SubFolderId }), quiz.SubFolderId);
+            await FillFolderTrailAsync(new[] { response });
             return response;
         }
 

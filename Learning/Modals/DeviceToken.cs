@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LearningBackendAPI.Models
 {
-    // An FCM registration token of one device a student is logged in on. A token belongs to one user at a time.
+    // A user's current FCM registration token - one record per user, replaced when they log in again or Firebase refreshes the token.
     [BsonIgnoreExtraElements]
     public class DeviceToken
     {

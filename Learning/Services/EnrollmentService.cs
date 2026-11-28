@@ -295,7 +295,9 @@ namespace LearningBackendAPI.Services
                     PhoneNumber = user?.PhoneNumber ?? "",
                     District = user?.District,
                     BatchTitle = enrollment.BatchTitle,
-                    Status = enrollment.Status
+                    Status = enrollment.Status,
+                    Amount = enrollment.CourseAmount,
+                    TransactionReference = enrollment.TransactionReference
                 });
             }
 

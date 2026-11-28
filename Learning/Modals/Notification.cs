@@ -63,6 +63,14 @@ namespace LearningBackendAPI.Models
         [BsonElement("userIds")]
         public List<string>? UserIds { get; set; }
 
+        // The window the notification is shown to students in the app (UTC): from PushStartDate (null = right away) until
+        // PushEndDate (null = never expires). Admins always see it. Also when the push goes out: at PushStartDate if that is in the future, otherwise right away.
+        [BsonElement("pushStartDate")]
+        public DateTime? PushStartDate { get; set; }
+
+        [BsonElement("pushEndDate")]
+        public DateTime? PushEndDate { get; set; }
+
         // Push delivery. SendPush is separate from NotificationType: a Flash or a Job notification can be pushed or not.
         [BsonElement("sendPush")]
         public bool SendPush { get; set; }

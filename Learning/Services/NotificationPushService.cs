@@ -52,6 +52,12 @@ namespace LearningBackendAPI.Services
                     continue;
                 }
 
+                if (notification.PushEndDate.HasValue && notification.PushEndDate.Value < DateTime.UtcNow)
+                {
+                    await _notificationRepository.SetPushResultAsync(id, Constants.PushStatuses.Cancelled, 0, 0, 0, "Expired (PushEndDate passed) before the push went out");
+                    continue;
+                }
+
                 try
                 {
                     await SendAsync(notification, cancellationToken);

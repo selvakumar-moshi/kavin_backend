@@ -10,5 +10,8 @@ namespace LearningBackendAPI.DTOs
         public string? District { get; set; }
         public string? BatchTitle { get; set; }
         public string Status { get; set; } = "";
+        // What the batch was bought for, and the payment's transaction reference
+        public decimal Amount { get; set; }
+        public string? TransactionReference { get; set; }
     }
 }

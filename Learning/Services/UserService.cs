@@ -137,11 +137,15 @@ namespace LearningBackendAPI.Services
                     var batchId = enrollment.BatchId;
                     bool InBatch(string? contentBatchId) => string.IsNullOrWhiteSpace(contentBatchId) || contentBatchId == batchId;
 
+                    var enrolledBatch = enrollment.BatchId != null ? await _batchRepository.GetByIdAsync(enrollment.BatchId) : null;
+
                     batches.Add(new EnrolledBatchDto
                     {
                         EnrollmentId = enrollment.Id,
                         BatchId = enrollment.BatchId,
                         BatchTitle = enrollment.BatchTitle,
+                        BatchPdfUrl = enrolledBatch?.PdfUrl,
+                        BatchPdfName = enrolledBatch?.PdfName,
                         Amount = enrollment.CourseAmount,
                         PaymentMethod = enrollment.PaymentMethod,
                         TransactionReference = enrollment.TransactionReference,
@@ -232,7 +236,8 @@ namespace LearningBackendAPI.Services
         public async Task<(byte[] Content, string FileName)> ExportUsersAsync()
         {
             var users = await _userRepository.GetAllByRoleAsync(Constants.Roles.User);
-            return (_excelExportService.GenerateUserListExcel(users), $"Users_{DateTime.UtcNow:yyyyMMdd_HHmm}.xlsx");
+            var enrollmentsByUser = (await _enrollmentRepository.GetAllAsync()).ToLookup(e => e.UserId);
+            return (_excelExportService.GenerateUserListExcel(users, enrollmentsByUser), $"Users_{DateTime.UtcNow:yyyyMMdd_HHmm}.xlsx");
         }
 
         // Clears the student's registered device so the next login (from any device) registers a new one

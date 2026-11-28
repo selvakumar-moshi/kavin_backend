@@ -25,11 +25,14 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Create a new batch mapped to a course (Admin only)
+        /// Create a new batch mapped to a course (Admin only). Form data: title, courseId, batchFrom, batchTo, description?,
+        /// whatsAppLink?, telegramLink?, file? (optional PDF, max 10 MB, returned as pdfUrl / pdfName).
         /// </summary>
         [HttpPost]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public async Task<IActionResult> CreateBatch([FromBody] BatchCreateRequest request)
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(12 * 1024 * 1024)]
+        public async Task<IActionResult> CreateBatch([FromForm] BatchCreateRequest request)
         {
             try
             {
@@ -43,11 +46,14 @@ namespace LearningBackendAPI.Controllers
         }
 
         /// <summary>
-        /// Update a batch (Admin only)
+        /// Update a batch (Admin only). Form data like create, only what is sent changes: a new file replaces the PDF,
+        /// removeFile=true deletes it.
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = Constants.Roles.Admin)]
-        public async Task<IActionResult> UpdateBatch(string id, [FromBody] BatchUpdateRequest request)
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(12 * 1024 * 1024)]
+        public async Task<IActionResult> UpdateBatch(string id, [FromForm] BatchUpdateRequest request)
         {
             try
             {

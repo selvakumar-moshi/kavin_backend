@@ -9,11 +9,55 @@ namespace LearningBackendAPI.Services
     {
         private readonly IBatchRepository _batchRepository;
         private readonly ICourseRepository _courseRepository;
+        private readonly IFileStorageService _fileStorageService;
 
-        public BatchService(IBatchRepository batchRepository, ICourseRepository courseRepository)
+        private const string PdfFolder = "coaching/Batch";
+        private const long MaxPdfSizeInBytes = 10 * 1024 * 1024; // 10 MB
+
+        public BatchService(IBatchRepository batchRepository, ICourseRepository courseRepository, IFileStorageService fileStorageService)
         {
+            _fileStorageService = fileStorageService;
             _batchRepository = batchRepository;
             _courseRepository = courseRepository;
+        }
+
+        private static bool HasFile(IFormFile? file) => file != null && file.Length > 0;
+
+        private static void ValidatePdf(IFormFile? file)
+        {
+            if (file == null)
+            {
+                return;
+            }
+            if (file.Length == 0)
+            {
+                throw new InvalidOperationException("The PDF file is empty");
+            }
+            if (!string.Equals(Path.GetExtension(file.FileName), ".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Only PDF files are allowed");
+            }
+            if (file.Length > MaxPdfSizeInBytes)
+            {
+                throw new InvalidOperationException("PDF file size must not exceed 10 MB");
+            }
+        }
+
+        // Each upload gets its own folder, so the URL ends with the file's own name and two batches can't overwrite each other
+        private async Task AttachPdfAsync(Batch batch, IFormFile file)
+        {
+            var name = Path.GetFileName(file.FileName);
+            var (url, key) = await _fileStorageService.UploadPdfAsync(file, $"{PdfFolder}/{Guid.NewGuid():N}", name);
+            batch.PdfUrl = url;
+            batch.PdfName = name;
+            batch.PdfKey = key;
+        }
+
+        // A file that can't be deleted from S3 must not block the batch change - it is only an orphan
+        private async Task DeletePdfAsync(string? key)
+        {
+            if (string.IsNullOrWhiteSpace(key)) return;
+            try { await _fileStorageService.DeleteAsync(key); } catch { }
         }
 
         public async Task<Batch> CreateBatchAsync(BatchCreateRequest request)
@@ -44,6 +88,8 @@ namespace LearningBackendAPI.Services
                 throw new InvalidOperationException(Constants.Messages.BatchDateRangeInvalid);
             }
 
+            ValidatePdf(request.File);
+
             var batch = new Batch
             {
                 Title = request.Title.Trim(),
@@ -57,7 +103,20 @@ namespace LearningBackendAPI.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            return await _batchRepository.CreateAsync(batch);
+            if (HasFile(request.File))
+            {
+                await AttachPdfAsync(batch, request.File!);
+            }
+
+            try
+            {
+                return await _batchRepository.CreateAsync(batch);
+            }
+            catch
+            {
+                await DeletePdfAsync(batch.PdfKey);
+                throw;
+            }
         }
 
         public async Task<Batch> UpdateBatchAsync(string id, BatchUpdateRequest request)
@@ -115,7 +174,25 @@ namespace LearningBackendAPI.Services
                 batch.TelegramLink = NormalizeLink(request.TelegramLink);
             }
 
+            ValidatePdf(request.File);
+
+            // The old PDF is only removed once the batch is saved with its replacement
+            string? oldKey = null;
+            if (HasFile(request.File))
+            {
+                oldKey = batch.PdfKey;
+                await AttachPdfAsync(batch, request.File!);
+            }
+            else if (request.RemoveFile == true && batch.PdfKey != null)
+            {
+                oldKey = batch.PdfKey;
+                batch.PdfUrl = null;
+                batch.PdfName = null;
+                batch.PdfKey = null;
+            }
+
             await _batchRepository.UpdateAsync(id, batch);
+            await DeletePdfAsync(oldKey);
             return batch;
         }
 
@@ -154,7 +231,12 @@ namespace LearningBackendAPI.Services
                 throw new KeyNotFoundException(Constants.Messages.BatchNotFound);
             }
 
-            return await _batchRepository.DeleteAsync(id);
+            var deleted = await _batchRepository.DeleteAsync(id);
+            if (deleted)
+            {
+                await DeletePdfAsync(batch.PdfKey);
+            }
+            return deleted;
         }
     }
 }

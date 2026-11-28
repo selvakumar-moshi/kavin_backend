@@ -17,6 +17,7 @@ namespace LearningBackendAPI.Services
         private readonly ISyllabusWiseRepository _syllabusWiseRepository;
         private readonly ICourseRepository _courseRepository;
         private readonly IBatchRepository _batchRepository;
+        private readonly IUserRepository _userRepository;
 
         public NotificationService(
             INotificationRepository notificationRepository,
@@ -24,8 +25,10 @@ namespace LearningBackendAPI.Services
             IEnrollmentRepository enrollmentRepository,
             ISyllabusWiseRepository syllabusWiseRepository,
             ICourseRepository courseRepository,
-            IBatchRepository batchRepository)
+            IBatchRepository batchRepository,
+            IUserRepository userRepository)
         {
+            _userRepository = userRepository;
             _courseRepository = courseRepository;
             _batchRepository = batchRepository;
             _notificationRepository = notificationRepository;
@@ -113,6 +116,27 @@ namespace LearningBackendAPI.Services
             return (normalized, Constants.NotificationAudiences.Batch, course.Id, batch.Id);
         }
 
+        // userIds plus the single userId; null when neither was sent (so an update keeps the saved users)
+        private static List<string>? MergeUsers(List<string>? userIds, string? userId)
+        {
+            if (userIds == null && string.IsNullOrWhiteSpace(userId))
+            {
+                return null;
+            }
+            return (userIds ?? new List<string>()).Concat(new[] { userId ?? "" })
+                .Where(u => !string.IsNullOrWhiteSpace(u)).Select(u => u.Trim()).Distinct().ToList();
+        }
+
+        private static DateTime? ToUtc(DateTime? value) => value.HasValue ? ToUtc(value.Value) : null;
+
+        private static void EnsureValidPushWindow(DateTime? start, DateTime? end)
+        {
+            if (start.HasValue && end.HasValue && end.Value <= start.Value)
+            {
+                throw new InvalidOperationException("PushEndDate must be after PushStartDate");
+            }
+        }
+
         // Treat a time without an offset as UTC, so the stored value doesn't depend on the server's time zone
         private static DateTime ToUtc(DateTime value)
             => value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(value, DateTimeKind.Utc) : value.ToUniversalTime();
@@ -142,7 +166,9 @@ namespace LearningBackendAPI.Services
                     ?? throw new InvalidOperationException("Notification type must be \"Flash Notification\" or \"Job Notification\"");
             }
 
-            EnsureValidDateRange(request.StartDate, request.EndDate);
+            // Job Notifications use startDate / endDate; Flash Notifications use pushStartDate / pushEndDate. The other pair is ignored.
+            var isJob = type == Constants.NotificationTypes.Job;
+            EnsureValidDateRange(isJob ? request.StartDate : null, isJob ? request.EndDate : null);
             ValidateAttachment(request.File);
 
             var notification = new Notification
@@ -151,26 +177,43 @@ namespace LearningBackendAPI.Services
                 Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
                 Link = string.IsNullOrWhiteSpace(request.Link) ? null : request.Link.Trim(),
                 NotificationType = type,
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
+                StartDate = isJob ? request.StartDate : null,
+                EndDate = isJob ? request.EndDate : null,
+                PushStartDate = isJob ? null : ToUtc(request.PushStartDate),
+                PushEndDate = isJob ? null : ToUtc(request.PushEndDate),
                 CreatedAt = DateTime.UtcNow
             };
+            EnsureValidPushWindow(notification.PushStartDate, notification.PushEndDate);
 
-            // courseType only applies to Flash Notifications; a Job Notification ignores it
-            var audienceType = request.AudienceType;
-            var courseId = request.CourseId;
-            var batchId = request.BatchId;
-            if (type == Constants.NotificationTypes.Flash && !string.IsNullOrWhiteSpace(request.CourseType))
+            if (type == Constants.NotificationTypes.Job)
             {
-                var resolved = await ResolveCourseTypeAsync(request.CourseType, request.AudienceType, request.CourseId, request.BatchId);
-                notification.CourseType = resolved.CourseType;
-                (audienceType, courseId, batchId) = (resolved.AudienceType, resolved.CourseId, resolved.BatchId);
+                // A Job Notification always goes to everyone: courseType, audienceType, courseId, batchId and users are ignored
+                ApplyAudience(notification, Constants.NotificationAudiences.All, null, null, null);
+            }
+            else
+            {
+                var audienceType = request.AudienceType;
+                var courseId = request.CourseId;
+                var batchId = request.BatchId;
+                var users = MergeUsers(request.UserIds, request.UserId);
+                if (users is { Count: > 0 })
+                {
+                    // userIds always win: it goes to exactly those users, whatever course / batch / audience was also sent
+                    (audienceType, courseId, batchId) = (Constants.NotificationAudiences.Users, null, null);
+                }
+                else if (!string.IsNullOrWhiteSpace(request.CourseType))
+                {
+                    var resolved = await ResolveCourseTypeAsync(request.CourseType, request.AudienceType, request.CourseId, request.BatchId);
+                    notification.CourseType = resolved.CourseType;
+                    (audienceType, courseId, batchId) = (resolved.AudienceType, resolved.CourseId, resolved.BatchId);
+                }
+
+                ApplyAudience(notification, audienceType, courseId, batchId, users);
             }
 
-            ApplyAudience(notification, audienceType, courseId, batchId, request.UserIds);
             if (request.SendPush == true)
             {
-                QueuePush(notification, request.PushScheduledAt);
+                QueuePush(notification, notification.PushStartDate);
             }
 
             if (HasFile(request.File))
@@ -218,6 +261,7 @@ namespace LearningBackendAPI.Services
                 notification.Link = string.IsNullOrWhiteSpace(request.Link) ? null : request.Link.Trim();
             }
 
+            var typeChanged = false;
             if (!string.IsNullOrWhiteSpace(request.NotificationType))
             {
                 var type = Constants.NotificationTypes.Normalize(request.NotificationType);
@@ -225,36 +269,68 @@ namespace LearningBackendAPI.Services
                 {
                     throw new InvalidOperationException("Notification type must be \"Flash Notification\" or \"Job Notification\"");
                 }
+                typeChanged = Constants.NotificationTypes.Normalize(notification.NotificationType) != type;
                 notification.NotificationType = type;
             }
 
-            if (request.StartDate.HasValue)
+            // Job Notifications use startDate / endDate; Flash Notifications use pushStartDate / pushEndDate. The other pair is ignored
+            // (and cleared when the notification changes type).
+            if (notification.NotificationType == Constants.NotificationTypes.Job)
             {
-                notification.StartDate = request.StartDate.Value;
-            }
-
-            if (request.EndDate.HasValue)
-            {
-                notification.EndDate = request.EndDate.Value;
-            }
-
-            EnsureValidDateRange(notification.StartDate, notification.EndDate);
-            ValidateAttachment(request.File);
-
-            // courseType only applies to Flash Notifications. A Job Notification drops it and keeps whatever audience it has.
-            var audienceType = request.AudienceType;
-            var courseId = request.CourseId;
-            var batchId = request.BatchId;
-            if (notification.NotificationType != Constants.NotificationTypes.Flash)
-            {
-                notification.CourseType = null;
+                notification.PushStartDate = null;
+                notification.PushEndDate = null;
+                if (request.StartDate.HasValue)
+                {
+                    notification.StartDate = request.StartDate.Value;
+                }
+                if (request.EndDate.HasValue)
+                {
+                    notification.EndDate = request.EndDate.Value;
+                }
             }
             else
             {
-                // Re-resolve when courseType is sent, or when a Paid notification's course / batch / audience is being changed
+                if (typeChanged)
+                {
+                    notification.StartDate = null;
+                    notification.EndDate = null;
+                }
+                if (request.PushStartDate.HasValue)
+                {
+                    notification.PushStartDate = ToUtc(request.PushStartDate);
+                }
+                if (request.PushEndDate.HasValue)
+                {
+                    notification.PushEndDate = ToUtc(request.PushEndDate);
+                }
+            }
+
+            EnsureValidDateRange(notification.StartDate, notification.EndDate);
+            EnsureValidPushWindow(notification.PushStartDate, notification.PushEndDate);
+            ValidateAttachment(request.File);
+
+            // A Job Notification always goes to everyone; courseType / audience / users only apply to Flash Notifications.
+            var audienceType = request.AudienceType;
+            var courseId = request.CourseId;
+            var batchId = request.BatchId;
+            var users = MergeUsers(request.UserIds, request.UserId);
+            if (notification.NotificationType != Constants.NotificationTypes.Flash)
+            {
+                notification.CourseType = null;
+                (audienceType, courseId, batchId, users) = (Constants.NotificationAudiences.All, null, null, null);
+            }
+            else
+            {
                 var changingPaid = notification.CourseType == Constants.MaterialAccess.Paid &&
                     (!string.IsNullOrWhiteSpace(request.CourseId) || !string.IsNullOrWhiteSpace(request.BatchId) || !string.IsNullOrWhiteSpace(request.AudienceType));
-                if (!string.IsNullOrWhiteSpace(request.CourseType) || changingPaid)
+                if (users is { Count: > 0 })
+                {
+                    // userIds always win: it goes to exactly those users, whatever course / batch / audience was also sent
+                    notification.CourseType = null;
+                    (audienceType, courseId, batchId) = (Constants.NotificationAudiences.Users, null, null);
+                }
+                // Re-resolve when courseType is sent, or when a Paid notification's course / batch / audience is being changed
+                else if (!string.IsNullOrWhiteSpace(request.CourseType) || changingPaid)
                 {
                     var wanted = string.IsNullOrWhiteSpace(request.CourseType) ? notification.CourseType! : request.CourseType;
                     // Fall back to what is saved for the fields that weren't sent
@@ -266,9 +342,14 @@ namespace LearningBackendAPI.Services
                     notification.CourseType = resolved.CourseType;
                     (audienceType, courseId, batchId) = (resolved.AudienceType, resolved.CourseId, resolved.BatchId);
                 }
+                else if (notification.CourseType == null && string.IsNullOrWhiteSpace(audienceType) && string.IsNullOrWhiteSpace(courseId) && string.IsNullOrWhiteSpace(batchId) && users is { Count: > 0 })
+                {
+                    // Only users were given: it is for exactly them
+                    audienceType = Constants.NotificationAudiences.Users;
+                }
             }
 
-            ApplyAudience(notification, audienceType, courseId, batchId, request.UserIds);
+            ApplyAudience(notification, audienceType, courseId, batchId, users);
 
             // Push: only one that hasn't gone out can be changed here; a sent one is resent via POST {id}/push
             var pushPending = notification.PushStatus is Constants.PushStatuses.None or Constants.PushStatuses.Cancelled or Constants.PushStatuses.Scheduled;
@@ -278,16 +359,17 @@ namespace LearningBackendAPI.Services
                 {
                     throw new InvalidOperationException("This push has already been sent - use POST /api/Notification/{id}/push to send it again");
                 }
-                QueuePush(notification, request.PushScheduledAt ?? notification.PushScheduledAt);
+                QueuePush(notification, notification.PushStartDate);
             }
             else if (request.SendPush == false && notification.PushStatus == Constants.PushStatuses.Scheduled)
             {
                 notification.SendPush = false;
                 notification.PushStatus = Constants.PushStatuses.Cancelled;
             }
-            else if (request.PushScheduledAt.HasValue && notification.PushStatus == Constants.PushStatuses.Scheduled)
+            else if (request.PushStartDate.HasValue && notification.PushStatus == Constants.PushStatuses.Scheduled)
             {
-                QueuePush(notification, request.PushScheduledAt);
+                // PushStartDate moved: a push still waiting goes out at the new time
+                QueuePush(notification, notification.PushStartDate);
             }
 
             // The old file is only removed once the notification is saved with its replacement
@@ -392,6 +474,39 @@ namespace LearningBackendAPI.Services
             }
         }
 
+        public async Task<List<NotificationRecipientResponse>> GetBatchRecipientsAsync(string batchId)
+        {
+            if (string.IsNullOrWhiteSpace(batchId))
+            {
+                throw new InvalidOperationException("batchId is required");
+            }
+            if (await _batchRepository.GetByIdAsync(batchId.Trim()) == null)
+            {
+                throw new KeyNotFoundException(Constants.Messages.BatchNotFound);
+            }
+
+            // Verified students only - the same people a Batch audience (and its push) reaches
+            var userIds = (await _enrollmentRepository.GetAllAsync())
+                .Where(e => e.Status == Constants.EnrollmentStatuses.Verified && e.BatchId == batchId.Trim())
+                .Select(e => e.UserId).Distinct().ToList();
+
+            var recipients = new List<NotificationRecipientResponse>();
+            foreach (var userId in userIds)
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null) continue;
+                recipients.Add(new NotificationRecipientResponse
+                {
+                    UserId = user.Id,
+                    Name = $"{user.FirstName} {user.LastName}".Trim(),
+                    ApplicationNo = user.ApplicationNo,
+                    PhoneNumber = user.PhoneNumber,
+                    Email = user.Email
+                });
+            }
+            return recipients.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
         public async Task<Notification> QueuePushAsync(string id)
         {
             var notification = await _notificationRepository.GetByIdAsync(id)
@@ -463,6 +578,11 @@ namespace LearningBackendAPI.Services
             if (!isAdmin)
             {
                 notifications = await VisibleToAsync(notifications, viewerUserId);
+                // Inside the PushStartDate .. PushEndDate window only (no dates = always)
+                var now = DateTime.UtcNow;
+                notifications = notifications
+                    .Where(n => (n.PushStartDate == null || n.PushStartDate <= now) && (n.PushEndDate == null || n.PushEndDate >= now))
+                    .ToList();
                 notifications.ForEach(HidePushDetails);
             }
 
@@ -473,8 +593,8 @@ namespace LearningBackendAPI.Services
                 notifications = notifications.Where(n => Constants.NotificationTypes.Normalize(n.NotificationType) == type).ToList();
             }
 
-            // Newest first: by its start date, or by when it was created if it has none
-            notifications = notifications.OrderByDescending(n => n.StartDate ?? n.CreatedAt).ToList();
+            // Newest first: by its start date (pushStartDate / startDate), or by when it was created if it has none
+            notifications = notifications.OrderByDescending(n => n.PushStartDate ?? n.StartDate ?? n.CreatedAt).ToList();
 
             var filtered = TextSearchHelper.ApplyFilter(notifications, searchTerm, globalFilter, SearchFields, DefaultSearchFields);
             return PagingHelper.ToPagedResult(filtered, pageNumber, pageSize);

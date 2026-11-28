@@ -84,7 +84,7 @@ namespace LearningBackendAPI.Controllers
 
         /// <summary>
         /// Register the logged-in user's FCM token so they can receive push notifications. The app calls this after login
-        /// and whenever Firebase refreshes the token; calling it again with the same token is harmless.
+        /// and whenever Firebase refreshes the token. A user has one token record: a new token replaces their previous one, and calling it again with the same token is harmless.
         /// </summary>
         [HttpPost("token")]
         public async Task<IActionResult> RegisterToken([FromBody] DeviceTokenRequest request)

@@ -26,7 +26,9 @@ namespace LearningBackendAPI.Controllers
 
         /// <summary>
         /// Create a new notification (Admin only). Every field is optional: notificationType ("Flash Notification" -
-        /// the default - or "Job Notification"), title, description, link, startDate, endDate. Sent as multipart/form-data so an optional "file" (PDF, or JPG / PNG / WEBP
+        /// the default - or "Job Notification"), title, description, link, startDate, endDate, pushStartDate / pushEndDate (when
+        /// students can see it). A Job Notification always goes to everyone (courseType, courseId, batchId are ignored); a push goes
+        /// out only when sendPush is true; userId / userIds on their own send it to just those students. Sent as multipart/form-data so an optional "file" (PDF, or JPG / PNG / WEBP
         /// image, up to 10 MB) can be attached; the response carries attachmentUrl and attachmentName.
         /// </summary>
         [HttpPost]
@@ -58,6 +60,30 @@ namespace LearningBackendAPI.Controllers
             {
                 var notification = await _notificationService.UpdateNotificationAsync(id, request);
                 return Ok(_responseHelper.Success(notification, "Notification updated successfully"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(_responseHelper.NotFound<object>(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(_responseHelper.BadRequest<object>(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Admin: the students of a batch, for picking who a notification goes to. Flow: pick a course (GET /api/Course), then its
+        /// batches (POST /api/Batch/search with { courseId }), then call this with the batch's id. Returns verified students only
+        /// - userId, name, applicationNo, phoneNumber, email. Send the chosen userId values as userIds when creating the notification.
+        /// </summary>
+        [HttpGet("recipients")]
+        [Authorize(Roles = Constants.Roles.Admin)]
+        public async Task<IActionResult> GetRecipients([FromQuery] string batchId)
+        {
+            try
+            {
+                var recipients = await _notificationService.GetBatchRecipientsAsync(batchId);
+                return Ok(_responseHelper.Success(recipients, "Recipients retrieved successfully"));
             }
             catch (KeyNotFoundException ex)
             {
